@@ -71,6 +71,7 @@ export interface PublicGeneratorOutput {
     observers: string;
     traditions: string;
     tension: string;
+    hiddenTruth?: string;
   }>;
   /** Dominant conflict domain for a BBEG villain's plan. */
   conflictDomain?: string;

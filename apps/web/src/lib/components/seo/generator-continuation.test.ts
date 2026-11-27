@@ -139,6 +139,14 @@ describe("generator-continuation", () => {
     ).toBe(false);
   });
 
+  it("configures the holiday as a Note import with GM-only lore and gates it on completed generation", () => {
+    const config = getGeneratorContinuationConfig("holiday");
+    expect(config).not.toBeNull();
+    expect(config?.capabilities.join(" ")).toContain("Note entry");
+    expect(config?.capabilities.join(" ")).toContain("GM-only lore");
+    expect(config?.capabilities.join(" ")).toContain("remove table hooks");
+  });
+
   it("configures the encounter as an Event import with GM-only lore and gates it on completed generation", () => {
     const config = getGeneratorContinuationConfig("encounter");
     expect(config).not.toBeNull();
@@ -287,6 +295,27 @@ describe("generator-continuation", () => {
         }),
       ).toBe(false);
     }
+  });
+
+  it("gates the holiday continuation on completed non-example generation", () => {
+    expect(
+      shouldShowGeneratorContinuation({
+        generatorType: "holiday",
+        userGenerationSucceeded: true,
+        isExampleDraft: false,
+        isBusy: false,
+        variant: "default",
+      }),
+    ).toBe(true);
+    expect(
+      shouldShowGeneratorContinuation({
+        generatorType: "holiday",
+        userGenerationSucceeded: false,
+        isExampleDraft: false,
+        isBusy: false,
+        variant: "default",
+      }),
+    ).toBe(false);
   });
 
   it("returns null for Wave 2, names, and unknown generator types", () => {

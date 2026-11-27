@@ -57,6 +57,8 @@ export const NON_STREAMABLE_SLUGS: readonly ValidSlug[] = [
   "tome",
   "bbeg-generator",
   "mystery-investigation",
+  // Partial previews cannot be checked for leaked GM-only hiddenTruth.
+  "holiday",
 ] as const;
 
 export function isStreamableSlug(slug: ValidSlug): boolean {

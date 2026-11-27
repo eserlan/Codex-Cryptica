@@ -149,19 +149,83 @@ Return only the JSON object. Do not include markdown code block formatting.`;
   };
 }
 
+function normalizeForSecretMatch(value: string): string {
+  return value.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function hasLeakedHolidayHiddenTruth(
+  rawObservances: unknown[],
+  playerFacingFields: string[],
+): boolean {
+  const normalizedFields = playerFacingFields.map(normalizeForSecretMatch);
+  return rawObservances.some((entry) => {
+    if (entry === null || typeof entry !== "object") return false;
+    const hiddenTruth = (entry as Record<string, unknown>).hiddenTruth;
+    const secret =
+      typeof hiddenTruth === "string"
+        ? normalizeForSecretMatch(hiddenTruth)
+        : "";
+    return (
+      secret.length > 0 &&
+      normalizedFields.some((field) => field.includes(secret))
+    );
+  });
+}
+
+const REQUIRED_HOLIDAY_OBSERVANCE_FIELDS = [
+  "name",
+  "type",
+  "when",
+  "observers",
+  "origin",
+  "traditions",
+  "foodOrDress",
+  "taboos",
+  "variations",
+  "outsiderMisunderstanding",
+  "publicBelief",
+  "tension",
+] as const;
+
+function areHolidayObservancesValid(
+  rawObservances: unknown[],
+  content: string,
+  expectedCount: number,
+): boolean {
+  return (
+    rawObservances.length === expectedCount &&
+    rawObservances.every(
+      (entry) =>
+        entry !== null &&
+        typeof entry === "object" &&
+        REQUIRED_HOLIDAY_OBSERVANCE_FIELDS.every((key) => {
+          const value = (entry as Record<string, unknown>)[key];
+          return typeof value === "string" && value.trim().length > 0;
+        }) &&
+        REQUIRED_HOLIDAY_OBSERVANCE_FIELDS.every((key) =>
+          content.includes((entry as Record<string, string>)[key]),
+        ),
+    )
+  );
+}
+
+function parseHolidayJsonObject(text: string): Record<string, unknown> {
+  try {
+    const parsed = parseFencedJson<unknown>(text);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return parsed as Record<string, unknown>;
+    }
+  } catch {
+    // Fall through to empty record so caller uses the complete local result.
+  }
+  return {};
+}
+
 export function parseHolidayResponse(
   text: string,
   resolved: ResolvedHoliday,
 ): PublicGeneratorOutput {
-  let data: Record<string, unknown> = {};
-  try {
-    const parsed = parseFencedJson<unknown>(text);
-    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-      data = parsed as Record<string, unknown>;
-    }
-  } catch {
-    // Fall through to the complete local result for malformed model output.
-  }
+  const data = parseHolidayJsonObject(text);
   const fallback = generateHolidayLocal({
     genre: resolved.genre,
     scope: resolved.scope,
@@ -173,6 +237,7 @@ export function parseHolidayResponse(
     religion: resolved.religion,
     avoidNames: resolved.avoidNames,
     tone: resolved.tone,
+    includeControversial: resolved.includeControversial,
     setSize:
       resolved.count > 1
         ? `A calendar of ${resolved.count} observances`
@@ -181,24 +246,21 @@ export function parseHolidayResponse(
   const rawObservances = Array.isArray(data.observances)
     ? data.observances
     : [];
+  const content = typeof data.content === "string" ? data.content : "";
   const structuredObservancesAreValid =
-    rawObservances.length === resolved.count &&
-    rawObservances.every(
-      (entry) =>
-        entry !== null &&
-        typeof entry === "object" &&
-        ["name", "type", "when", "observers", "traditions", "tension"].every(
-          (key) => {
-            const value = (entry as Record<string, unknown>)[key];
-            return typeof value === "string" && value.trim().length > 0;
-          },
-        ),
-    ) &&
+    areHolidayObservancesValid(rawObservances, content, resolved.count) &&
     typeof data.title === "string" &&
     data.title.trim().length > 0 &&
-    typeof data.content === "string" &&
-    data.content.trim().length > 0;
-  if (!structuredObservancesAreValid) return fallback;
+    content.trim().length > 0;
+  const hasLeakedHiddenTruth = hasLeakedHolidayHiddenTruth(rawObservances, [
+    typeof data.title === "string" ? data.title : "",
+    typeof data.summary === "string" ? data.summary : "",
+    content,
+    ...(Array.isArray(data.labels)
+      ? data.labels.filter((l): l is string => typeof l === "string")
+      : []),
+  ]);
+  if (!structuredObservancesAreValid || hasLeakedHiddenTruth) return fallback;
   return {
     type: "note",
     title: data.title as string,
@@ -206,7 +268,7 @@ export function parseHolidayResponse(
       typeof data.summary === "string" && data.summary.trim()
         ? data.summary
         : fallback.summary,
-    content: data.content as string,
+    content,
     lore: typeof data.lore === "string" ? data.lore : fallback.lore,
     labels:
       Array.isArray(data.labels) &&
@@ -284,19 +346,22 @@ export function generateHolidayLocal(
       tension,
     };
   });
+  // Scope options are capitalised noun phrases ("A nation"); mid-sentence and
+  // in titles they need the lowercase article.
+  const scopePhrase = resolved.scope.replace(/^A /, "a ");
   const title =
-    count === 1 ? observances[0]!.name : `${resolved.scope} observances`;
+    count === 1 ? observances[0]!.name : `Calendar for ${scopePhrase}`;
   const content =
     count === 1
       ? `## ${observances[0]!.name}\n\n**Type:** ${observances[0]!.type}\n**When:** ${observances[0]!.when}\n**Observed by:** ${observances[0]!.observers}\n\n### Origin\n${observances[0]!.origin}\n\n### Traditions\n${observances[0]!.traditions}\n\n### Food, dress and symbols\n${observances[0]!.foodOrDress}\n\n### Taboos and variations\n${observances[0]!.taboos} ${observances[0]!.variations}\n\n### What outsiders misunderstand\n${observances[0]!.outsiderMisunderstanding}\n\n### What people believe\n${observances[0]!.publicBelief}\n\n### At the table\n${observances[0]!.tension}`
-      : `## Calendar overview\n\n${count} observances across ${resolved.scope}, mixing seasonal, civic, religious, memorial and local traditions. The shared motifs are mutual protection, contested memory and the obligations owed to absent people.\n\n${observances.map((day) => `## ${day.name}\n\n**Type:** ${day.type}\n**When:** ${day.when}\n**Observed by:** ${day.observers}\n\n### Origin\n${day.origin}\n\n### Traditions\n${day.traditions}\n\n### Food, dress and symbols\n${day.foodOrDress}\n\n### Taboos and regional variations\n${day.taboos} ${day.variations}\n\n### What outsiders misunderstand\n${day.outsiderMisunderstanding}\n\n### What people believe\n${day.publicBelief}${day.hiddenTruth ? `\n\n### Hidden history\n${day.hiddenTruth}` : ""}\n\n### At the table\n${day.tension}`).join("\n\n")}`;
+      : `## Calendar overview\n\n${count} observances across ${scopePhrase}, mixing seasonal, civic, religious, memorial and local traditions. The shared motifs are mutual protection, contested memory and the obligations owed to absent people.\n\n${observances.map((day) => `## ${day.name}\n\n**Type:** ${day.type}\n**When:** ${day.when}\n**Observed by:** ${day.observers}\n\n### Origin\n${day.origin}\n\n### Traditions\n${day.traditions}\n\n### Food, dress and symbols\n${day.foodOrDress}\n\n### Taboos and regional variations\n${day.taboos} ${day.variations}\n\n### What outsiders misunderstand\n${day.outsiderMisunderstanding}\n\n### What people believe\n${day.publicBelief}\n\n### At the table\n${day.tension}`).join("\n\n")}`;
   return {
     type: "note",
     title,
     summary:
       count === 1
-        ? `${observances[0]!.when}; a ${observances[0]!.type.toLowerCase()} shaped by ${resolved.culture || resolved.genre}.`
-        : `${count} connected observances for ${resolved.scope}, shaped by ${resolved.culture || resolved.genre}.`,
+        ? `${observances[0]!.name} is marked each year at ${observances[0]!.when}, a ${observances[0]!.type.toLowerCase()} shaped by ${resolved.genre}.`
+        : `${count} connected observances for ${scopePhrase}, shaped by ${resolved.genre}.`,
     content,
     lore: observances.some((day) => day.hiddenTruth)
       ? `## GM-only history\n\n${observances

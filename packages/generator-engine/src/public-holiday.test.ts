@@ -87,25 +87,34 @@ describe("public holiday generator", () => {
       rng,
     );
     expect(contested.lore).toContain("GM-only history");
+    const hiddenTruth = contested.observances?.[0]?.hiddenTruth;
+    expect(hiddenTruth).toBeTruthy();
+    expect(contested.content).not.toContain(hiddenTruth);
   });
 
   it("parses valid JSON and safely falls back for malformed JSON", () => {
     const resolved = resolveHoliday({ setSize: "One observance" });
+    const completeObservance = {
+      name: "Clearwater Vigil",
+      type: "Memorial",
+      when: "The first thaw",
+      observers: "The river families",
+      origin: "It recalls a flood survived together.",
+      traditions: "Carry lights to the water.",
+      foodOrDress: "Wear river-blue sashes.",
+      taboos: "Do not cast offerings into the channel.",
+      variations: "Upstream families sing a different verse.",
+      outsiderMisunderstanding: "Visitors mistake the silence for mourning.",
+      publicBelief: "The vigil honours shared rescue.",
+      tension: "The old flood record has gone missing.",
+    };
+    const completeContent = Object.values(completeObservance).join("\n");
     expect(
       parseHolidayResponse(
         JSON.stringify({
           title: "Clearwater Vigil",
-          content: "A vigil",
-          observances: [
-            {
-              name: "Clearwater Vigil",
-              type: "Memorial",
-              when: "The first thaw",
-              observers: "The river families",
-              traditions: "Carry lights",
-              tension: "The record is missing.",
-            },
-          ],
+          content: completeContent,
+          observances: [completeObservance],
         }),
         resolved,
       ).title,
@@ -120,5 +129,148 @@ describe("public holiday generator", () => {
         resolved,
       ).observances,
     ).toHaveLength(1);
+  });
+
+  it("falls back when an AI observance omits origin or expanded details", () => {
+    const resolved = resolveHoliday({ setSize: "One observance" });
+    const completeObservance = {
+      name: "Clearwater Vigil",
+      type: "Memorial",
+      when: "The first thaw",
+      observers: "The river families",
+      origin: "It recalls a flood survived together.",
+      traditions: "Carry lights to the water.",
+      foodOrDress: "Wear river-blue sashes.",
+      taboos: "Do not cast offerings into the channel.",
+      variations: "Upstream families sing a different verse.",
+      outsiderMisunderstanding: "Visitors mistake the silence for mourning.",
+      publicBelief: "The vigil honours shared rescue.",
+      tension: "The old flood record has gone missing.",
+    };
+    const missingOrigin = { ...completeObservance };
+    delete (missingOrigin as Partial<typeof completeObservance>).origin;
+    const base = {
+      title: "Clearwater Vigil",
+      content: Object.values(completeObservance).join("\n"),
+    };
+
+    expect(
+      parseHolidayResponse(
+        JSON.stringify({ ...base, observances: [missingOrigin] }),
+        resolved,
+      ).title,
+    ).not.toBe("Clearwater Vigil");
+
+    expect(
+      parseHolidayResponse(
+        JSON.stringify({
+          ...base,
+          content: "Clearwater Vigil\nThe first thaw",
+          observances: [completeObservance],
+        }),
+        resolved,
+      ).title,
+    ).not.toBe("Clearwater Vigil");
+
+    const controversialResolved = resolveHoliday({
+      setSize: "One observance",
+      includeControversial: true,
+    });
+    const fallbackWithControversial = parseHolidayResponse(
+      JSON.stringify({ ...base, observances: [missingOrigin] }),
+      controversialResolved,
+    );
+    expect(fallbackWithControversial.title).not.toBe("Clearwater Vigil");
+    expect(
+      fallbackWithControversial.observances?.[0]?.hiddenTruth,
+    ).toBeTruthy();
+    expect(fallbackWithControversial.lore).toContain(
+      fallbackWithControversial.observances?.[0]?.hiddenTruth ?? "",
+    );
+
+    const leakedHiddenTruth = "The council burned the original treaty.";
+    const leakedResult = parseHolidayResponse(
+      JSON.stringify({
+        ...base,
+        content: `${base.content}\n${leakedHiddenTruth}`,
+        observances: [
+          { ...completeObservance, hiddenTruth: leakedHiddenTruth },
+        ],
+      }),
+      controversialResolved,
+    );
+    expect(leakedResult.content).not.toContain(leakedHiddenTruth);
+
+    const summaryLeakedResult = parseHolidayResponse(
+      JSON.stringify({
+        ...base,
+        summary: `A vigil hiding a secret: ${leakedHiddenTruth}`,
+        observances: [
+          { ...completeObservance, hiddenTruth: leakedHiddenTruth },
+        ],
+      }),
+      controversialResolved,
+    );
+    expect(summaryLeakedResult.summary).not.toContain(leakedHiddenTruth);
+
+    const labelLeakedResult = parseHolidayResponse(
+      JSON.stringify({
+        ...base,
+        labels: ["holiday", leakedHiddenTruth],
+        observances: [
+          { ...completeObservance, hiddenTruth: leakedHiddenTruth },
+        ],
+      }),
+      controversialResolved,
+    );
+    expect(labelLeakedResult.labels).not.toContain(leakedHiddenTruth);
+
+    const caseVariantLeak = "the council   burned\nTHE ORIGINAL TREATY.";
+    const caseVariantLeakedResult = parseHolidayResponse(
+      JSON.stringify({
+        ...base,
+        content: `${base.content}\n${caseVariantLeak}`,
+        observances: [
+          { ...completeObservance, hiddenTruth: leakedHiddenTruth },
+        ],
+      }),
+      controversialResolved,
+    );
+    expect(caseVariantLeakedResult.title).not.toBe("Clearwater Vigil");
+    expect(
+      caseVariantLeakedResult.content.replace(/\s+/g, " ").toLowerCase(),
+    ).not.toContain(leakedHiddenTruth.toLowerCase());
+  });
+
+  it("writes a single observance summary as a capitalised sentence that names it", () => {
+    const out = generateHolidayLocal({ setSize: "One observance" }, () => 0.3);
+    expect(out.summary).toMatch(/^[A-Z]/);
+    expect(out.summary).toContain(`${out.title} is marked each year at `);
+    expect(out.summary).not.toMatch(/^[a-z]/);
+  });
+
+  it("keeps the scope's article lowercase in calendar titles, overviews and summaries", () => {
+    const out = generateHolidayLocal(
+      { scope: "A nation", setSize: "A calendar of 3 observances" },
+      () => 0.3,
+    );
+    expect(out.title).toBe("Calendar for a nation");
+    expect(out.summary).toContain("for a nation,");
+    expect(out.content).toContain("across a nation,");
+    expect(out.title).not.toMatch(/A nation/);
+    expect(out.summary).not.toMatch(/ A nation/);
+    expect(out.content).not.toMatch(/(across|for|of) A nation/);
+  });
+
+  it("does not paste free-text culture into the summary", () => {
+    const out = generateHolidayLocal(
+      {
+        setSize: "One observance",
+        culture: "Orbital dockworkers share water under a fragile compact",
+      },
+      () => 0.3,
+    );
+    expect(out.summary).not.toContain("Orbital dockworkers");
+    expect(out.summary).toMatch(/shaped by .+\.$/);
   });
 });

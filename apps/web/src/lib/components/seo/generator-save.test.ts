@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { GuestExporter } from "@codex/vault-engine";
 import type { Entity } from "schema";
 import type { SessionEntity } from "generator-engine";
+import { generateHolidayLocal } from "generator-engine";
 import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 import {
   buildGeneratorSavePayload,
@@ -20,6 +21,150 @@ const baseOutput: GeneratorOutput = {
 };
 
 describe("generator save payloads", () => {
+  it("keeps controversial holiday history out of saved content and guest exports", () => {
+    const output = {
+      ...generateHolidayLocal(
+        {
+          setSize: "A calendar of 6 observances",
+          includeControversial: true,
+        },
+        () => 0.21,
+      ),
+      type: "note",
+    } satisfies GeneratorOutput;
+    const hiddenTruth = output.observances?.[0]?.hiddenTruth;
+    expect(hiddenTruth).toBeTruthy();
+
+    const payload = buildGeneratorSavePayload(
+      output,
+      getGeneratorDocumentLayout(output),
+    );
+    expect(payload.content).not.toContain(hiddenTruth);
+    expect(payload.lore).toContain(hiddenTruth);
+
+    const entity = {
+      id: "holiday-calendar",
+      type: payload.type,
+      title: payload.title,
+      content: payload.content,
+      lore: payload.lore,
+      labels: payload.labels,
+      status: payload.status,
+      aliases: [],
+      connections: [],
+    } satisfies Entity;
+    const bundle = GuestExporter.export({
+      entities: [entity],
+      defaultVisibility: "visible",
+      activeTheme: { primaryColor: "#000000" },
+      publishId: "holiday-export-test",
+      vaultTitle: "Test Vault",
+      publisherVersion: "test",
+    });
+
+    expect(JSON.stringify(bundle)).not.toContain(hiddenTruth);
+  });
+
+  it("keeps AI holiday hiddenTruth out of saved content and guest exports", async () => {
+    const { parseHolidayResponse, resolveHoliday } =
+      await import("generator-engine");
+    const resolved = resolveHoliday({
+      setSize: "One observance",
+      includeControversial: true,
+    });
+    const aiHiddenTruth = "The harbour guild sank the first relief ship.";
+    const publicFields = {
+      name: "Lantern Tide",
+      type: "Memorial",
+      when: "First autumn gale",
+      observers: "Dockward families",
+      origin: "Honours sailors lost in the great storm.",
+      traditions: "Float paper lanterns at dusk.",
+      foodOrDress: "Salt cakes and oiled cloaks.",
+      taboos: "Never extinguish a drifting lantern.",
+      variations: "Outer-quay crews sing in low unison.",
+      outsiderMisunderstanding: "Strangers mistake it for a harvest festival.",
+      publicBelief: "The lanterns guide lost souls home.",
+      tension: "No shipwright admits who built the doomed hull.",
+    };
+    const aiOutput = parseHolidayResponse(
+      JSON.stringify({
+        title: "Lantern Tide",
+        summary: "A coastal memorial with a buried secret.",
+        content: Object.values(publicFields).join("\n"),
+        lore: `### Hidden Truth\n${aiHiddenTruth}`,
+        observances: [{ ...publicFields, hiddenTruth: aiHiddenTruth }],
+      }),
+      resolved,
+    ) as GeneratorOutput;
+
+    const payload = buildGeneratorSavePayload(
+      aiOutput,
+      getGeneratorDocumentLayout(aiOutput),
+    );
+    expect(payload.content).not.toContain(aiHiddenTruth);
+    expect(payload.lore).toContain(aiHiddenTruth);
+
+    const bundle = GuestExporter.export({
+      entities: [
+        {
+          id: "holiday-ai",
+          type: payload.type,
+          title: payload.title,
+          content: payload.content,
+          lore: payload.lore,
+          labels: payload.labels,
+          status: payload.status,
+          aliases: [],
+          connections: [],
+        } satisfies Entity,
+      ],
+      defaultVisibility: "visible",
+      activeTheme: { primaryColor: "#000000" },
+      publishId: "holiday-ai-export-test",
+      vaultTitle: "Test Vault",
+      publisherVersion: "test",
+    });
+    expect(JSON.stringify(bundle)).not.toContain(aiHiddenTruth);
+
+    const summaryLeakOutput = parseHolidayResponse(
+      JSON.stringify({
+        title: "Lantern Tide",
+        summary: `Remembering the storm — ${aiHiddenTruth}`,
+        content: Object.values(publicFields).join("\n"),
+        lore: `### Hidden Truth\n${aiHiddenTruth}`,
+        observances: [{ ...publicFields, hiddenTruth: aiHiddenTruth }],
+      }),
+      resolved,
+    ) as GeneratorOutput;
+    const summaryLeakPayload = buildGeneratorSavePayload(
+      summaryLeakOutput,
+      getGeneratorDocumentLayout(summaryLeakOutput),
+    );
+    expect(summaryLeakPayload.content).not.toContain(aiHiddenTruth);
+    const summaryLeakBundle = GuestExporter.export({
+      entities: [
+        {
+          id: "holiday-summary-leak",
+          type: summaryLeakPayload.type,
+          title: summaryLeakPayload.title,
+          content: summaryLeakPayload.content,
+          lore: summaryLeakPayload.lore,
+          labels: summaryLeakPayload.labels,
+          status: summaryLeakPayload.status,
+          aliases: [],
+          connections: [],
+        } satisfies Entity,
+      ],
+      defaultVisibility: "visible",
+      activeTheme: { primaryColor: "#000000" },
+      publishId: "holiday-summary-leak-test",
+      vaultTitle: "Test Vault",
+      publisherVersion: "test",
+    });
+    expect(JSON.stringify(summaryLeakBundle)).not.toContain(aiHiddenTruth);
+  });
+
   it("builds a normal vault payload from the rendered document layout", () => {
     expect(
       buildGeneratorSavePayload(baseOutput, {
