@@ -190,8 +190,11 @@ Return only the JSON object. Do not include markdown code block formatting like 
 
 function extractSchemeStagesSection(lore: string): string {
   const lines = lore.split(/\r?\n/);
+  const stageHeadings = lines.filter((line) =>
+    /^###\s+Scheme Stages\b/.test(line),
+  );
+  if (stageHeadings.length !== 1) return "";
   const start = lines.findIndex((line) => /^###\s+Scheme Stages\b/.test(line));
-  if (start === -1) return "";
   const rest = lines.slice(start + 1);
   const end = rest.findIndex((line) => /^###\s/.test(line));
   return (end === -1 ? rest : rest.slice(0, end)).join("\n");
@@ -204,14 +207,21 @@ export function parseVillainSchemeResponse(
   const data = asRecord(parseFencedJson<unknown>(text));
   const lore = asString(data.lore);
   const stagesSection = extractSchemeStagesSection(lore);
-  const stageNumbers = Array.from(
-    stagesSection.matchAll(/^\s*(?:[-*+]|\d+\.)?\s*\*\*Stage\s+(\d+)\s*:/gm),
-    (match) => Number(match[1]),
+  const stageMatches = Array.from(
+    stagesSection.matchAll(
+      /^\s*(?:[-*+]|\d+\.)?\s*\*\*Stage\s+(\d+)\s*:\s*(.+)$/gm,
+    ),
+    (match) => ({
+      num: Number(match[1]),
+      name: match[2].replace(/\*+/g, "").trim(),
+    }),
   );
   const hasSequentialStages =
-    stageNumbers.length >= 4 &&
-    stageNumbers.length <= 6 &&
-    stageNumbers.every((num, index) => num === index + 1);
+    stageMatches.length >= 4 &&
+    stageMatches.length <= 6 &&
+    stageMatches.every(
+      (stage, index) => stage.num === index + 1 && stage.name.length > 0,
+    );
   if (!hasSequentialStages) {
     throw new Error(
       "Villain scheme lore must contain four to six numbered stages",

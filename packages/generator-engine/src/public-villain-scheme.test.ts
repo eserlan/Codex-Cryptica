@@ -275,6 +275,29 @@ describe("parseVillainSchemeResponse", () => {
     expect(out.lore).toBe(listPrefixedLore);
   });
 
+  it("rejects duplicate Scheme Stages sections and empty stage names", () => {
+    const duplicateSectionLore = `${loreWithStages(4)}\n\n${loreWithStages(4)}`;
+    const emptyNameLore = [
+      "### Scheme Stages",
+      "**Stage 1: **",
+      "**Stage 2: Supply Squeeze**",
+      "**Stage 3: Public Distraction**",
+      "**Stage 4: Vault Breach**",
+    ].join("\n");
+    expect(() =>
+      parseVillainSchemeResponse(
+        JSON.stringify({ lore: duplicateSectionLore }),
+        resolved,
+      ),
+    ).toThrow("four to six numbered stages");
+    expect(() =>
+      parseVillainSchemeResponse(
+        JSON.stringify({ lore: emptyNameLore }),
+        resolved,
+      ),
+    ).toThrow("four to six numbered stages");
+  });
+
   it("rejects duplicate or out-of-order stage numbers", () => {
     const duplicateLore = [
       "### Scheme Stages",
