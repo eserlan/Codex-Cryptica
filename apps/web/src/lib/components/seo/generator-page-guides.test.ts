@@ -716,6 +716,27 @@ describe("generator guide distinctness", () => {
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
+  it("serves the constellation guide with tips naming its form labels and without dashes", () => {
+    const guide = getGeneratorGuide("constellation", "Constellation Generator");
+    expect(guide).toBe(SLUG_GUIDES.constellation);
+    expect(guide).not.toEqual(
+      defaultGuideForSlug("constellation", "Constellation Generator"),
+    );
+    expect(guide.tips).toHaveLength(3);
+    expect(guide.links?.length).toBeGreaterThan(0);
+    const tipText = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const label of [
+      "Visual Impression",
+      "Practical Use",
+      "Cultural Meaning",
+      "Single Constellation",
+      "Full Night Sky",
+    ]) {
+      expect(tipText).toContain(label);
+    }
+    expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
+  });
+
   it("serves the world guide with tips naming its form labels and without dashes", () => {
     const guide = getGeneratorGuide("world", "Sci-Fi World Generator");
     expect(guide).toBe(SLUG_GUIDES.world);
