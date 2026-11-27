@@ -332,6 +332,34 @@ describe("parseVillainSchemeResponse", () => {
         resolved,
       ),
     ).toThrow("four to six numbered stages");
+
+    const nestedFourBacktickLore = [
+      "### Scheme Stages",
+      "````markdown",
+      "```",
+      "**Stage 1: Quiet Recon**",
+      "**Stage 2: Supply Squeeze**",
+      "**Stage 3: Public Distraction**",
+      "**Stage 4: Vault Breach**",
+      "```",
+      "````",
+    ].join("\n");
+    expect(() =>
+      parseVillainSchemeResponse(
+        JSON.stringify({ lore: nestedFourBacktickLore }),
+        resolved,
+      ),
+    ).toThrow("four to six numbered stages");
+  });
+
+  it("writes a finite Current Activity clause for a custom Power Scale", () => {
+    const out = generateVillainSchemeLocal(
+      { powerScale: "Multiversal Threat" },
+      seededRng(2),
+    );
+    expect(out.lore).toContain(
+      "They are positioning people, resources, and cover stories",
+    );
   });
 
   it("rejects duplicate or out-of-order stage numbers", () => {

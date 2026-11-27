@@ -190,15 +190,25 @@ Return only the JSON object. Do not include markdown code block formatting like 
 
 function stripFencedCodeLines(lore: string): string[] {
   const lines: string[] = [];
-  let inFence: string | null = null;
+  let inFence: { char: string; length: number } | null = null;
   for (const line of lore.split(/\r?\n/)) {
-    const fenceMatch = /^\s{0,3}(`{3,}|~{3,})/.exec(line);
-    if (fenceMatch) {
-      const marker = fenceMatch[1][0];
-      inFence = inFence === marker ? null : (inFence ?? marker);
+    if (!inFence) {
+      const openMatch = /^\s{0,3}(`{3,}|~{3,})/.exec(line);
+      if (openMatch) {
+        inFence = { char: openMatch[1][0], length: openMatch[1].length };
+        continue;
+      }
+      lines.push(line);
       continue;
     }
-    if (!inFence) lines.push(line);
+    const closeMatch = /^\s{0,3}(`{3,}|~{3,})\s*$/.exec(line);
+    if (
+      closeMatch &&
+      closeMatch[1][0] === inFence.char &&
+      closeMatch[1].length >= inFence.length
+    ) {
+      inFence = null;
+    }
   }
   return lines;
 }
@@ -339,7 +349,7 @@ The ${resolved.villainProfile.toLowerCase()} behind ${resolved.schemeName} wants
 Their reasoning holds together on its own terms: a ${resolved.tone.toLowerCase()}, ${resolved.schemeType.toLowerCase()}-flavoured plan that makes sense from inside their own priorities, whatever the wider world would think of it.
 
 ### Current Activity
-The reported public incidents are a cover for quieter work. ${scaleFallback?.methods ?? "Positioning people, resources, and cover stories so that by the time anyone official asks the right question, the answer is already unreachable."}
+The reported public incidents are a cover for quieter work. ${scaleFallback?.methods ?? "They are positioning people, resources, and cover stories so that by the time anyone official asks the right question, the answer is already unreachable."}
 
 ### Resources & Minions
 - **${minionName}** — handles the operation's day-to-day logistics; loyal enough to follow orders, not loyal enough to die for them.
