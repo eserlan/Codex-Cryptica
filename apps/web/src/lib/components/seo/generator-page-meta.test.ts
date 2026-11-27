@@ -287,3 +287,40 @@ describe("Faction Roster editorial example", () => {
     ).toContain("not separate Character entries or graph links");
   });
 });
+
+describe("RPG Item editorial example", () => {
+  it("illustrates a common ring with its appearance and a bounded property in the GM reference", () => {
+    const draft = slugDrafts.item!;
+    expect(draft).toMatchObject({
+      type: "item",
+      title: "The Tollwarden's Ring",
+      labels: ["rpg-item", "imported-draft"],
+    });
+    expect(draft.content).toContain("three-arched bridge");
+    expect(draft.content).not.toContain("### Magical Properties");
+    expect(draft.lore).toContain("**Type**: Ring");
+    expect(draft.lore).toContain("**Rarity**: Common");
+    expect(draft.lore).toContain("### Magical Properties");
+    expect(draft.lore).toContain("cannot reveal the cause");
+    expect(draft.lore).toContain("### Lore & History");
+  });
+
+  it("describes the shared magic-item engine and does not promise mundane generation or automatic links", () => {
+    const answers = slugMeta.item.faqs?.map(({ answer }) => answer).join(" ");
+    expect(answers).toContain("Common is a rarity, not a non-magical setting");
+    expect(answers).toContain("independently of the chosen rarity");
+    expect(answers).toContain("one Item in your local vault");
+    expect(answers).toContain(
+      "history and offline campaign context appear in the main document",
+    );
+    expect(answers).toContain(
+      "Only sections headed GM Reference Information or Magical Properties are kept separately",
+    );
+    expect(answers).toContain(
+      "AI headings can vary, so check the rendered document before sharing it",
+    );
+    expect(answers).toContain(
+      "do not automatically become graph connections or inventory entries",
+    );
+  });
+});

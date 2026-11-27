@@ -345,6 +345,40 @@ describe("generator-continuation", () => {
     expect(roster?.capabilities.join(" ")).toContain("named connections");
   });
 
+  it("configures the canonical RPG Item route without promising additional graph entries", () => {
+    const config = getGeneratorContinuationConfig("item");
+    expect(config).toMatchObject({
+      headline: "Keep the find's history with the item",
+      placement: "near-result",
+      ctaLabel: "Add to my Codex",
+      localFirstNotice: "No account needed; stored locally in this browser.",
+    });
+    expect(config?.summary).toContain("one Item");
+    expect(config?.capabilities.join(" ")).toContain(
+      "sections headed GM Reference Information or Magical Properties in GM reference",
+    );
+    expect(config?.capabilities.join(" ")).toContain(
+      "AI headings can vary, so check the rendered document before sharing it",
+    );
+    for (const overrides of [
+      {},
+      { userGenerationSucceeded: false },
+      { isExampleDraft: true },
+      { isBusy: true },
+    ]) {
+      expect(
+        shouldShowGeneratorContinuation({
+          generatorType: "item",
+          userGenerationSucceeded: true,
+          isExampleDraft: false,
+          isBusy: false,
+          variant: "default",
+          ...overrides,
+        }),
+      ).toBe(Object.keys(overrides).length === 0);
+    }
+  });
+
   it("returns null for Wave 2, names, and unknown generator types", () => {
     for (const type of [
       "point-crawl",
