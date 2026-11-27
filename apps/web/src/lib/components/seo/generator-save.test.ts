@@ -398,6 +398,60 @@ describe("generator save payloads", () => {
     expect(serialized).not.toContain("Canary Outcome");
   });
 
+  it("keeps nation power blocs, rumours, entity seeds, and hidden problem out of guest exports", async () => {
+    const { generateNationLocal } = await import("generator-engine");
+    const nation = generateNationLocal(
+      {
+        genre: "Fantasy",
+        polityType: "Republic",
+        governmentStyle: "Merchant Oligarchy",
+      },
+      () => 0.25,
+    ) as GeneratorOutput;
+    const layout = getGeneratorDocumentLayout(nation);
+    const payload = buildGeneratorSavePayload(nation, layout);
+
+    expect(payload.type).toBe("faction");
+    expect(payload.content).not.toContain("Power Blocs");
+    expect(payload.content).not.toContain("Entity Seeds");
+    expect(payload.lore).toContain("Power Blocs");
+    expect(payload.lore).toContain("Rumours & Hooks");
+    expect(payload.lore).toContain("Entity Seeds");
+    const hiddenProblem = nation.lore.match(
+      /- \*\*Hidden Problem\*\*: ([^\n]+)/,
+    )?.[1];
+    expect(hiddenProblem).toBeTruthy();
+    expect(payload.content).not.toContain(hiddenProblem!);
+    expect(payload.lore).toContain(hiddenProblem!);
+
+    const entity = {
+      id: "nation-1",
+      type: payload.type,
+      title: payload.title,
+      content: payload.content,
+      lore: payload.lore,
+      labels: payload.labels,
+      status: payload.status,
+      aliases: [],
+      connections: [],
+    } satisfies Entity;
+    const bundle = GuestExporter.export({
+      entities: [entity],
+      defaultVisibility: "visible",
+      activeTheme: { primaryColor: "#000000" },
+      publishId: "nation-export-test",
+      vaultTitle: "Test Vault",
+      publisherVersion: "test",
+    });
+
+    const serialized = JSON.stringify(bundle);
+    expect(serialized).toContain(nation.title);
+    expect(serialized).not.toContain("Power Blocs");
+    expect(serialized).not.toContain("Rumours & Hooks");
+    expect(serialized).not.toContain("Entity Seeds");
+    expect(serialized).not.toContain(hiddenProblem!);
+  });
+
   it("keeps adventure lore in the vault and omits empty map images", () => {
     const adventure = {
       ...baseOutput,

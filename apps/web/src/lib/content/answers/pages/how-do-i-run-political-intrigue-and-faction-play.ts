@@ -287,6 +287,12 @@ export const howDoIRunPoliticalIntrigueAndFactionPlay: AnswerConfigInput = {
         "Hidden organisations with motives, methods and ranks pulling strings.",
       href: "/generators/secret-society",
     },
+    {
+      title: "Nation Generator",
+      description:
+        "Named states with a leader, competing power blocs and a hidden problem.",
+      href: "/generators/nation",
+    },
   ],
   relatedForPages: [
     {

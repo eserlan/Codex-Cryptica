@@ -1,9 +1,16 @@
 import type { ValidSlug } from "./generator-types";
 
+export interface GeneratorGuideLink {
+  href: string;
+  label: string;
+  description?: string;
+}
+
 export interface GeneratorGuide {
   summary: string;
   tips: { title: string; detail: string }[];
-  links?: { href: string; label: string }[];
+  linksTitle?: string;
+  links?: GeneratorGuideLink[];
 }
 
 export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
@@ -25,6 +32,27 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
         title: "Meet the factions behind the state",
         detail:
           "Power Blocs shows which factions compete for influence. Entity Seeds suggests Codex entries that can become people, groups, or places for the party to encounter from the first session.",
+      },
+    ],
+    linksTitle: "Bring your nation to life",
+    links: [
+      {
+        href: "/answers/how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
+        label: "Give civilisations distinct strengths and weaknesses",
+        description:
+          "Develop believable institutional advantages, dependencies and weaknesses for the generated nation.",
+      },
+      {
+        href: "/answers/how-do-i-run-political-intrigue-and-faction-play",
+        label: "Run political intrigue and faction play",
+        description:
+          "Turn its competing power blocs into active rivalries and consequential player choices.",
+      },
+      {
+        href: "/answers/how-do-i-build-a-believable-constitutional-crisis-or-coup",
+        label: "Build a believable constitutional crisis or coup",
+        description:
+          "Develop its hidden problem into a political crisis with stakes and multiple outcomes.",
       },
     ],
   },

@@ -208,6 +208,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    nation: {
+      headline: "Keep building this nation",
+      summary:
+        "Save this nation as a Faction entry in your local Codex vault so its government, tensions, and power blocs stay together across sessions.",
+      capabilities: [
+        "Store the state overview, power structure, and society in one Faction entry",
+        "Keep power blocs, rumours, and entity seeds as GM-only lore",
+        "Develop the leader, rival blocs, and centre of power into linked entries inside your vault",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+    },
     encounter: {
       headline: "Run this encounter from your vault",
       summary:
