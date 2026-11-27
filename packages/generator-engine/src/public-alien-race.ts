@@ -110,6 +110,25 @@ const capitalise = (text: string) =>
 const article = (word: string) => (/^[aeiou]/i.test(word.trim()) ? "an" : "a");
 
 /**
+ * Turns a relation option into a predicate that follows "they are currently":
+ * "in an uneasy ceasefire", "a client species". The option names are noun
+ * phrases, so using them bare reads as "they are currently uneasy ceasefire".
+ */
+const RELATION_PHRASES: Record<string, string> = {
+  "First contact pending": "awaiting first contact",
+  "Established trade partners": "established trade partners",
+  "Uneasy ceasefire": "in an uneasy ceasefire",
+  "Client species": "a client species",
+  "Feared isolates": "feared isolates",
+  "Scattered diaspora": "a scattered diaspora",
+  "Active belligerents": "active belligerents",
+};
+const relationPhrase = (name: string): string =>
+  Object.prototype.hasOwnProperty.call(RELATION_PHRASES, name)
+    ? RELATION_PHRASES[name]
+    : name.toLowerCase();
+
+/**
  * Resolves a trait against its pool, honouring the generation mode: an exotic
  * trait is only reachable in Freeform mode, but an explicit user choice is
  * always respected (the form can offer a custom value, and a user who typed
@@ -321,7 +340,7 @@ export function generateAlienRaceLocal(
   const speciality = environment.specialityShort;
   const content = [
     "## Overview",
-    `The ${title} are a ${resolved.genre.toLowerCase()} species with ${bodyPlan.detail}, native to ${environment.short}. Their disposition is ${psychology.detail}, they are organised as ${resolved.socialOrganisation.toLowerCase()}, and they currently stand as ${resolved.relationToOutsiders.toLowerCase()} to their neighbours.`,
+    `The ${title} are a ${resolved.genre.toLowerCase()} species with ${bodyPlan.detail}, native to ${environment.short}. Their disposition is ${psychology.detail}, they are organised as ${resolved.socialOrganisation.toLowerCase()}, and they are currently ${relationPhrase(resolved.relationToOutsiders)}.`,
     "",
     "## Evolutionary Origin",
     `They evolved on ${environment.short}, which selected for ${environment.selectedFor}. That pressure set the constraints they have lived inside ever since — though not everything about them follows from it.`,
@@ -345,7 +364,7 @@ export function generateAlienRaceLocal(
     `${capitalise(psychology.worldview)}. What another species would call faith, they treat as an accurate description of how the world has always behaved for them.`,
     "",
     "## Relations with Outsiders",
-    `They are currently ${resolved.relationToOutsiders.toLowerCase()}. The friction is rarely malice: ${relation.friction}.`,
+    `They are currently ${relationPhrase(resolved.relationToOutsiders)}. The friction is rarely malice: ${relation.friction}.`,
     "",
     "## Internal Factions & Conflicts",
     `One faction holds that their ${speciality} should be traded openly for standing among other species; another argues that dependence is exactly how a species like theirs gets absorbed. Neither side is wrong about the risk.`,
