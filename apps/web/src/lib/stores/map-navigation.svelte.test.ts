@@ -12,6 +12,7 @@ const makeMap = (id: string): Map => ({
   pins: [],
 });
 function setup(canSelectFirst = true) {
+  const timers = createTimerScheduler();
   const state = {
     activeMapId: null as string | null,
     viewport: { pan: { x: 0, y: 0 }, zoom: 1 },
@@ -33,18 +34,47 @@ function setup(canSelectFirst = true) {
     storage,
     vault,
     () => canSelectFirst,
+    timers,
   );
-  return { state, settings, vault, storage, navigation };
+  return { state, settings, vault, storage, timers, navigation };
+}
+
+function createTimerScheduler() {
+  let now = 0;
+  let nextId = 0;
+  const scheduled = new Map<
+    ReturnType<typeof setTimeout>,
+    { dueAt: number; callback: () => void }
+  >();
+  const scheduleTimeout = vi.fn((callback: () => void, delay: number) => {
+    const id = ++nextId as unknown as ReturnType<typeof setTimeout>;
+    scheduled.set(id, { dueAt: now + delay, callback });
+    return id;
+  });
+  const cancelTimeout = vi.fn((id: ReturnType<typeof setTimeout>) => {
+    scheduled.delete(id);
+  });
+
+  function advanceBy(ms: number) {
+    now += ms;
+    while (true) {
+      const next = [...scheduled.entries()].sort(
+        ([, left], [, right]) => left.dueAt - right.dueAt,
+      )[0];
+      if (!next || next[1].dueAt > now) return;
+      scheduled.delete(next[0]);
+      next[1].callback();
+    }
+  }
+
+  return { scheduleTimeout, cancelTimeout, advanceBy };
 }
 
 describe("MapNavigation", () => {
   beforeEach(() => {
-    vi.useFakeTimers();
     localStorage.clear();
   });
   afterEach(() => {
-    vi.clearAllTimers();
-    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -74,15 +104,16 @@ describe("MapNavigation", () => {
   });
 
   it("coalesces viewport updates after 250ms of inactivity", () => {
-    const { navigation, storage } = setup();
+    const { navigation, storage, timers } = setup();
     navigation.selectMap("first");
     storage.setItem.mockClear();
     navigation.updateViewport({ x: 1, y: 2 }, 2);
-    vi.advanceTimersByTime(200);
+    timers.advanceBy(200);
     navigation.updateViewport({ x: 3, y: 4 }, 3);
-    vi.advanceTimersByTime(249);
+    expect(timers.cancelTimeout).toHaveBeenCalledOnce();
+    timers.advanceBy(249);
     expect(storage.setItem).not.toHaveBeenCalled();
-    vi.advanceTimersByTime(1);
+    timers.advanceBy(1);
     expect(storage.setItem).toHaveBeenCalledOnce();
     expect(
       JSON.parse(localStorage.getItem("codex-map-page-state:vault-a")!)
@@ -169,10 +200,10 @@ describe("MapNavigation", () => {
   });
 
   it("restores each vault's page state and clears the history on vault switch", () => {
-    const { navigation, state, vault } = setup();
+    const { navigation, state, vault, timers } = setup();
     navigation.selectMap("first");
     navigation.updateViewport({ x: 5, y: 6 }, 2);
-    vi.advanceTimersByTime(250);
+    timers.advanceBy(250);
     navigation.selectMap("second", true);
     navigation.start();
     flushSync();
@@ -203,10 +234,10 @@ describe("MapNavigation", () => {
   });
 
   it("does not persist a viewport during settings restoration", () => {
-    const { navigation, settings, storage } = setup();
+    const { navigation, settings, storage, timers } = setup();
     settings.isRestoringSettings = true;
     navigation.updateViewport({ x: 5, y: 6 }, 2);
-    vi.advanceTimersByTime(250);
+    timers.advanceBy(250);
     expect(storage.setItem).not.toHaveBeenCalled();
   });
 });

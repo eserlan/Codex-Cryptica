@@ -261,9 +261,10 @@ describe("generator guide distinctness", () => {
     expect(
       getGeneratorGuide("star-system", "Star System Generator").summary,
     ).toContain("playable region map");
-    expect(getGeneratorGuide("tome", "Tome Generator").summary).toContain(
-      "Tome Generator",
-    );
+    expect(
+      getGeneratorGuide("villain-scheme-generator", "Villain Scheme Generator")
+        .summary,
+    ).toContain("Villain Scheme Generator");
   });
 
   it("serves the kingdom guide with tips that name its form labels", () => {
@@ -684,26 +685,47 @@ describe("generator guide distinctness", () => {
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
-  it("serves the secret society guide with tips naming its form labels and without dashes", () => {
-    const guide = getGeneratorGuide(
-      "secret-society",
-      "Secret Society Generator",
-    );
-    expect(guide).toBe(SLUG_GUIDES["secret-society"]);
-    expect(guide).not.toEqual(
-      defaultGuideForSlug("secret-society", "Secret Society Generator"),
-    );
-    expect(guide.tips).toHaveLength(3);
-    expect(guide.links?.length).toBeGreaterThan(0);
-    const tipText = guide.tips.map((tip) => tip.detail).join(" ");
-    for (const label of [
-      "Public face",
-      "Relationship to truth",
-      "Danger level",
-    ]) {
-      expect(tipText).toContain(label);
+  it("serves the tome, secret society, and world guides with form labels and without dashes", () => {
+    const cases = [
+      {
+        slug: "tome",
+        title: "Tome & Forbidden Book Generator",
+        labels: [
+          "Primary Reading Hazard",
+          "Current Custodian",
+          "Campaign Context",
+        ],
+      },
+      {
+        slug: "secret-society",
+        title: "Secret Society Generator",
+        labels: ["Public face", "Relationship to truth", "Danger level"],
+      },
+      {
+        slug: "world",
+        title: "Sci-Fi World Generator",
+        labels: [
+          "World Tag 1",
+          "World Tag 2",
+          "Habitability",
+          "Civilisation",
+          "Dominant feature (optional)",
+        ],
+      },
+    ] as const;
+
+    for (const { slug, title, labels } of cases) {
+      const guide = getGeneratorGuide(slug, title);
+      expect(guide).toBe(SLUG_GUIDES[slug]);
+      expect(guide).not.toEqual(defaultGuideForSlug(slug, title));
+      expect(guide.tips).toHaveLength(3);
+      expect(guide.links?.length).toBeGreaterThan(0);
+      const tipText = guide.tips.map((tip) => tip.detail).join(" ");
+      for (const label of labels) {
+        expect(tipText).toContain(label);
+      }
+      expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
     }
-    expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
   it("serves the constellation guide with tips naming its form labels and without dashes", () => {
@@ -721,27 +743,6 @@ describe("generator guide distinctness", () => {
       "Cultural Meaning",
       "Single Constellation",
       "Full Night Sky",
-    ]) {
-      expect(tipText).toContain(label);
-    }
-    expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
-  });
-
-  it("serves the world guide with tips naming its form labels and without dashes", () => {
-    const guide = getGeneratorGuide("world", "Sci-Fi World Generator");
-    expect(guide).toBe(SLUG_GUIDES.world);
-    expect(guide).not.toEqual(
-      defaultGuideForSlug("world", "Sci-Fi World Generator"),
-    );
-    expect(guide.tips).toHaveLength(3);
-    expect(guide.links?.length).toBeGreaterThan(0);
-    const tipText = guide.tips.map((tip) => tip.detail).join(" ");
-    for (const label of [
-      "World Tag 1",
-      "World Tag 2",
-      "Habitability",
-      "Civilisation",
-      "Dominant feature (optional)",
     ]) {
       expect(tipText).toContain(label);
     }
