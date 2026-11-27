@@ -184,6 +184,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    "alien-race": {
+      headline: "Give this species a place in your world",
+      summary:
+        "Save this alien species as a Creature entry in your local Codex vault so its biology, culture, and internal split stay connected to your campaign.",
+      capabilities: [
+        "Store the overview, biology, culture, and technology in one Creature entry",
+        "Keep weaknesses, typical archetypes, and adventure hooks as GM-only lore",
+        "Link the species to its homeworld, allies, and rival species inside your vault",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+    },
     "secret-society": {
       headline: "Bring this society into your world",
       summary:
