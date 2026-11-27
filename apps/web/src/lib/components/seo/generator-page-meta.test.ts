@@ -314,6 +314,12 @@ describe("RPG Item editorial example", () => {
       "history and offline campaign context appear in the main document",
     );
     expect(answers).toContain(
+      "Only sections headed GM Reference Information or Magical Properties are kept separately",
+    );
+    expect(answers).toContain(
+      "AI headings can vary, so check the rendered document before sharing it",
+    );
+    expect(answers).toContain(
       "do not automatically become graph connections or inventory entries",
     );
   });

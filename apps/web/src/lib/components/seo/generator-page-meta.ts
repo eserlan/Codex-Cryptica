@@ -581,7 +581,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "What is saved when I add an item to Codex Cryptica?",
         answer:
-          "Add to my Codex saves one Item in your local vault. The description, history and offline campaign context appear in the main document; structured GM reference and magical properties are kept separately. Review the text before sharing it, especially AI drafts. Named references do not automatically become graph connections or inventory entries.",
+          "Add to my Codex saves one Item in your local vault. The description, history and offline campaign context appear in the main document. Only sections headed GM Reference Information or Magical Properties are kept separately in GM reference; AI headings can vary, so check the rendered document before sharing it. Named references do not automatically become graph connections or inventory entries.",
       },
     ],
   },

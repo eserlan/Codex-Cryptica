@@ -80,7 +80,7 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       summary:
         "Save this find as one Item in your local Codex vault and record where it came from, who claims it and what the party does with it.",
       capabilities: [
-        "Keep the description and history together, with structured magical properties in the GM reference",
+        "Keep sections headed GM Reference Information or Magical Properties in GM reference; AI headings can vary, so check the rendered document before sharing it",
         "Link the Item to existing owners, places or campaign notes and update its story after play",
       ],
       localFirstNotice: LOCAL_FIRST_NOTICE,

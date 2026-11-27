@@ -355,7 +355,10 @@ describe("generator-continuation", () => {
     });
     expect(config?.summary).toContain("one Item");
     expect(config?.capabilities.join(" ")).toContain(
-      "structured magical properties in the GM reference",
+      "sections headed GM Reference Information or Magical Properties in GM reference",
+    );
+    expect(config?.capabilities.join(" ")).toContain(
+      "AI headings can vary, so check the rendered document before sharing it",
     );
     for (const overrides of [
       {},
