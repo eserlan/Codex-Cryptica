@@ -149,17 +149,25 @@ Return only the JSON object. Do not include markdown code block formatting.`;
   };
 }
 
+function normalizeForSecretMatch(value: string): string {
+  return value.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
 function hasLeakedHolidayHiddenTruth(
   rawObservances: unknown[],
   playerFacingFields: string[],
 ): boolean {
+  const normalizedFields = playerFacingFields.map(normalizeForSecretMatch);
   return rawObservances.some((entry) => {
     if (entry === null || typeof entry !== "object") return false;
     const hiddenTruth = (entry as Record<string, unknown>).hiddenTruth;
-    const secret = typeof hiddenTruth === "string" ? hiddenTruth.trim() : "";
+    const secret =
+      typeof hiddenTruth === "string"
+        ? normalizeForSecretMatch(hiddenTruth)
+        : "";
     return (
       secret.length > 0 &&
-      playerFacingFields.some((field) => field.includes(secret))
+      normalizedFields.some((field) => field.includes(secret))
     );
   });
 }

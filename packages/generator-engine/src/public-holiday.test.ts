@@ -224,6 +224,22 @@ describe("public holiday generator", () => {
       controversialResolved,
     );
     expect(labelLeakedResult.labels).not.toContain(leakedHiddenTruth);
+
+    const caseVariantLeak = "the council   burned\nTHE ORIGINAL TREATY.";
+    const caseVariantLeakedResult = parseHolidayResponse(
+      JSON.stringify({
+        ...base,
+        content: `${base.content}\n${caseVariantLeak}`,
+        observances: [
+          { ...completeObservance, hiddenTruth: leakedHiddenTruth },
+        ],
+      }),
+      controversialResolved,
+    );
+    expect(caseVariantLeakedResult.title).not.toBe("Clearwater Vigil");
+    expect(
+      caseVariantLeakedResult.content.replace(/\s+/g, " ").toLowerCase(),
+    ).not.toContain(leakedHiddenTruth.toLowerCase());
   });
 
   it("writes a single observance summary as a capitalised sentence that names it", () => {
