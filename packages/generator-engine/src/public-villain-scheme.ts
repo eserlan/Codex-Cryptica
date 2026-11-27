@@ -190,13 +190,12 @@ Return only the JSON object. Do not include markdown code block formatting like 
 
 function extractSchemeStagesSection(lore: string): string {
   const lines = lore.split(/\r?\n/);
-  const stageHeadings = lines.filter((line) =>
-    /^###\s+Scheme Stages\b/.test(line),
-  );
+  const stageHeadingPattern = /^ {0,3}###\s+Scheme Stages\b/;
+  const stageHeadings = lines.filter((line) => stageHeadingPattern.test(line));
   if (stageHeadings.length !== 1) return "";
-  const start = lines.findIndex((line) => /^###\s+Scheme Stages\b/.test(line));
+  const start = lines.findIndex((line) => stageHeadingPattern.test(line));
   const rest = lines.slice(start + 1);
-  const end = rest.findIndex((line) => /^###\s/.test(line));
+  const end = rest.findIndex((line) => /^ {0,3}###\s/.test(line));
   return (end === -1 ? rest : rest.slice(0, end)).join("\n");
 }
 

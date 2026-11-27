@@ -298,6 +298,24 @@ describe("parseVillainSchemeResponse", () => {
     ).toThrow("four to six numbered stages");
   });
 
+  it("accepts indented Scheme Stages and subsequent section headings", () => {
+    const indentedLore = [
+      "   ### Scheme Stages",
+      "**Stage 1: Quiet Recon**",
+      "**Stage 2: Supply Squeeze**",
+      "**Stage 3: Public Distraction**",
+      "**Stage 4: Vault Breach**",
+      "",
+      "  ### Contingency",
+      "**Stage 1: Misplaced**",
+    ].join("\n");
+    const out = parseVillainSchemeResponse(
+      JSON.stringify({ lore: indentedLore }),
+      resolved,
+    );
+    expect(out.lore).toBe(indentedLore);
+  });
+
   it("rejects duplicate or out-of-order stage numbers", () => {
     const duplicateLore = [
       "### Scheme Stages",
