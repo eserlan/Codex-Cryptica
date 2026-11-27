@@ -967,10 +967,19 @@ export function scaleFunctionPhrase(
 }
 
 const VOWEL_SOUND = /^(a|e|i|o|u)/i;
+const CONSONANT_SOUND_VOWEL_SPELLING =
+  /^(uni([^nmd]|$)|use|euro|one\b|once\b|ewe)/i;
+const VOWEL_SOUND_CONSONANT_SPELLING = /^(honest|honou?r|hour|heir)\b/i;
 
 /** "a" or "an", by the phrase's leading sound rather than strict spelling rules. */
 export function withArticle(phrase: string): string {
-  return `${VOWEL_SOUND.test(phrase) ? "an" : "a"} ${phrase}`;
+  const startsWithVowelSound = VOWEL_SOUND.test(phrase);
+  const article =
+    VOWEL_SOUND_CONSONANT_SPELLING.test(phrase) ||
+    (startsWithVowelSound && !CONSONANT_SOUND_VOWEL_SPELLING.test(phrase))
+      ? "an"
+      : "a";
+  return `${article} ${phrase}`;
 }
 
 /**

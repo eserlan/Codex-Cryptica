@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   buildMagicItemPrompt,
+  magicItemConfig,
   parseMagicItemResponse,
   generateMagicItemLocal,
 } from "./public-magic-item";
@@ -39,6 +40,61 @@ describe("generateMagicItemLocal", () => {
     expect(generateMagicItemLocal({}, seededRng(9))).toEqual(
       generateMagicItemLocal({}, seededRng(9)),
     );
+  });
+});
+
+describe("generateMagicItemLocal copy and theme", () => {
+  const seeds = Array.from({ length: 30 }, (_, i) => i + 1);
+
+  it("uses 'an' before a vowel-initial type", () => {
+    const contents = seeds.map(
+      (seed) =>
+        generateMagicItemLocal({ type: "Amulet" }, seededRng(seed)).content,
+    );
+    expect(contents.some((c) => /\ban amulet\b/.test(c))).toBe(true);
+    expect(contents.some((c) => /\ba amulet\b/i.test(c))).toBe(false);
+  });
+
+  it("uses 'a' before a consonant-initial type", () => {
+    const contents = seeds.map(
+      (seed) =>
+        generateMagicItemLocal({ type: "Wand" }, seededRng(seed)).content,
+    );
+    expect(contents.some((c) => /\ba wand\b/.test(c))).toBe(true);
+    expect(contents.some((c) => /\ban wand\b/i.test(c))).toBe(false);
+  });
+
+  it("writes the campaign context into the GM notes when provided", () => {
+    const out = generateMagicItemLocal(
+      { campaignContext: "  The Ash Court of Veyra  " },
+      seededRng(3),
+    );
+    expect(out.lore).toContain("### Campaign Context\nThe Ash Court of Veyra");
+  });
+
+  it("omits the campaign section when the context is blank", () => {
+    const out = generateMagicItemLocal(
+      { campaignContext: "   " },
+      seededRng(3),
+    );
+    expect(out.lore).not.toContain("### Campaign Context");
+  });
+
+  it("uses the chosen theme's effects and histories", () => {
+    const out = generateMagicItemLocal(
+      { theme: "Cyberpunk / Corporate" },
+      seededRng(7),
+    );
+    expect(out.lore).toContain("- **Theme**: Cyberpunk / Corporate");
+    const themed = magicItemConfig.propertiesByTheme["Cyberpunk / Corporate"];
+    const classic = magicItemConfig.propertiesByTheme["Classic Fantasy"];
+    expect(themed.some((effect) => out.lore.includes(effect))).toBe(true);
+    expect(classic.some((effect) => out.lore.includes(effect))).toBe(false);
+  });
+
+  it("falls back to Classic Fantasy for an unknown theme", () => {
+    const out = generateMagicItemLocal({ theme: "Not A Theme" }, seededRng(7));
+    expect(out.lore).toContain("- **Theme**: Classic Fantasy");
   });
 });
 

@@ -2,6 +2,54 @@ import { describe, expect, it } from "vitest";
 import { getGeneratorDocumentLayout } from "./generator-document-layout";
 
 describe("getGeneratorDocumentLayout", () => {
+  it("keeps Table Card knowledge and secrets out of player-visible content", () => {
+    const secret = "The ledger is a forgery; she conceals the stolen signet.";
+    const layout = getGeneratorDocumentLayout({
+      type: "character",
+      title: "Elowen Ashford",
+      content: `### The Six Elements\n- **Immediate Want**: Retrieve a sealed ledger.\n- **Knowledge & Secrets**: ${secret}\n\n### Table Delivery\nIntroduce her through her mannerism.`,
+      lore: `### At a Glance\n- **Role**: Rogue\n- **Knowledge & Secrets**: ${secret}`,
+      labels: ["table-card", "npc-generator", "rpg-character"],
+      status: "active",
+    });
+
+    expect(layout.content).not.toContain(secret);
+    expect(layout.content).not.toContain("Knowledge & Secrets");
+    expect(layout.lore).toContain(secret);
+  });
+
+  it("retains Table Card secrets in lore when they are absent from the source lore", () => {
+    const secret = "The ledger is a forgery; she conceals the stolen signet.";
+    const layout = getGeneratorDocumentLayout({
+      type: "character",
+      title: "Elowen Ashford",
+      content: `### The Six Elements\n- **Knowledge & Secrets**: ${secret}`,
+      lore: "### At a Glance\n- **Role**: Rogue",
+      labels: ["table-card", "npc-generator", "rpg-character"],
+      status: "active",
+    });
+
+    expect(layout.content).not.toContain(secret);
+    expect(layout.lore).toContain("### GM-Only Secrets");
+    expect(layout.lore).toContain(secret);
+  });
+
+  it("keeps Table Card secrets private when lore uses an unexpected heading", () => {
+    const secret = "The ledger is a forgery; she conceals the stolen signet.";
+    const layout = getGeneratorDocumentLayout({
+      type: "character",
+      title: "Elowen Ashford",
+      content: "### The Six Elements\n- **Immediate Want**: Retrieve a ledger.",
+      lore: `### Unexpected AI Heading\n- **Knowledge & Secrets**: ${secret}`,
+      labels: ["table-card", "npc-generator", "rpg-character"],
+      status: "active",
+    });
+
+    expect(layout.content).not.toContain(secret);
+    expect(layout.lore).toContain(secret);
+    expect(layout.lore).toContain("### GM-Only Secrets");
+  });
+
   it("splits world narrative from GM reference without duplicating either column", () => {
     const layout = getGeneratorDocumentLayout({
       type: "location",
@@ -449,13 +497,13 @@ Yeva will remember who paid better.`,
 
     expect(layout.lore).toContain("### Voting Procedure");
     expect(layout.lore).toContain("### Current Vote Estimate");
+    expect(layout.lore).toContain("### Council Members");
     expect(layout.lore).toContain("### Antagonist Influence");
-    expect(layout.lore).not.toContain("### Council Members");
     expect(layout.lore).not.toContain("### Investigation Leads");
     expect(layout.lore).not.toContain("### Possible Paths");
     expect(layout.lore).not.toContain("### Follow-Up Hooks");
 
-    expect(layout.content).toContain("### Council Members");
+    expect(layout.content).not.toContain("### Council Members");
     expect(layout.content).toContain("### Investigation Leads");
     expect(layout.content).toContain("### Possible Paths");
     expect(layout.content).toContain("### Follow-Up Hooks");
@@ -541,5 +589,160 @@ describe("section uniqueness invariant (#2768)", () => {
     );
     expect(layout.content).toContain("A line before any heading.");
     expect(layout.content).toContain("### The Score");
+  });
+
+  it("moves table-card Knowledge & Secrets to GM Reference once and notes the sixth element", () => {
+    const secret =
+      "- **Knowledge & Secrets**: Knows the harbour cipher; conceals a stolen signet.";
+    const layout = getGeneratorDocumentLayout({
+      type: "character",
+      title: "Vaelgar",
+      summary: "A true neutral elf mage.",
+      status: "active",
+      labels: ["table-card", "mage", "rpg-character"],
+      content: [
+        "### The Six Elements",
+        "- **Immediate Want**: Needs moonstone dust.",
+        "- **Physical Mannerism**: Taps his staff twice.",
+        "- **Sharp Contradiction**: Cultivates fragile orchids despite a ruthless reputation.",
+        "- **Relationship Hook**: Owes the harbourmaster a favour.",
+        "- **Sensory Tag**: Smells of ozone and rain.",
+        secret,
+        "",
+        "### Table Delivery",
+        "Introduce him through his staff tap.",
+      ].join("\n"),
+      lore: [
+        "### At a Glance",
+        "- **Class / Archetype**: Wizard / Level 5",
+        "- **Table Rating**: CR 3",
+        secret,
+      ].join("\n"),
+    });
+
+    expect(layout.content).not.toContain("Knowledge & Secrets");
+    expect(layout.content).toContain(
+      "the sixth element (secrets) is in GM Reference for spoiler protection",
+    );
+    expect(layout.lore.match(/\*\*Knowledge & Secrets\*\*:/g)).toHaveLength(1);
+    expect(layout.lore).toContain("### GM-Only Secrets");
+  });
+
+  it("omits the five-cue count when a malformed Table Card has fewer than five public cues", () => {
+    const secret = "- **Knowledge & Secrets**: Conceals a forged seal.";
+    const layout = getGeneratorDocumentLayout({
+      type: "character",
+      title: "Sparse NPC",
+      summary: "An incomplete AI draft.",
+      status: "active",
+      labels: ["table-card", "rpg-character"],
+      content: [
+        "### The Six Elements",
+        "- **Immediate Want**: Needs a horse.",
+        "- **Physical Mannerism**: Taps his boots.",
+        secret,
+      ].join("\n"),
+      lore: `### At a Glance\n${secret}`,
+    });
+
+    expect(layout.content).not.toContain("Knowledge & Secrets");
+    expect(layout.content).not.toContain("Five public cues below");
+    expect(layout.content).toContain(
+      "The sixth element (secrets) is in GM Reference for spoiler protection",
+    );
+    expect(layout.lore.match(/\*\*Knowledge & Secrets\*\*:/g)).toHaveLength(1);
+  });
+
+  it("keeps pantheon Hidden Problem and Rumours & Legends in layout.lore so guest exports omit them", () => {
+    const hiddenProblem =
+      "A sealed relic from the founding pact has cracked, weakening every oath.";
+    const rumour =
+      "High priests of rival deities are meeting in secret to avert a schism.";
+    const layout = getGeneratorDocumentLayout({
+      type: "faction",
+      title: "The Silent Maw",
+      summary: "A pantheon bound by cosmic balance.",
+      status: "active",
+      labels: ["rpg-pantheon", "pantheon-generator", "imported-draft"],
+      content: [
+        "### Origin & Dogma",
+        "The pantheon formed after the first break.",
+      ].join("\n"),
+      lore: [
+        "### At a Glance",
+        "- **Pantheon Name**: The Silent Maw",
+        `- **Hidden Problem**: ${hiddenProblem}`,
+        "- **Immediate Hook**: Rival temples declared the same holy day.",
+        "",
+        "### Deities of the Pantheon",
+        "#### Vaelor — First Arbiter",
+        "- **Portfolio**: Shadow and oaths",
+        "",
+        "### Clergy & Temples",
+        "- **Clergy Roles**: Rotating stewards.",
+        "",
+        "### Rumours & Legends",
+        `- ${rumour}`,
+      ].join("\n"),
+    });
+
+    expect(layout.content).toContain("### Deities of the Pantheon");
+    expect(layout.content).toContain("#### Vaelor — First Arbiter");
+    expect(layout.content).toContain("### Clergy & Temples");
+    expect(layout.content).toContain("**Immediate Hook**: Rival temples");
+    expect(layout.content).not.toContain("Hidden Problem");
+    expect(layout.content).not.toContain(hiddenProblem);
+    expect(layout.content).not.toContain("Rumours & Legends");
+    expect(layout.content).not.toContain(rumour);
+
+    expect(layout.lore).toContain(`**Hidden Problem**: ${hiddenProblem}`);
+    expect(layout.lore).toContain("### Rumours & Legends");
+    expect(layout.lore).toContain(rumour);
+    expect(layout.lore).not.toContain("### Deities of the Pantheon");
+    expect(layout.lore).not.toContain("**Immediate Hook**");
+  });
+
+  it("keeps ship profile, complication, secret and hooks in layout.lore while lifting crew and zones into layout.content", () => {
+    const layout = getGeneratorDocumentLayout({
+      type: "location",
+      title: "CSV Meridian",
+      summary: "A worn freighter.",
+      status: "active",
+      labels: ["rpg-ship", "rpg-location", "imported-draft"],
+      content: "## Core Concept\nA worn freighter.",
+      lore: [
+        "### Ship Profile",
+        "- **Class**: Freighter / Frigate",
+        "",
+        "### Captain, Officers & Crew",
+        "- **Captain**: Captain Ren Calder",
+        "",
+        "### Key Zones",
+        "- **🚀 Cargo Hold**: Contested cargo.",
+        "",
+        "### Complication",
+        "The manifest does not match the hold.",
+        "",
+        "### Secret",
+        "The vessel was declared lost ten years ago.",
+        "",
+        "### Adventure Hooks",
+        "- A broker on the docks wants a buyer.",
+      ].join("\n"),
+    });
+
+    expect(layout.content).toContain("## Core Concept");
+    expect(layout.content).toContain("### Captain, Officers & Crew");
+    expect(layout.content).toContain("### Key Zones");
+    expect(layout.content).not.toContain("### Complication");
+    expect(layout.content).not.toContain("### Secret");
+    expect(layout.content).not.toContain("### Adventure Hooks");
+
+    expect(layout.lore).toContain("### Ship Profile");
+    expect(layout.lore).toContain("### Complication");
+    expect(layout.lore).toContain("### Secret");
+    expect(layout.lore).toContain("### Adventure Hooks");
+    expect(layout.lore).not.toContain("### Captain, Officers & Crew");
+    expect(layout.lore).not.toContain("### Key Zones");
   });
 });

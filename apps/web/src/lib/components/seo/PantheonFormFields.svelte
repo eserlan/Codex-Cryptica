@@ -49,6 +49,14 @@
       <option value={choice.value}>{choice.label}</option>
     {/each}
   </select>
+  {#if mode === "single"}
+    <p
+      class="text-micro text-theme-text leading-relaxed rounded-lg border border-theme-border/40 bg-theme-surface/20 px-3 py-2"
+    >
+      Single Deity mode generates a Character-ready god, spirit, or saint with
+      portfolio, sacred symbol, rites, taboo, and a hidden secret.
+    </p>
+  {/if}
 </div>
 
 {#if mode === "pantheon"}
@@ -165,9 +173,9 @@
 {/if}
 
 <div class="flex flex-col gap-1.5">
-  <label for="pantheon-context" class={labelClass}
-    >Campaign context (optional)</label
-  >
+  <label for="pantheon-context" class={labelClass}>
+    Campaign context (optional)
+  </label>
   <textarea
     id="pantheon-context"
     bind:value={campaignContext}

@@ -89,6 +89,14 @@ describe("generator-page-meta completeness and social preview tags", () => {
     expect(slugMeta.business.ogImageAlt).toMatch(/Business Generator/);
   });
 
+  it("describes how campaign context affects AI and offline nomad clan drafts", () => {
+    expect(slugMeta["nomad-clan"].faqs).toContainEqual({
+      question: "Can I aim the clan at my current campaign?",
+      answer:
+        "With AI generation on, campaign context is used as input to tailor the clan, and the draft is asked to include it. Offline drafts display your context under Who they are, but do not use it to tailor the other generated details.",
+    });
+  });
+
   it("describes the Holiday generator's calendar mode and social preview", () => {
     expect(slugMeta.holiday.faqs).toContainEqual(
       expect.objectContaining({ question: "Can I generate a full calendar?" }),

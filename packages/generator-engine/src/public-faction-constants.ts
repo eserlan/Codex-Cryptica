@@ -2,7 +2,115 @@ import { type Rng, defaultRng, pickFrom } from "./random-utils";
 import { NAME_BAN_PROMPT } from "./public-npc";
 export { themeIdToLabel } from "./theme-id-labels";
 
+/** Hooks and internal conflicts for each group of faction vibes. */
+const FACTION_VIBE_GROUP_POOLS = {
+  fantasy: {
+    hooks: [
+      "They hire the party for a simple delivery that is actually a loyalty test.",
+      "They ask for protection during a meeting with a bitter rival.",
+      "They offer information about a villain in exchange for public help.",
+    ],
+    conflicts: [
+      "A splinter leader is selling secrets to an enemy.",
+      "Their patron has vanished, leaving rival lieutenants in charge.",
+      "Their members disagree over whether the party is useful or dangerous.",
+    ],
+  },
+  technological: {
+    hooks: [
+      "They offer the party a free upgrade that quietly reports every move back to them.",
+      "Their security contractor has been breached, and they need outsiders to find the leak before the press does.",
+      "They want the party to carry an encrypted drive through a checkpoint they do not control.",
+    ],
+    conflicts: [
+      "A junior engineer is copying their core records and selling them to a rival firm.",
+      "Their automated systems have started making decisions their own leaders cannot explain.",
+      "A leaked payroll proves they have been bribing the city council for years.",
+    ],
+  },
+  occult: {
+    hooks: [
+      "They need outsiders to enter a place their members are forbidden to visit.",
+      "They invite the party to a private rite where the price of attendance is a secret the party must share.",
+      "They offer protection from a hunter, if the party carries a message to the hunter's employer.",
+    ],
+    conflicts: [
+      "Their public mission conflicts with the methods they use at night.",
+      "A member was seen in daylight, and the others are split over who should be punished.",
+      "Witnesses to their hidden rites remember things that never happened.",
+    ],
+  },
+  steampunk: {
+    hooks: [
+      "They need an engineer who can open a locked foundry without the guild noticing.",
+      "They offer a share of a new engine's profits in return for an escort along the rail line.",
+      "They ask the party to recover a stolen boiler before a rival firm uses it for sabotage.",
+    ],
+    conflicts: [
+      "A foreman is skimming pressure gauges and reselling the parts on the black market.",
+      "The founders disagree over whether to sell their patents to a foreign empire.",
+      "Their workers have begun to strike, and the board is split on how hard to push back.",
+    ],
+  },
+  "post-apocalyptic": {
+    hooks: [
+      "They need a supply run to a half-flooded depot that no one has returned from.",
+      "They offer safe passage through their walls if the party guards a convoy for a week.",
+      "They ask the party to find a missing scout who knows the way to the reactor.",
+    ],
+    conflicts: [
+      "A raider chief has offered to sell their location to the scavengers.",
+      "Their water supply is failing, and the council is split between rationing and raiding.",
+      "A rival settlement claims their stockpile is poisoned, and some of their own believe it.",
+    ],
+  },
+  frontier: {
+    hooks: [
+      "They need a sealed telegram carried to the fort before the railroad men arrive.",
+      "They offer land and protection to a family the party has been hunting.",
+      "They hire the party to recover stolen cattle before the spring drive.",
+    ],
+    conflicts: [
+      "A foreman is selling the company's survey maps to a rival outfit.",
+      "Their claim is disputed, and each family blames another for the last killing.",
+      "A drifter they took in has started remembering a crime they committed.",
+    ],
+  },
+} as const;
+
+type FactionVibeGroup = keyof typeof FACTION_VIBE_GROUP_POOLS;
+
+/** The vibe group that each faction vibe draws its hooks and conflicts from. */
+const FACTION_VIBE_GROUP: Record<string, FactionVibeGroup> = {
+  "Classic Fantasy": "fantasy",
+  Pirate: "fantasy",
+  "Superhero / Comic Book": "fantasy",
+  "Cyberpunk / Corporate": "technological",
+  "Sci-Fi / Space Opera": "technological",
+  "Modern Conspiracy": "technological",
+  Lancer: "technological",
+  "Space Opera Resistance": "technological",
+  "Optimistic Exploration Sci-Fi": "technological",
+  "Space Western": "technological",
+  "Vampire / Gothic Noir": "occult",
+  "Cosmic Horror": "occult",
+  Steampunk: "steampunk",
+  "Post-Apocalyptic": "post-apocalyptic",
+  "Western / Frontier": "frontier",
+};
+
+function poolsByVibe(key: "hooks" | "conflicts"): Record<string, string[]> {
+  return Object.fromEntries(
+    Object.entries(FACTION_VIBE_GROUP).map(([vibe, group]) => [
+      vibe,
+      [...FACTION_VIBE_GROUP_POOLS[group][key]],
+    ]),
+  );
+}
+
 export const factionConfig = {
+  hooksByTheme: poolsByVibe("hooks"),
+  conflictsByTheme: poolsByVibe("conflicts"),
   themes: [
     "Classic Fantasy",
     "Pirate",
@@ -468,22 +576,6 @@ export const factionConfig = {
     "Protect a hidden sanctuary from outside discovery.",
     "Break an old treaty that limits their expansion.",
     "Expose a rival faction's crimes without revealing their own.",
-  ],
-  conflicts: [
-    "A splinter leader is selling secrets to an enemy.",
-    "Their public mission conflicts with the methods they use at night.",
-    "A recent victory created debts they cannot repay.",
-    "Their patron has vanished, leaving rival lieutenants in charge.",
-    "A hostage, ledger, or relic could unravel their legitimacy.",
-    "Their members disagree over whether the party is useful or dangerous.",
-  ],
-  hooks: [
-    "They hire the party for a simple delivery that is actually a loyalty test.",
-    "They ask for protection during a meeting with a bitter rival.",
-    "They offer information about a villain in exchange for public help.",
-    "They frame the party to force them into negotiation.",
-    "They need outsiders to enter a place their members are forbidden to visit.",
-    "They ask the party to choose between two bad successors.",
   ],
 };
 
@@ -1038,6 +1130,14 @@ export const nomadClanConfig = {
     "Prove the clan's code was broken by an insider and find the traitor.",
     "Acquire a vehicle capable of reaching the next settlement before the season closes.",
     "Negotiate a truce with a rival clan before the corporate pressure destroys them both.",
+  ],
+  secrets: [
+    "The convoy's lead rig carries a black-box transponder that a megacorp thinks was destroyed three years ago.",
+    "Two of the clan's trusted scouts are feeding route timings to a corporate fixer in exchange for medical supplies.",
+    "Half their salvaged fuel comes from siphoning an automated corporate pipeline that is due for an audit this week.",
+    "Their road code hides an old blood debt owed to a rival syndicate that can call in the markers at any time.",
+    "One of the cargo haulers is shielding a runaway AI core disguised as an industrial water purifier.",
+    "The clan's founder quietly bought an arcology residency years ago and left a body double in the lead rig.",
   ],
 };
 

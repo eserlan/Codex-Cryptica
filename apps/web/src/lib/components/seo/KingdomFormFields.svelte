@@ -113,9 +113,9 @@
 />
 
 <div class="flex flex-col gap-1.5">
-  <label for="kingdom-context" class={labelClass}
-    >Campaign context (optional)</label
-  >
+  <label for="kingdom-context" class={labelClass}>
+    Campaign context (optional)
+  </label>
   <textarea
     id="kingdom-context"
     bind:value={campaignContext}
@@ -128,8 +128,9 @@
     id="kingdom-context-help"
     class="text-micro text-theme-text/60 leading-relaxed"
   >
-    Add a campaign name, ongoing conflict, or political tension to aim the realm
-    at your table.
+    Add a campaign name, ongoing conflict or political tension. Offline drafts
+    put it under Campaign Context in the GM notes, and the AI draft builds the
+    realm around it.
   </p>
 </div>
 

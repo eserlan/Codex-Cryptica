@@ -32,7 +32,6 @@ import {
   defaultRng,
   pickFrom,
   pickRandomItems,
-  generatePlaceholderName as generateName,
 } from "./random-utils";
 import {
   parseFencedJson,
@@ -46,6 +45,7 @@ import {
   avoidNamesExcludingContext,
 } from "./campaign-context";
 import { factionConfig, FACTION_THEME_VOICE } from "./public-faction-constants";
+import { INHABITANT_NAMES_BY_GENRE } from "./public-settlement-inhabitant-names";
 
 export const factionRosterConfig = {
   // Strings, matching councilVoteConfig.sizes — form selects bind to string
@@ -335,49 +335,97 @@ export function parseFactionRosterResponse(
   };
 }
 
-const ROSTER_ARCHETYPES = [
+interface RosterArchetype {
+  role: string;
+  /** The role with its article, for the "Handles what … handles" duty line. */
+  roleWithArticle: string;
+  stance: string;
+  trait: string;
+  leverage: string;
+  /** Roster emphases this archetype is drawn for first. */
+  emphases: readonly string[];
+  motive: (faction: string) => string;
+  wantNow: string;
+}
+
+const ROSTER_ARCHETYPES: readonly RosterArchetype[] = [
   {
     role: "Authority figure",
+    roleWithArticle: "an authority figure",
     stance: "Loyalist",
     trait: "Speaks softly and expects to be obeyed anyway.",
     leverage:
       "Everyone assumes their word is final; it hasn't been tested in years.",
+    emphases: ["Public face"],
+    motive: (faction) =>
+      `Wants to keep the public voice of ${faction} theirs, even after the real decisions have moved elsewhere.`,
+    wantNow: "Needs the next meeting to end with their decision on the record.",
   },
   {
     role: "True believer",
+    roleWithArticle: "a true believer",
     stance: "Zealot",
     trait: "Quotes the founding cause word for word, unprompted.",
     leverage:
       "Would do something reckless if the cause were ever publicly doubted.",
+    emphases: ["Public face"],
+    motive: (faction) =>
+      `Wants ${faction} to be seen living out its founding cause, whatever that costs the people who joined for it.`,
+    wantNow:
+      "Needs proof that the founding cause still matters before someone else publicly doubts it.",
   },
   {
     role: "Practical operator",
+    roleWithArticle: "a practical operator",
     stance: "Opportunist",
     trait:
       "Solves problems nobody else wants solved, and remembers who owes them.",
     leverage:
       "Keeps a private ledger of favours that could ruin several other members.",
+    emphases: ["Field operators"],
+    motive: (faction) =>
+      `Wants a larger share of what ${faction} earns in the field than the leadership is willing to pay.`,
+    wantNow:
+      "Needs a supply run or contract signed before a rival offers better terms.",
   },
   {
     role: "Conflicted member",
+    roleWithArticle: "a conflicted member",
     stance: "Reformer",
     trait: "Agrees out loud and hesitates in private.",
     leverage: "One more compromise from walking away, and everyone can tell.",
+    emphases: ["Internal dissent", "New blood"],
+    motive: (faction) =>
+      `Wants ${faction} to change its methods quietly, so nobody has to admit the old ones failed.`,
+    wantNow:
+      "Needs one vote to pass before their doubts become visible to the rest of the membership.",
   },
   {
     role: "Recent recruit",
+    roleWithArticle: "a recent recruit",
     stance: "Trapped",
     trait: "Still learning the unwritten rules, and getting them wrong.",
     leverage: "Owes a debt that got them in the door and isn't repaid yet.",
+    emphases: ["New blood", "Field operators"],
+    motive: (faction) =>
+      `Wants out of ${faction} with their debt cleared and their name kept out of its records.`,
+    wantNow:
+      "Needs to learn who really gives the orders before they make a mistake in front of them.",
   },
   {
     role: "Internal problem",
+    roleWithArticle: "an internal problem",
     stance: "Secret traitor",
     trait: "The most reliable person in the room, which is the problem.",
     leverage:
       "Has already made contact with someone the faction would call an enemy.",
+    emphases: ["Internal dissent"],
+    motive: (faction) =>
+      `Wants ${faction} to lose its next fight, on terms the enemy has already agreed to.`,
+    wantNow:
+      "Needs to get a message to their contact before the next meeting asks where they have been.",
   },
-] as const;
+];
 
 /**
  * Best-effort faction name from a handed-over `factionContext` blob, so the
@@ -394,27 +442,81 @@ function extractFactionName(factionContext?: string): string | undefined {
   return extractProperNouns(factionContext)[0];
 }
 
+/**
+ * Name pool for the fresh members, keyed by the vibe, so a Cyberpunk roster
+ * reads as Nyx and Jax rather than fantasy names. Tries the exact vibe, then
+ * the part before " / ", then the first word, then falls back to Fantasy.
+ */
+function rosterNamePool(theme: string): readonly string[] {
+  const candidates = [
+    theme,
+    theme.replace(/^Classic /, ""),
+    theme.replace(/ \/ .*/, ""),
+    theme.split(" ")[0],
+  ];
+  for (const key of candidates) {
+    const pool = INHABITANT_NAMES_BY_GENRE[key];
+    if (pool) return pool;
+  }
+  return INHABITANT_NAMES_BY_GENRE.Fantasy;
+}
+
+/**
+ * Roster emphasis decides which archetypes come first, so the roster really
+ * leans that way and not only the summary. Matching archetypes are drawn
+ * first and any remaining slots are filled from the rest. A custom emphasis
+ * matches nothing and gives an unweighted roster.
+ */
+function pickRosterArchetypes(
+  emphasis: string,
+  size: number,
+  rng: Rng,
+): RosterArchetype[] {
+  const emphasised = ROSTER_ARCHETYPES.filter((a) =>
+    a.emphases.includes(emphasis),
+  );
+  const others = ROSTER_ARCHETYPES.filter(
+    (a) => !a.emphases.includes(emphasis),
+  );
+  const fromEmphasis = pickRandomItems(
+    emphasised,
+    Math.min(emphasised.length, size),
+    rng,
+  );
+  return [
+    ...fromEmphasis,
+    ...pickRandomItems(others, size - fromEmphasis.length, rng),
+  ];
+}
+
 export function generateFactionRosterLocal(
   options: FactionRosterGeneratorOptions = {},
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
   const resolved = resolveFactionRoster(options, rng);
-  const { size, structure, emphasis } = resolved;
+  const { size, structure, emphasis, theme, campaignContext } = resolved;
   const factionName = extractFactionName(resolved.factionContext);
   const factionLabel = factionName ?? "the faction";
 
   // Promote the faction's own already-named people onto the roster first —
   // they're exactly who a roster should surface — before filling any
-  // remaining slots with fresh archetype-based members.
+  // remaining slots with fresh members named from the vibe's pool.
   const notableNpcs = extractFactionNotableNpcs(resolved.factionContext).slice(
     0,
     size,
   );
-  const freshNames = Array.from({ length: size - notableNpcs.length }, () =>
-    generateName(rng),
+  const takenNames = new Set(
+    notableNpcs.map((npc) => npc.name.trim().toLowerCase()),
   );
-  const names = [...notableNpcs.map((npc) => npc.name), ...freshNames];
-  const archetypes = pickRandomItems(ROSTER_ARCHETYPES, size, rng);
+  const freshPool = rosterNamePool(theme).filter(
+    (name) => !takenNames.has(name.trim().toLowerCase()),
+  );
+  const names = [
+    ...notableNpcs.map((npc) => npc.name),
+    ...pickRandomItems(freshPool, size - notableNpcs.length, rng),
+  ];
+  const archetypes = pickRosterArchetypes(emphasis, size, rng);
+  const structureLabel = structure.toLowerCase();
 
   const members: FactionRosterMember[] = archetypes.map((archetype, i) => {
     // Each member connects to the next in the shuffled order (circular), so
@@ -426,11 +528,11 @@ export function generateFactionRosterLocal(
       role: archetype.role,
       duty:
         notable?.description ??
-        `Handles what a ${archetype.role.toLowerCase()} handles for ${factionLabel}, organised as a ${structure.toLowerCase()} — the work nobody minutes.`,
-      motive: `Wants something for themselves out of this, separate from what ${factionLabel} claims to want.`,
+        `Handles what ${archetype.roleWithArticle} handles for ${factionLabel}, organised as a ${structureLabel}. Nobody minutes this work.`,
+      motive: archetype.motive(factionLabel),
       stance: archetype.stance,
       trait: archetype.trait,
-      wantNow: `Needs a decision made before the next ${structure.toLowerCase()} meeting forces one on them.`,
+      wantNow: archetype.wantNow,
       leverage: archetype.leverage,
       connection: {
         member: names[nextIndex],
@@ -440,7 +542,10 @@ export function generateFactionRosterLocal(
   });
 
   const content = members.map(formatMemberSection).join("\n\n");
-  const summary = `${size} notable members of ${factionLabel}, organised as a ${structure.toLowerCase()} and weighted toward ${emphasis.toLowerCase()}.`;
+  const summary = `${size} notable members of ${factionLabel}, organised as a ${structureLabel} and weighted toward ${emphasis.toLowerCase()}.`;
+  const campaignSection = campaignContext
+    ? `\n\n### Campaign Context\n${campaignContext}`
+    : "";
 
   const lore = `### At a Glance
 - **Structure**: ${structure}
@@ -448,7 +553,7 @@ export function generateFactionRosterLocal(
 - **Immediate Hook**: The roster's internal tension is one bad decision from spilling into the open.
 
 ### How This Roster Divides
-Loyalty to ${factionLabel} is not the same as loyalty to each other — the ${emphasis.toLowerCase()} in this group means the fault line runs through people who each think they are the reasonable one.`;
+Loyalty to ${factionLabel} is not the same as loyalty to each other, and the ${emphasis.toLowerCase()} in this group means the fault line runs through people who each think they are the reasonable one.${campaignSection}`;
 
   return {
     type: "note",

@@ -329,6 +329,7 @@
           <!-- Textarea for Note Content -->
           <textarea
             bind:value={quickNoteStore.currentNote.content}
+            aria-label="Quick note content"
             placeholder="Dump your thoughts here instantly... Type location lore, NPC concepts, or plot hooks. Auto-saved!"
             class="flex-1 bg-transparent border-0 text-xs text-theme-text placeholder-theme-muted focus:ring-0 focus:outline-none resize-none font-body leading-relaxed"
           ></textarea>

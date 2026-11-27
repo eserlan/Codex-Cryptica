@@ -17,6 +17,7 @@ import {
   defaultRng,
   pickFrom,
   generatePlaceholderName as generateName,
+  indefiniteArticle,
 } from "./random-utils";
 import { parseFencedJson } from "./llm-response-utils";
 
@@ -196,7 +197,12 @@ export function generateFactionLocal(
   const base = selectSmartFactionBase(factionType, traits, rng);
   const resource = selectSmartFactionResource(factionType, traits, rng);
 
-  const summary = `A ${alignment.toLowerCase()} ${factionType.toLowerCase()} operating at the ${scope.toLowerCase()} level.`;
+  const profile = `${alignment.toLowerCase()} ${factionType.toLowerCase()}`;
+  const opening = `${indefiniteArticle(profile)} ${profile}`;
+  const summary = `${opening.charAt(0).toUpperCase()}${opening.slice(1)} operating across the ${scope.toLowerCase()}.`;
+  const campaignSection = campaignContext
+    ? `\n\n### Campaign Context\n${campaignContext}`
+    : "";
 
   const factionControlClosers = [
     `Their reach is felt in every trade deal, guarded rumor, and carefully placed favor.`,
@@ -236,7 +242,7 @@ export function generateFactionLocal(
   ] as const;
 
   const content = `### What they control
-${name} is a ${factionType.toLowerCase()} with a firm grip on key resources across the ${scope.toLowerCase()}. ${pickFrom(factionControlClosers, rng)}${campaignContext ? ` In ${campaignContext}, they already have fingers in the most contested disputes.` : ""}
+${name} is ${indefiniteArticle(factionType)} ${factionType.toLowerCase()} with a firm grip on key resources across the ${scope.toLowerCase()}. ${pickFrom(factionControlClosers, rng)}${campaignContext ? " Within the campaign setting, they already have fingers in the most contested disputes." : ""}
 
 ### What they want
 ${goal} ${pickFrom(factionWantClosers, rng)}
@@ -263,7 +269,7 @@ ${pickFrom(factionHowToUse, rng)(name)}`;
 ${conflict}
 
 ### Rival Faction
-- **👥 ${rival}**: Pursuing the same influence, relic, or route — and will reach it first if the party does nothing.`;
+- **👥 ${rival}**: Pursuing the same influence, relic, or route — and will reach it first if the party does nothing.${campaignSection}`;
 
   return {
     type: "faction",
@@ -295,6 +301,7 @@ export interface ResolvedNomadClan {
   conflict: string;
   goal: string;
   hook: string;
+  secret: string;
   campaignContext?: string;
   name: string;
   traits: readonly string[];
@@ -337,14 +344,21 @@ export function resolveNomadClan(
   if (options.territory)
     locked.territory = { value: options.territory, source: "manual" };
   if (options.tone) locked.tone = { value: options.tone, source: "manual" };
-  if (options.conflict)
-    locked.conflict = { value: options.conflict, source: "manual" };
+  if (options.conflict?.trim())
+    locked.conflict = { value: options.conflict.trim(), source: "manual" };
 
   const { values, traits } = resolveSmart(
     nomadClanSchema,
     { genre: "Cyberpunk / Corporate", locked },
     rng,
   );
+
+  const conflictKey = values.conflict.trim().toLowerCase();
+  const hookKey = values.hook.trim().toLowerCase();
+  const secretPool = nomadClanConfig.secrets.filter((s) => {
+    const key = s.trim().toLowerCase();
+    return key !== conflictKey && key !== hookKey;
+  });
 
   return {
     role: values.role,
@@ -353,6 +367,10 @@ export function resolveNomadClan(
     conflict: values.conflict,
     goal: values.goal,
     hook: values.hook,
+    secret: pickFrom(
+      secretPool.length > 0 ? secretPool : nomadClanConfig.secrets,
+      rng,
+    ),
     campaignContext: options.campaignContext?.trim() || undefined,
     name: generateNomadName(rng),
     traits,
@@ -424,25 +442,47 @@ export function parseNomadClanResponse(
   };
 }
 
+function asSentence(text: string): string {
+  const trimmed = text.trim().replace(/[;,]+(["'”’»)]*)$/, ".$1");
+  return /[.!?]["'”’»)]*$/.test(trimmed) ? trimmed : `${trimmed}.`;
+}
+
 export function generateNomadClanLocal(
   options: NomadClanGeneratorOptions = {},
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
-  const { role, tone, territory, conflict, goal, hook, campaignContext, name } =
-    resolveNomadClan(options, rng);
+  const {
+    role,
+    tone,
+    territory,
+    conflict,
+    goal,
+    hook,
+    secret,
+    campaignContext,
+    name,
+  } = resolveNomadClan(options, rng);
   const rival = generateNomadName(rng);
   const leader = generateName(rng);
   const mechanic = generateName(rng);
   const scout = generateName(rng);
+  // Roles are noun phrases with mixed plurals ("Family Convoy", "Tech
+  // Scavengers"), so they sit in brackets rather than behind "a".
+  const roleText = role.toLowerCase();
+  const territoryText = territory.toLowerCase();
+  // Conflict options are fragments; end them as sentences before the crisis
+  // copy continues. Keep campaign context intact as supplied by the GM.
+  const crisis = asSentence(conflict);
+  const contextText = campaignContext?.trim();
 
   const content = `### Who they are
-${name} is a ${role.toLowerCase()} operating across ${territory.toLowerCase()}. Their tone is ${tone.toLowerCase()} — every decision is shaped by the road and the people who depend on the convoy.${campaignContext ? ` In ${campaignContext}, they are a known presence: respected by those who need them, watched by those who profit from stability.` : ""}
+${name} is a nomad clan (${roleText}) operating across ${territoryText}. Their tone is ${tone.toLowerCase()} — every decision is shaped by the road and the people who depend on the convoy.${contextText ? ` Campaign context: ${contextText}` : ""}
 
 ### How they survive
 ${goal} Their economy runs on what the roads provide — cargo runs, repairs, protection contracts, and trade at waystation markets. Nothing is wasted; everything has a price.
 
 ### What threatens them
-${conflict} This is the crisis that cannot be deferred. The clan must resolve it before it costs them a route, a vehicle, or a member.
+${crisis} This is the crisis that cannot be deferred. The clan must resolve it before it costs them a route, a vehicle, or a member.
 
 ### How to use them at the table
 ${name} works best as a faction the party keeps running into — on the road, at fuel stops, in waystation bars. They are reliable in a way most factions are not, but their code has limits and their patience for outsiders who cause problems is short.`;
@@ -451,7 +491,7 @@ ${name} works best as a faction the party keeps running into — on the road, at
 - **📍 Territory**: ${territory}
 - **Fleet**: Mixed convoy — a lead rig, two cargo haulers, and two scout bikes. Plus whatever they have salvaged this season.
 - **Code**: ${tone.split(",")[0]} — don't burn bridges you might need to cross again.
-- **Secret**: ${conflict}
+- **Secret**: ${secret}
 - **Immediate Hook**: ${hook}
 
 ### Notable Members
@@ -460,7 +500,7 @@ ${name} works best as a faction the party keeps running into — on the road, at
 - **👤 ${scout}**: Point rider who has memorised three hundred kilometres of road and is running out of safe routes.
 
 ### Current Crisis
-${conflict} The clan is managing it — for now — but every day without a resolution narrows their options.
+${crisis} The clan is managing it — for now — but every day without a resolution narrows their options.
 
 ### Rival Faction
 - **👥 ${rival}**: Competing for the same routes, safe stops, or cargo contracts. The rivalry is old enough to have its own code of conduct — and new enough that someone recently broke it.`;
@@ -468,7 +508,7 @@ ${conflict} The clan is managing it — for now — but every day without a reso
   return {
     type: "faction",
     title: name,
-    summary: `A ${role.toLowerCase()} convoy operating across ${territory.toLowerCase()}.`,
+    summary: `A nomad clan (${roleText}) operating across ${territoryText}.`,
     content,
     lore,
     labels: ["rpg-faction", "nomad-clan", "imported-draft"],
@@ -649,12 +689,16 @@ export function generateVampireLocal(
   const rival = `${generateName(rng)} Inquisition`;
   const sire = generateName(rng);
   const thrall = generateName(rng);
+  // The bloodline's parenthetical (e.g. "(Charismatic Mind-Benders)") is a
+  // GM hint for the reference block, not prose, so keep it out of the overview.
+  const bloodlineName = bloodline.replace(/\s*\([^)]*\)\s*$/, "").toLowerCase();
+  const archetypeName = archetype.toLowerCase();
 
   const content = `### Overview
-${name} is a powerful vampire clan of the ${bloodline.toLowerCase()} lineage, operating as a ${archetype.toLowerCase()} across ${scope.toLowerCase()}. They hide their predatory activities behind a carefully crafted mortal facade, manipulating events from the dark.
+${name} is a powerful vampire clan of the ${bloodlineName} lineage, operating as ${indefiniteArticle(archetypeName)} ${archetypeName} in the ${scope.toLowerCase()}. They hide their predatory activities behind a carefully crafted mortal facade, manipulating events from the dark.
 
 ${campaignContext ? `### Campaign Fit\nUse ${name} in ${campaignContext}. Their influence should touch the local halls of power, forgotten catacombs, or ongoing dark mysteries.\n` : ""}### Public Facade
-To the mortal world, members of ${name} present themselves as wealthy philanthropists, eccentric scholars, or influential patrons. Very few suspect that behind this elegant mask lies a highly organized coven of undead hunters.
+To the mortal world, members of ${name} present themselves as wealthy philanthropists, eccentric scholars, or influential patrons. Very few suspect that behind this elegant mask lies a tightly organised coven of predators.
 
 ### Table Use
 Introduce ${name} when the party enters high-society intrigue, investigates occult occurrences, or needs a powerful but dangerous ally who demands blood or secrets as currency.`;
@@ -742,6 +786,42 @@ function generateDarkFactionName(rng: Rng = defaultRng): string {
     "Last Ember",
   ];
   return `${pickFrom(prefixes, rng)}${pickFrom(roots, rng)}`;
+}
+
+// Bounded reroll so a rival or NPC never shares the name it is listed against.
+function rerollUntilDistinct(taken: string, roll: () => string): string {
+  let candidate = roll();
+  for (let attempt = 0; candidate === taken && attempt < 10; attempt++) {
+    candidate = roll();
+  }
+  return candidate;
+}
+
+// Moral postures are "Head — explanation" pairs; the head is a noun phrase
+// that reads well after "with a moral posture of", the explanation a clause.
+function splitMoralPosture(posture: string): { head: string; detail: string } {
+  const [head, ...rest] = posture.split(" — ");
+  return {
+    head: stripSentenceEnd(head),
+    detail: stripSentenceEnd(rest.join(" — ")),
+  };
+}
+
+function stripSentenceEnd(text: string): string {
+  return text.trim().replace(/[.!?]+$/, "");
+}
+
+function withSentenceEnd(text: string): string {
+  const trimmed = text.trim();
+  return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
+}
+
+function sentenceCase(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function lowerFirst(text: string): string {
+  return text.charAt(0).toLowerCase() + text.slice(1);
 }
 
 export function resolveDarkFaction(
@@ -857,36 +937,38 @@ export function generateDarkFactionLocal(
     name,
     traits,
   } = resolveDarkFaction(options, rng);
-  const rival = generateDarkFactionName(rng);
+  const rival = rerollUntilDistinct(name, () => generateDarkFactionName(rng));
   const leader = generateName(rng);
-  const agent = generateName(rng);
+  const agent = rerollUntilDistinct(leader, () => generateName(rng));
   const base = selectSmartFactionBase(factionType, traits, rng);
   const resource = selectSmartFactionResource(factionType, traits, rng);
 
-  const summary = `A ${moralPosture.split(" —")[0].toLowerCase()} ${factionType.toLowerCase()} operating through a ${mode.toLowerCase()}.`;
+  const { head: postureHead, detail: postureDetail } =
+    splitMoralPosture(moralPosture);
+  const summary = `${sentenceCase(`${indefiniteArticle(factionType)} ${factionType.toLowerCase()}`)} operating through ${indefiniteArticle(mode)} ${mode.toLowerCase()}, with the moral posture “${postureHead}”.`;
 
   const content = `### What they control
-${name} is a ${factionType.toLowerCase()} with real authority across ${scope.toLowerCase()}, built on the back of the ${mode.toLowerCase()} that made them necessary in the first place.
+${name} is ${indefiniteArticle(factionType)} ${factionType.toLowerCase()} with real authority across ${scope.toLowerCase()}, built on the back of the ${mode.toLowerCase()} that made them necessary in the first place.
 
 ### What they want
 ${goal}
 
 ### Why they are dangerous
-${conflict} Their posture — ${moralPosture.toLowerCase()} — means they will not stop simply because they are shown to be wrong.
+${conflict} Their chosen posture is “${postureHead}”${postureDetail ? `: ${lowerFirst(postureDetail)}.` : "."} They will not stop simply because they are shown to be wrong.
 
 ### How to use them at the table
-Bring ${name} into play when the party needs a power that is doing something defensible in the worst possible way. Let them be useful, or unavoidable, before the party learns the full cost of what they protect.${campaignContext ? ` They fit naturally into ${campaignContext}.` : ""}`;
+Bring ${name} into play when the party needs a power that is doing something defensible in the worst possible way. Let them be useful, or unavoidable, before the party learns the full cost of what they protect.${campaignContext ? ` Campaign context: ${withSentenceEnd(campaignContext)}` : ""}`;
 
   const lore = `### At a Glance
 - **📍 Base**: ${base}
 - **Resource**: ${resource}
 - **Symbol**: ${name.split(" ").slice(-2).join(" ")} iconography, worn or branded by the faithful
-- **Secret**: ${conflict}
+- **Secret**: see Internal Conflict below.
 - **Immediate Hook**: ${hook}
 
 ### Notable NPCs
 - **👤 ${leader}**: The one who still believes this was the right choice, and needs everyone else to believe it too.
-- **👤 ${agent}**: Does the parts of the work no one else will, and keeps a private ledger of what it has cost them.
+- **👤 ${agent}**: Handles the parts of the work no one else will, and keeps a private ledger of what it has cost them.
 
 ### Internal Conflict
 ${conflict}

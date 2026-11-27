@@ -94,11 +94,11 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     pageTitle:
       "Magic Item Generator | Free Fantasy RPG Loot Tool | Codex Cryptica",
     metaDescription:
-      "Generate fantasy RPG magic items with lore, abilities, quirks, and campaign hooks. Copy the draft or save it into your local campaign vault.",
+      "Generate fantasy RPG magic items with a description, magical properties, and lore. Copy the draft or save it into your local campaign vault.",
     introTitle: "Magic Item Generator",
     eyebrow: "Magic Item Generator",
     introText:
-      "Create a campaign-ready magic item with lore, abilities, and quirks. Works without login.",
+      "Create a magic item with a description, magical properties, and lore. Works without login.",
     canonicalPath: "/generators/magic-item",
     labels: ["fantasy"],
     ogImage:
@@ -232,13 +232,13 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
   },
   faction: {
     pageTitle:
-      "RPG Faction Generator | Fantasy Guilds, Cyberpunk Megacorps & Vampire Clans | Codex Cryptica",
+      "RPG Faction Generator | Fantasy Guilds, Cyberpunk Megacorps & Vampire Courts | Codex Cryptica",
     metaDescription:
-      "Generate detailed RPG factions. Perfect as a fantasy guild generator, cyberpunk megacorp creator, sci-fi empire builder, or gothic vampire clan generator. Save drafts to your vault.",
+      "Generate detailed RPG factions. Perfect as a fantasy guild generator, cyberpunk megacorp creator, or gothic vampire court generator. Save drafts to your vault.",
     introTitle: "RPG Faction Generator",
     eyebrow: "Faction Generator",
     introText:
-      "Forge campaign-ready organizations across any genre. Use it as a fantasy guild generator, cyberpunk megacorp creator, sci-fi empire builder, or gothic vampire clan generator with distinct agendas, conflicts, and NPCs.",
+      "Forge campaign-ready organizations across any genre. Use it as a fantasy guild generator, cyberpunk megacorp creator, or gothic vampire court generator with distinct agendas, conflicts, and NPCs.",
     canonicalPath: "/generators/faction",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-faction.jpg",
@@ -255,7 +255,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "What does the faction generator create?",
         answer:
-          "It generates a complete RPG faction across any genre — fantasy guilds, cyberpunk megacorps, vampire covens, space federations, and more. Each result includes a name, agenda, internal conflict, rival faction, notable NPCs, and a ready-to-use GM hook.",
+          "It generates a complete RPG faction across any genre — fantasy guilds, cyberpunk megacorps, gothic vampire courts, and more. Each result includes a name, agenda, internal conflict, rival faction, notable NPCs, and a ready-to-use GM hook.",
       },
       {
         question: "Can I use it without an account?",
@@ -265,7 +265,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Can I aim the faction at my current campaign?",
         answer:
-          "Yes. Add optional campaign context — a location, villain, ongoing conflict, or political tension — and the generator will fit the faction to your table rather than producing a generic result.",
+          "Yes. Add optional campaign context, such as a location, villain, ongoing conflict, or political tension. Offline drafts keep it in the GM notes and add a line to What they control, and the AI draft is built around it.",
       },
       {
         question: "How does saving a generated faction work?",
@@ -308,17 +308,17 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "What does the faction roster generator create?",
         answer:
-          "It generates 3 to 6 notable members of a faction, each with a role, a personal motive distinct from the faction's own goal, a stance toward the faction (loyalist, zealot, opportunist, trapped, reformer, secret traitor, or similar), a distinctive trait, an immediate hook, a leverage point, and a connection to another member on the same roster.",
+          "An offline draft contains 3 to 6 notable faction members, each with a role, personal motive, stance, distinctive trait, immediate want, leverage point and connection to another member. The AI draft is prompted for this shape and selected count, though its returned structure can vary.",
       },
       {
         question: "Will the roster always be a leader and underlings?",
         answer:
-          "No. Choosing a structure — hierarchy, cell network, council, warband, corporate ladder, or congregation — changes the shape of the roster to match, so a clandestine cult produces a genuinely different roster than a corporation.",
+          "No. Choosing a structure (hierarchy, cell network, council, warband, corporate ladder, or congregation) changes synthesized duties for new offline members and the roster summary. Existing named people's copied descriptions stay as written. The AI draft is prompted to reshape duties to match the structure.",
       },
       {
         question: "How does saving a generated roster work?",
         answer:
-          "Clicking 'Save to Codex' stores the roster draft in your browser's local storage. Open Codex Cryptica and it imports automatically as a Faction entity. Each member section also has its own Open as Character action to continue developing that member individually.",
+          "Clicking 'Save to Codex' stores the roster draft in your browser's local storage. Open Codex Cryptica and it imports automatically as a Note entity. Each member section also has its own Open as Character action to continue developing that member individually.",
       },
     ],
     relatedLinks: [
@@ -351,7 +351,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Does this puzzle generator require a specific RPG system?",
         answer:
-          "No. It is system-neutral by default, with optional D&D, Pathfinder 2e, and Tales of the Valiant tailoring.",
+          "No. It is system-neutral by default. You can choose D&D 5e, Pathfinder 2e or Tales of the Valiant under System tailoring: the AI draft uses that system, and an offline draft records it with any party level and player count in the GM notes.",
       },
       {
         question: "Will a puzzle require one spell or character class?",
@@ -361,7 +361,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "What happens when players fail?",
         answer:
-          "The generator includes fail-forward escalation: failures can add pressure, cost resources, or change the situation while preserving a path forward.",
+          "Failure pressure decides. With None, a failed attempt only gives feedback. Otherwise it adds a complication, a clock, danger or a fight, and the party still has a way forward.",
       },
       {
         question: "What makes this the best RPG puzzle generator to try?",
@@ -409,7 +409,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "RPG Quest Generator",
     eyebrow: "Quest Hook Generator",
     introText:
-      "Create campaign-ready adventure seeds and quest hooks. Set the genre, tone, threat, and twist, then import into your local vault.",
+      "Create campaign-ready adventure seeds and quest hooks. Choose a vibe, then set the tone, threat, and twist. Import the result into your local vault.",
     canonicalPath: "/generators/quest",
     ogImage: "https://assets.codexcryptica.com/screenshots/generator-quest.jpg",
     ogImageAlt:
@@ -539,11 +539,11 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     pageTitle:
       "Social Hub Generator | RPG Venue Generator for Any Genre | Codex Cryptica",
     metaDescription:
-      "Generate a genre-agnostic social gathering location — from cyberpunk noodle bars to western saloons to fantasy inns. Works without login. Save into your Codex Cryptica campaign vault.",
+      "Generate a social venue for any genre, from cyberpunk noodle bars to Western saloons and fantasy inns, with an operator, regulars, rumours and a hidden problem. Works without login. Save into your Codex Cryptica campaign vault.",
     introTitle: "Social Hub Generator",
     eyebrow: "Social Hub Generator",
     introText:
-      "Create a campaign-ready social venue for any genre. Pick your setting, venue type, and atmosphere — get a named location with regulars, rumours, and a hidden problem.",
+      "Create a campaign-ready social venue for any genre. Pick the setting, venue type, atmosphere, wealth level and clientele, and get a named location with an operator, regulars, rumours and a hidden problem.",
     canonicalPath: "/generators/social-hub",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-social-hub.jpg",
@@ -592,7 +592,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-kingdom.jpg",
     ogImageAlt:
-      "Codex Cryptica kingdom generator drafting fantasy realms with rulers, court factions, and borders",
+      "Codex Cryptica kingdom generator drafting fantasy realms with rulers, capitals and rival factions",
     keywords: [
       "kingdom generator",
       "fantasy realm creator",
@@ -627,7 +627,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     pageTitle:
       "Tavern Generator | Free RPG Inn & Alehouse Creator | Codex Cryptica",
     metaDescription:
-      "Generate a detailed RPG tavern or inn with owner, patrons, rumours, trouble, and adventure hooks. Works without login. Save into your Codex Cryptica campaign vault.",
+      "Generate a detailed RPG tavern or inn with an owner, regular patrons, rumours, a hidden problem and an opening hook. Works without login. Save into your Codex Cryptica campaign vault.",
     introTitle: "Tavern Generator",
     eyebrow: "Tavern Generator",
     introText:
@@ -700,7 +700,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Can I use it without an account?",
         answer:
-          "Yes. Generate and copy clan notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
+          "Yes. Generate and copy clan notes on this page without logging in. After you generate a result, Add to my Codex stages the draft in your browser's local storage and imports it as a Faction entity when you open Codex Cryptica.",
       },
       {
         question: "Which RPG systems does it work with?",
@@ -710,7 +710,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Can I aim the clan at my current campaign?",
         answer:
-          "Yes. Add optional campaign context — a city, megacorp, rival clan, or active threat — and the generator will fit the clan to your table rather than producing a generic result.",
+          "With AI generation on, campaign context is used as input to tailor the clan, and the draft is asked to include it. Offline drafts display your context under Who they are, but do not use it to tailor the other generated details.",
       },
     ],
     relatedLinks: [
@@ -896,6 +896,28 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "fantasy npc creator",
       "dm prep tool",
     ],
+    faqs: [
+      {
+        question: "What is the difference between Table Card and Full Dossier?",
+        answer:
+          "Table Card (the default) gives you six scannable cues for live play: Immediate Want, Physical Mannerism, Sharp Contradiction, Relationship Hook, Sensory Tag, and Knowledge & Secrets, plus a short Table Delivery note. Full Dossier switches to four background sections (Who they are, What they want, Why they are useful, How to use them at the table) alongside Faction Stance & Biases, Leverage & Price, Secret, and Personality.",
+      },
+      {
+        question: "Does the D&D NPC generator include full 5e stat blocks?",
+        answer:
+          "No. It adds a Class / Archetype and Table Rating benchmark (such as Wizard / Level 5 and CR 3 for a Mage, or Level 3 and CR 1 for custom roles) at the top of At a Glance rather than full combat stat blocks or equipment lists.",
+      },
+      {
+        question: "How does Add campaign context change the NPC?",
+        answer:
+          "Naming a town, guild, or conflict steers AI drafts and anchors offline Dossier drafts. If you mention a dungeon or delve in Add campaign context, both offline and AI drafts also add lair-specific fields and a three-stage Alert & Lair Response.",
+      },
+      {
+        question: "What happens when I save a generated D&D NPC?",
+        answer:
+          "After you generate a result, Add to my Codex stages the NPC in your browser's local storage with no account required. Opening Codex Cryptica imports it as a Character entity with its At a Glance notes, Faction Connection, and labels.",
+      },
+    ],
   },
   "pantheon-generator": {
     pageTitle:
@@ -919,6 +941,33 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "worldbuilding gods",
     ],
     labels: ["religion"],
+    faqs: [
+      {
+        question: "What does the pantheon generator create?",
+        answer:
+          "It creates a divine assembly with an origin myth, a sized deity roster, alliances and rivalries, clergy and temple notes, rumours, a GM-only hidden problem, and an immediate hook.",
+      },
+      {
+        question: "Can I use it without an account?",
+        answer:
+          "Yes. Generate and copy pantheon notes on this page without logging in. After you generate a result, Add to my Codex stages the draft in your browser's local storage and imports it as a Faction entity (or a Character entity in Single Deity / Spirit mode) when you open Codex Cryptica.",
+      },
+      {
+        question: "Can I switch between a full pantheon and a single deity?",
+        answer:
+          "Yes. Use Generate target to switch between Pantheon and Single Deity / Spirit, or adjust Pantheon Size and Pantheon Focus / Width to control how many gods appear and whether they cluster around one domain or span many.",
+      },
+      {
+        question: "How does Campaign context (optional) affect the draft?",
+        answer:
+          "With AI generation on, your campaign context guides the entire pantheon and its myths in Pantheon mode, or shapes the deity and its cult in Single Deity / Spirit mode. Offline drafts display your context in an Influence of Campaign Context section while using your selected domain, worshippers, and, in Pantheon mode, conflict theme.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/god-generator", label: "God & deity generator" },
+      { href: "/generators/faction", label: "Faction generator" },
+      { href: "/generators/settlement", label: "Settlement generator" },
+    ],
   },
   "god-generator": {
     pageTitle:
@@ -977,7 +1026,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "What genres does the ship generator support?",
         answer:
-          "Sci-Fi, Space Opera, Cyberpunk, Optimistic Exploration Sci-Fi, Space Opera Resistance, Lancer, Post-Apocalyptic, Fantasy, Pirate / Age of Sail, Steampunk, Dark Fantasy, and Western (River & Rail). Each genre has its own roles, names, crew types, and complications.",
+          "Sci-Fi, Space Opera, Cyberpunk, Optimistic Exploration Sci-Fi, Space Opera Resistance, Lancer, Post-Apocalyptic, Fantasy, Pirate / Age of Sail, Steampunk, Dark Fantasy, Western (River & Rail), and Space Western. Each genre has its own roles, names, crew types, and complications.",
       },
       {
         question: "Can I use it for D&D or fantasy RPGs?",

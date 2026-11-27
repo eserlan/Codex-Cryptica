@@ -116,7 +116,7 @@ function resolveCouncilVote(
   const deadline = options.deadline?.trim() || "before the week is out";
   const proposal =
     options.proposal?.trim() ||
-    "a contested proposal that will reshape the region";
+    "A contested proposal that will reshape the region";
   const scope = options.scope || pickFrom(councilVoteConfig.scopes, rng);
   const tone = options.tone || pickFrom(councilVoteConfig.tones, rng);
   const antagonistInfluence =
@@ -341,6 +341,91 @@ export function parseCouncilVoteFoundation(
   return councilVoteFoundationFromRecord(parseFencedJson(text), resolved);
 }
 
+function parseSetextHeading(
+  line: string,
+  nextLine: string | undefined,
+): { depth: number; heading: string } | null {
+  if (!nextLine) return null;
+  const setextMatch = /^\s{0,3}(=+|-+)\s*$/.exec(nextLine);
+  const trimmed = line.trim();
+  if (
+    !setextMatch ||
+    trimmed.length === 0 ||
+    /^\s{4,}/.test(line) ||
+    /^\s{0,3}(?:#|>|[-*+]\s|\d+\.\s)/.test(line)
+  ) {
+    return null;
+  }
+  return { depth: setextMatch[1][0] === "=" ? 1 : 2, heading: trimmed };
+}
+
+function extractMarkdownHeadings(
+  markdown: string,
+): Array<{ depth: number; heading: string }> {
+  const headings: Array<{ depth: number; heading: string }> = [];
+  const lines = markdown.split(/\r?\n/);
+  const stripBlockquotePrefixes = (line: string): string => {
+    let unquoted = line;
+    while (/^\s{0,3}>[ \t]?/.test(unquoted)) {
+      unquoted = unquoted.replace(/^\s{0,3}>[ \t]?/, "");
+    }
+    return unquoted;
+  };
+  let inFence: string | null = null;
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = stripBlockquotePrefixes(lines[i]);
+    const fenceMatch = /^\s{0,3}(`{3,}|~{3,})/.exec(line);
+    if (fenceMatch) {
+      const marker = fenceMatch[1][0];
+      inFence = inFence === marker ? null : (inFence ?? marker);
+      continue;
+    }
+    if (inFence) continue;
+
+    const atxMatch = /^\s{0,3}(#{1,6})\s+(.+?)\s*$/.exec(line);
+    if (atxMatch) {
+      headings.push({
+        depth: atxMatch[1].length,
+        heading: atxMatch[2].replace(/\s+#+\s*$/, "").trim(),
+      });
+      continue;
+    }
+
+    const setext = parseSetextHeading(
+      line,
+      stripBlockquotePrefixes(lines[i + 1] ?? ""),
+    );
+    if (setext) {
+      headings.push(setext);
+      i += 1;
+    }
+  }
+  return headings;
+}
+
+function hasHiddenMarkdownHeading(markdown: string): boolean {
+  let inFence: string | null = null;
+  for (const line of markdown.split(/\r?\n/)) {
+    const fenceMatch = /^\s{0,3}(`{3,}|~{3,})/.exec(line);
+    if (fenceMatch) {
+      const marker = fenceMatch[1][0];
+      inFence = inFence === marker ? null : (inFence ?? marker);
+      continue;
+    }
+    if (inFence && /^\s*(?:>\s*)*#{1,6}\s+/.test(line)) {
+      return true;
+    }
+    if (!inFence && /^(?: {4,}|\t)\s*(?:>\s*)*#{1,6}\s+/.test(line)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function hasRawHtmlHeading(markdown: string): boolean {
+  return /<h[1-6](?=[\s>/])[^>]*>/i.test(markdown);
+}
+
 export function readCouncilVoteFoundation(
   reply: string,
   resolved: ResolvedCouncilVote,
@@ -348,7 +433,51 @@ export function readCouncilVoteFoundation(
   const data = readJsonObject(reply);
   if (!data) return null;
   const parsed = councilVoteFoundationFromRecord(data, resolved);
-  return parsed.content.trim() && parsed.lore.trim() ? parsed : null;
+  if (!parsed.content.trim() || !parsed.lore.trim()) return null;
+
+  // This output is later split into player-facing content and GM-only lore.
+  // Enforce the prompt's section contract at the model boundary: any heading
+  // outside the allowed player-facing set (such as a renamed roster or
+  // private section) or an unrecognized lore section must not be accepted and
+  // routed into the player-facing document by the layout.
+  const publicSections = new Set([
+    "the proposal",
+    "campaign fit",
+    "the deadline",
+  ]);
+  const privateSections = [
+    "Voting Procedure",
+    "Current Vote Estimate",
+    "Council Members",
+    "Antagonist Influence",
+    "Investigation Leads",
+  ];
+
+  const contentHeadings = extractMarkdownHeadings(parsed.content);
+  if (
+    hasHiddenMarkdownHeading(parsed.content) ||
+    hasRawHtmlHeading(parsed.content) ||
+    contentHeadings.some(
+      ({ heading }) => !publicSections.has(heading.trim().toLowerCase()),
+    )
+  ) {
+    return null;
+  }
+
+  const loreHeadings = extractMarkdownHeadings(parsed.lore);
+  if (
+    hasHiddenMarkdownHeading(parsed.lore) ||
+    hasRawHtmlHeading(parsed.lore) ||
+    loreHeadings.length !== privateSections.length ||
+    loreHeadings.some(
+      ({ depth, heading }, index) =>
+        depth !== 3 || heading.trim() !== privateSections[index],
+    )
+  ) {
+    return null;
+  }
+
+  return parsed;
 }
 
 // ---------------------------------------------------------------------------
@@ -1112,7 +1241,7 @@ ${
 }
 
 ### Investigation Leads
-Each councillor's public reputation hides a private agenda; asking around the ${resolved.governingBodyType.toLowerCase()}'s usual haunts is the fastest way to learn who can be swayed and how.
+Each councillor's public reputation hides a private agenda; asking around the usual haunts of the ${resolved.governingBodyType.toLowerCase()} is the fastest way to learn who can be swayed and how.
 
 ### Possible Paths
 At least two coalitions of votes can carry the proposal — persuasion and evidence for the cautious, leverage and favours for the desperate. The costly best solution: win every seat outright, but only by spending every favour and secret in hand — the vote passes clean, and the party leaves owing debts, and making enemies, they cannot yet see the price of.

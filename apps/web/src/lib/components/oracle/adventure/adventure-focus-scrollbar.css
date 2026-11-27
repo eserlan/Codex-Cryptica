@@ -1,0 +1,51 @@
+/* Native, theme-aware scrollbars for independently scrolling Adventure panes.
+   Keep this scoped to play rather than overriding scrollbars across the app. */
+.adventure-scrollbar {
+  --adventure-scrollbar-track: var(--color-bg-primary);
+  --adventure-scrollbar-thumb: color-mix(
+    in srgb,
+    var(--color-accent-primary) 80%,
+    var(--color-bg-surface)
+  );
+  --adventure-scrollbar-thumb-hover: color-mix(
+    in srgb,
+    var(--color-accent-primary) 90%,
+    var(--color-bg-surface)
+  );
+
+  scrollbar-width: thin;
+  scrollbar-color: var(--adventure-scrollbar-thumb)
+    var(--adventure-scrollbar-track);
+}
+
+/* Fallback for engines without the standard scrollbar properties. */
+.adventure-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.adventure-scrollbar::-webkit-scrollbar-track {
+  background: var(--adventure-scrollbar-track);
+}
+
+.adventure-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--adventure-scrollbar-thumb);
+  border-radius: 9999px;
+}
+
+.adventure-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--adventure-scrollbar-thumb-hover);
+}
+
+@media (forced-colors: active) {
+  .adventure-scrollbar {
+    scrollbar-color: auto;
+    scrollbar-width: auto;
+  }
+
+  .adventure-scrollbar::-webkit-scrollbar,
+  .adventure-scrollbar::-webkit-scrollbar-track,
+  .adventure-scrollbar::-webkit-scrollbar-thumb,
+  .adventure-scrollbar::-webkit-scrollbar-thumb:hover {
+    all: revert;
+  }
+}

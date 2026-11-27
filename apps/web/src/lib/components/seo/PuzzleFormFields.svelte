@@ -122,18 +122,19 @@
     class="rounded-lg border border-theme-border/60 bg-theme-surface/30 p-3"
   >
     <summary
-      class="cursor-pointer text-meta font-bold uppercase tracking-wider text-theme-text/80"
-      >Advanced system-specific details</summary
+      class="cursor-pointer text-meta font-bold uppercase tracking-wider text-theme-text"
     >
-    <p class="mt-1 text-micro leading-relaxed text-theme-muted">
+      Advanced system-specific details
+    </summary>
+    <p class="mt-1 text-micro leading-relaxed text-theme-text">
       Optional mechanical context for the selected system. These never make a
       class, spell, or ability mandatory.
     </p>
     <div class="mt-3 grid gap-3 sm:grid-cols-2">
       <div class="flex flex-col gap-1.5">
-        <label for="puzzle-party-level" class={labelClass}
-          >Party level or competence</label
-        ><input
+        <label for="puzzle-party-level" class={labelClass}>
+          Party level or competence
+        </label><input
           id="puzzle-party-level"
           name="party_level"
           bind:value={partyLevel}
@@ -141,9 +142,9 @@
         />
       </div>
       <div class="flex flex-col gap-1.5">
-        <label for="puzzle-player-count" class={labelClass}
-          >Number of players</label
-        ><input
+        <label for="puzzle-player-count" class={labelClass}>
+          Number of players
+        </label><input
           id="puzzle-player-count"
           name="player_count"
           bind:value={playerCount}
@@ -156,61 +157,62 @@
 {/if}
 
 <div class="flex flex-col gap-1.5">
-  <label for="puzzle-capabilities" class={labelClass}
-    >PC capabilities to make matter</label
-  ><textarea
+  <label for="puzzle-capabilities" class={labelClass}>
+    PC capabilities to make matter
+  </label><textarea
     id="puzzle-capabilities"
     name="capabilities"
     bind:value={capabilities}
     maxlength="4000"
     rows="3"
     aria-describedby="puzzle-capabilities-help"
-    class="w-full min-h-20 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"
+    class="w-full min-h-20 bg-theme-bg/60 border border-theme-text/80 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"
   ></textarea>
   <p
     id="puzzle-capabilities-help"
-    class="text-micro text-theme-muted leading-relaxed"
+    class="text-micro text-theme-text leading-relaxed"
   >
     Add concepts, abilities, spells, or skills. They create opportunities, never
     requirements.
   </p>
 </div>
 <div class="flex flex-col gap-1.5">
-  <label for="puzzle-consequence" class={labelClass}
-    >Optional downstream consequence</label
-  ><textarea
+  <label for="puzzle-consequence" class={labelClass}>
+    Optional downstream consequence
+  </label><textarea
     id="puzzle-consequence"
     name="downstream_consequence"
     bind:value={downstreamConsequence}
     maxlength="4000"
     rows="3"
     aria-describedby="puzzle-consequence-help"
-    class="w-full min-h-20 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"
+    class="w-full min-h-20 bg-theme-bg/60 border border-theme-text/80 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"
   ></textarea>
   <p
     id="puzzle-consequence-help"
-    class="text-micro text-theme-muted leading-relaxed"
+    class="text-micro text-theme-text leading-relaxed"
   >
     For example: the boss loses a shield or reinforcements never arrive.
   </p>
 </div>
 <div class="flex flex-col gap-1.5">
-  <label for="puzzle-context" class={labelClass}
-    >Optional campaign context</label
-  ><textarea
+  <label for="puzzle-context" class={labelClass}>
+    Optional campaign context
+  </label><textarea
     id="puzzle-context"
     name="campaign_context"
     bind:value={campaignContext}
     maxlength="4000"
     rows="3"
     aria-describedby="puzzle-context-help"
-    class="w-full min-h-20 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"
+    class="w-full min-h-20 bg-theme-bg/60 border border-theme-text/80 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"
   ></textarea>
   <p
     id="puzzle-context-help"
-    class="text-micro text-theme-muted leading-relaxed"
+    class="text-micro text-theme-text leading-relaxed"
   >
-    Add a location, villain, or situation to ground this encounter.
+    Add a location, villain, or situation. Offline drafts keep it in the GM
+    notes, and the AI draft builds the puzzle around it.
   </p>
 </div>
 
@@ -225,9 +227,10 @@
       failurePressure = pickFrom(puzzleConfig.failurePressures);
       if (onSurprise) onSurprise();
     }}
-    class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-micro font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
+    class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-micro font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-on-primary hover:border-theme-primary transition-all cursor-pointer"
     title="Randomize puzzle options and generate a draft"
-    ><span class="icon-[lucide--dices] w-3.5 h-3.5" aria-hidden="true"></span> Surprise
-    Me</button
   >
+    <span class="icon-[lucide--dices] w-3.5 h-3.5" aria-hidden="true"></span> Surprise
+    Me
+  </button>
 </div>

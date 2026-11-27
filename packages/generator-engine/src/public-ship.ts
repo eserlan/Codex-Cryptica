@@ -23,8 +23,34 @@ import { parseFencedJson } from "./llm-response-utils";
 import { shipConfig } from "./public-ship-constants";
 export { shipConfig };
 
+const OFFICER_GENRE_FALLBACK: Record<string, string> = {
+  "Dark Fantasy": "Fantasy",
+  Steampunk: "Pirate / Age of Sail",
+  "Western (River & Rail)": "Pirate / Age of Sail",
+};
+
 function forGenre<T>(record: Record<string, T[]>, genre: string): T[] {
-  return record[genre] ?? record["Sci-Fi"] ?? Object.values(record)[0];
+  const mapped = OFFICER_GENRE_FALLBACK[genre];
+  return (
+    record[genre] ??
+    (mapped ? record[mapped] : undefined) ??
+    record["Sci-Fi"] ??
+    Object.values(record)[0]
+  );
+}
+
+function capitalizeFirst(value: string): string {
+  if (!value) return value;
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function lowerFirst(value: string): string {
+  if (!value) return value;
+  return value.charAt(0).toLowerCase() + value.slice(1);
+}
+
+function withDefiniteArticle(name: string): string {
+  return /^The\s+/i.test(name) ? name : `The ${name}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -118,7 +144,9 @@ function resolveShip(options: ShipGeneratorOptions, rng: Rng): ResolvedShip {
   );
   const secret = pickFrom(forGenre(shipConfig.secretsByGenre, genre), rng);
   const zoneSource =
-    shipConfig.zonesByRole[role] ?? shipConfig.zonesByRole["default"];
+    shipConfig.zonesByRole[role] ??
+    shipConfig.zonesByGenre?.[genre] ??
+    shipConfig.zonesByRole["default"];
   const zones = getRandomItems(zoneSource, Math.min(3, zoneSource.length), rng);
 
   const prefixes = forGenre(shipConfig.namePrefixesByGenre, genre);
@@ -295,7 +323,7 @@ const CORE_CONCEPT_VARIANTS = [
     tone: string,
     complication: string,
   ) =>
-    `The ${name} operates as a ${role.toLowerCase()} — ${scale.toLowerCase()}, ${condition.toLowerCase()}, and ${tone.toLowerCase()} in a way that has become its reputation. The problem no one is talking about openly is that ${complication.toLowerCase()}.`,
+    `${withDefiniteArticle(name)} operates as a ${role.toLowerCase()} — ${scale.toLowerCase()}, ${condition.toLowerCase()}, and ${tone.toLowerCase()} in a way that has become its reputation. The problem no one is talking about openly is that ${lowerFirst(complication)}.`,
   (
     name: string,
     role: string,
@@ -359,7 +387,7 @@ export function generateShipLocal(
   const officerRoster = officerNames
     .map((officer, index) => `- **${officer}** — ${officerDetails[index]}`)
     .join("\n");
-  const commandSection = `\n\n## Captain, Officers & Crew\n**${captain}** commands a ${crewType.toLowerCase()}. ${captainDetail}
+  const commandSection = `\n\n## Captain, Officers & Crew\n**${captain}** leads the ${crewType.toLowerCase()} aboard. ${capitalizeFirst(captainDetail)}
 
 ### Officer Roster
 ${officerRoster}
@@ -381,8 +409,8 @@ ${HISTORY_VARIANTS[historyIdx](name, role, affiliation, condition)}${commandSect
     )
     .join("\n");
 
-  const hook1 = `The party learns about ${complication.toLowerCase().slice(0, 60)}… — and they are the only ones who can act.`;
-  const hook2 = `Someone on the docks knows ${secret.toLowerCase().slice(0, 50)}… — and is willing to sell that information.`;
+  const hook1 = `Word reaches the party that ${lowerFirst(complication)} — and they may be the only outsiders able to intervene before it escalates.`;
+  const hook2 = `A broker on the docks claims to know a dangerous truth: ${lowerFirst(secret)} — and is looking for a buyer.`;
   const hook3 = `${affiliation} needs the party to deliver something to — or retrieve something from — ${name}. They are not told everything.`;
 
   const lore = `### Ship Profile

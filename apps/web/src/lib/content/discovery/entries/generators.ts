@@ -620,7 +620,7 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     intentAliases: ["fantasy magic item creator"],
     userJob: "create",
     uniqueValue:
-      "Magic items with lore, abilities, quirks and campaign hooks attached.",
+      "Magic items with a description, magical properties and lore attached.",
     parentCluster: "item-creation",
     indexable: true,
     status: "live",

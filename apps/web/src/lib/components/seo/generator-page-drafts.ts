@@ -138,12 +138,12 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
     type: "faction",
     title: "Dustborn Convoy",
     summary:
-      "A fuel-scarce smuggler band running corporate contraband along closed highway corridors.",
+      "A nomad clan (smuggler band) operating across sealed highway corridors and arcology outskirts.",
     content:
-      "### Who they are\nDustborn Convoy is a tight-knit smuggler band running the sealed highway corridors between Arcology 7 and the outer settlements. They survive on reputation, route knowledge, and a code that outsiders rarely understand until it is enforced.\n\n### How they survive\nCargo runs, corporate contraband, and repair work at waystations. Nothing moves through their territory without them knowing - or taking a cut.",
-    lore: "",
+      "### Who they are\nDustborn Convoy is a nomad clan (smuggler band) operating across sealed highway corridors and arcology outskirts. Their tone is grounded, gritty survival — every decision is shaped by the road and the people who depend on the convoy.\n\n### How they survive\nKeep the outer fuel depots supplied before winter dust storms close the passes. Their economy runs on what the roads provide — cargo runs, repairs, protection contracts, and trade at waystation markets. Nothing is wasted; everything has a price.\n\n### What threatens them\nCorporate pressure to surrender a cargo or a person. This is the crisis that cannot be deferred. The clan must resolve it before it costs them a route, a vehicle, or a member.\n\n### How to use them at the table\nDustborn Convoy works best as a faction the party keeps running into — on the road, at fuel stops, in waystation bars. They are reliable in a way most factions are not, but their code has limits and their patience for outsiders who cause problems is short.",
+    lore: "### Clan Profile\n- **📍 Territory**: Sealed highway corridors and arcology outskirts\n- **Fleet**: Mixed convoy — a lead rig, two cargo haulers, and two scout bikes. Plus whatever they have salvaged this season.\n- **Code**: Grounded — don't burn bridges you might need to cross again.\n- **Secret**: The convoy's lead rig carries a black-box transponder that a megacorp thinks was destroyed three years ago.\n- **Immediate Hook**: A clan outrider offers safe passage through a corporate checkpoint in exchange for silence about what is in the lead rig.\n\n### Notable Members\n- **👤 Sera Vane**: Convoy lead who makes the calls and takes the blame when they go wrong.\n- **👤 Kaelen Voss**: Head mechanic whose hands keep the fleet running; knows every vehicle's secrets.\n- **👤 Tomas Rell**: Point rider who has memorised three hundred kilometres of road and is running out of safe routes.\n\n### Current Crisis\nCorporate pressure to surrender a cargo or a person. The clan is managing it — for now — but every day without a resolution narrows their options.\n\n### Rival Faction\n- **👥 Rustline Syndicate**: Competing for the same routes, safe stops, or cargo contracts. The rivalry is old enough to have its own code of conduct — and new enough that someone recently broke it.",
     labels: ["rpg-faction", "nomad-clan", "imported-draft"],
-    status: "draft",
+    status: "active",
   },
   names: {
     type: "character",
@@ -168,22 +168,30 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
   "dnd-npc": {
     type: "character",
     title: "Elowen Ashford",
-    summary: "A half-elf rogue with a talent for leverage.",
+    summary:
+      "A chaotic neutral half-elf rogue. Needs someone expendable to retrieve a sealed ledger from the harbour master's office before midnight.",
     content:
-      "### Description\nElowen moves through taverns and guild halls with the easy confidence of someone who knows where the exits are. Her smile is genuine - mostly.\n\n### Secret\nShe carries a stolen signet ring that proves a local noble's son committed a crime the family has paid to bury.",
-    lore: "",
-    labels: ["rpg-npc", "Rogue", "Half-Elf"],
-    status: "draft",
+      "### The Six Elements\n- **Immediate Want**: Needs someone expendable to retrieve a sealed ledger from the harbour master's office before midnight.\n- **Physical Mannerism**: Keeps one thumb hooked in her belt while scanning every doorway.\n- **Sharp Contradiction**: A sharp-tongued fence who quietly pays off the debts of dockside apprentices.\n- **Relationship Hook**: Owes a favour to a disgraced watch captain who still holds her real name.\n- **Sensory Tag**: Smells of damp saltwool and cheap clove oil; speaks in clipped, unhurried sentences.\n- **Knowledge & Secrets**: Knows which warehouse guards take coin; does not know the ledger is a forgery; will never reveal the stolen signet ring sewn into her cloak lining.\n\n### Table Delivery\nIntroduce Elowen through her saltwool scent and doorway-scanning habit before she names the midnight ledger job. Let her dry generosity toward an apprentice show through if the party presses her terms.",
+    lore: "### At a Glance\n- **Class / Archetype**: Rogue / Level 4\n- **Table Rating**: CR 2\n- **Ancestry**: Half-Elf\n- **Role**: Rogue\n- **Immediate Want**: Needs someone expendable to retrieve a sealed ledger from the harbour master's office before midnight.\n- **Mannerism / Vocal Tell**: Keeps one thumb hooked in her belt while scanning every doorway.\n- **Contradiction**: A sharp-tongued fence who quietly pays off the debts of dockside apprentices.\n- **Relationship Hook**: Owes a favour to a disgraced watch captain who still holds her real name.\n- **Sensory Tag**: Smells of damp saltwool and cheap clove oil; speaks in clipped, unhurried sentences.\n- **Knowledge & Secrets**: Knows which warehouse guards take coin; does not know the ledger is a forgery; will never reveal the stolen signet ring sewn into her cloak lining.\n- **Moral Stance**: Chaotic Neutral\n\n### Faction Connection\nThe Lantern Guild, smugglers who treat harbour tariffs as an optional suggestion.",
+    labels: [
+      "table-card",
+      "rogue",
+      "rpg-character",
+      "npc-generator",
+      "imported-draft",
+    ],
+    status: "active",
   },
   "pantheon-generator": {
     type: "faction",
     title: "The Silent Maw",
-    summary: "A small pantheon of forgotten deities.",
+    summary:
+      "A collection of deities bound by the theme of cosmic balance in a classic fantasy world with shadow at its center.",
     content:
-      "### Origin & Dogma\nThe Silent Maw is a collection of ancient entities who hold sway over the dark and forgotten corners of the world.\n\n### Divine Portfolio\nTheir tenets demand absolute silence and devotion to secrets.",
-    lore: "### At a Glance\n- **Pantheon Name**: The Silent Maw\n- **Conflict Theme**: Cosmic Balance\n- **Worshippers**: Mystery Cult",
+      "### Origin & Dogma\nThe oldest texts describe these deities emerging not at the beginning of time but at its first break — the moment when cosmic balance entered the cosmos and forced a division of responsibility.\n\n### Pantheon Structure\nThe pantheon consists of 3 deities:\n1. **Vaelor**: Represents the domain of Shadow.\n2. **Kaelith**: Serves as a rival claimant challenging the old order.\n3. **Morgath**: Serves as a neutral arbiter holding the balance.\n\n### Divine Alliances & Rivalries\n- **Vaelor** is allied with **Morgath**, but stands in direct opposition to **Kaelith**.\n- **Kaelith** seeks to overthrow the established order of the other deities.",
+    lore: "### At a Glance\n- **Pantheon Name**: The Silent Maw\n- **Conflict Theme**: Cosmic Balance\n- **Worshippers**: Mystery Cult\n- **Hidden Problem**: A sealed relic from the pantheon's founding pact has cracked, weakening the oaths sworn in their name.\n- **Immediate Hook**: Two rival temples in the same city have declared the same holy day, and both demand the streets.\n\n### Deities of the Pantheon\n- **Vaelor**: The primary deity of Shadow.\n- **Kaelith**: Known as a rival claimant challenging the old order.\n- **Morgath**: Known as a neutral arbiter holding the balance.\n\n### Clergy & Temples\n- **Clergy Roles**: Rotating stewards hold office for one lunar cycle, splitting duties between public alms and sealed tribunal judgements.\n- **Temples & Shrines**: Vaulted sanctuaries sit beside busy markets, backed by modest wayside shrines along trade routes.\n\n### Rumours & Legends\n- One of the pantheon's sacred relics was pawned decades ago and now sits in a noble's private vault.\n- The high priests of rival deities are meeting in secret to avert an open schism.\n\n### Entity Seeds\n- **👥 Mystery Cult**: A major temple order or mystery cult dedicated to the worship of the pantheon.",
     labels: ["rpg-pantheon", "pantheon-generator", "imported-draft"],
-    status: "draft",
+    status: "active",
   },
   "god-generator": {
     type: "character",

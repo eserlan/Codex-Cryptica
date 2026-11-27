@@ -57,6 +57,8 @@ export const NON_STREAMABLE_SLUGS: readonly ValidSlug[] = [
   "tome",
   "bbeg-generator",
   "mystery-investigation",
+  // Partial previews cannot be checked for leaked GM-only hiddenTruth.
+  "holiday",
 ] as const;
 
 export function isStreamableSlug(slug: ValidSlug): boolean {
@@ -207,6 +209,7 @@ export function createGeneratorHandlers(
     "magic-item": (useAI) =>
       engine.generateMagicItem({
         ...(ctx.magicItem as object),
+        theme: ctx.getActiveTheme(),
         useAI,
       } as never),
     "minor-magic-item": (useAI) =>
@@ -226,6 +229,7 @@ export function createGeneratorHandlers(
     item: (useAI) =>
       engine.generateMagicItem({
         ...(ctx.magicItem as object),
+        theme: ctx.getActiveTheme(),
         useAI,
       } as never),
     faction: (useAI) =>

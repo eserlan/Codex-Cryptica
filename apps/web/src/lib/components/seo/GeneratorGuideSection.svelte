@@ -14,7 +14,10 @@
 </script>
 
 {#if guide}
-  <section class="border-t border-theme-border/60 px-6 py-12">
+  <section
+    class="border-t border-theme-border/60 px-6 py-12"
+    style="content-visibility: auto; contain-intrinsic-size: auto 360px;"
+  >
     <div class="max-w-4xl mx-auto">
       <h2
         class="font-header font-bold text-xl uppercase tracking-wider text-theme-primary mb-3"
@@ -29,7 +32,9 @@
           <article
             class="border border-theme-border/50 bg-theme-surface/20 rounded-xl p-4"
           >
-            <h3 class="font-header font-bold text-sm text-theme-text mb-1.5">
+            <h3
+              class="font-header font-bold text-base sm:text-lg uppercase tracking-wide text-theme-text mb-2.5 pb-2 border-b border-theme-primary/40"
+            >
               {tip.title}
             </h3>
             <p class="text-xs sm:text-sm text-theme-text leading-relaxed">

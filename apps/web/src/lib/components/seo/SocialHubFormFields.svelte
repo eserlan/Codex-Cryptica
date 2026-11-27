@@ -128,8 +128,9 @@
 />
 
 <div class="flex flex-col gap-1.5">
-  <label for="hub-context" class={labelClass}>Campaign context (optional)</label
-  >
+  <label for="hub-context" class={labelClass}>
+    Campaign context (optional)
+  </label>
   <textarea
     id="hub-context"
     bind:value={campaignContext}
@@ -142,8 +143,8 @@
     id="hub-context-help"
     class="text-micro text-theme-text/60 leading-relaxed"
   >
-    Add a city, faction, ongoing conflict, or campaign tension to aim the venue
-    at your table.
+    Add a city, faction, ongoing conflict or campaign tension. Offline drafts
+    keep it in the GM notes, and the AI draft is built around it.
   </p>
 </div>
 

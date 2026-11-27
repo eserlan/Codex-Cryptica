@@ -86,6 +86,35 @@ describe("SyncStore", () => {
     expect(store.status).toBe("error");
   });
 
+  it("unsubscribes from drive-pull events and disposes timers", async () => {
+    vi.useFakeTimers();
+    const unsubscribe = vi.fn();
+    const subscribe = vi
+      .spyOn(appEventBus, "subscribe")
+      .mockReturnValue(unsubscribe);
+    const retiredStore = new SyncStore({
+      activeVaultId: () => "vault-1",
+      activeVaultRecord: () => mockVaultRecord,
+      repository: repository as any,
+      getSyncCoordinator: vi.fn().mockResolvedValue(null),
+      getActiveVaultHandle: vi.fn().mockResolvedValue(opfsHandle),
+      getActiveFolderHandle: vi.fn().mockResolvedValue(null),
+      ensureServicesInitialized: vi.fn().mockResolvedValue(undefined),
+      loadMaps: vi.fn().mockResolvedValue(undefined),
+      loadCanvases: vi.fn().mockResolvedValue(undefined),
+      updateEntityCount: vi.fn().mockResolvedValue(undefined),
+      flushPendingSaves: vi.fn().mockResolvedValue(undefined),
+    });
+    retiredStore.setStatus("saved");
+    retiredStore.destroy();
+    retiredStore.destroy();
+    await vi.advanceTimersByTimeAsync(2500);
+    expect(unsubscribe).toHaveBeenCalledOnce();
+    expect(retiredStore.status).toBe("saved");
+    subscribe.mockRestore();
+    vi.useRealTimers();
+  });
+
   it("automatically transitions from saved back to idle after timeout", () => {
     vi.useFakeTimers();
     store.setStatus("saved");

@@ -205,7 +205,10 @@ function resolveAdventure(
     ? `${primaryPressure} coupled with ${secondaryPressure}`
     : primaryPressure;
 
-  const initialSituation = `${incitingActor.charAt(0).toUpperCase() + incitingActor.slice(1)} has set events in motion. ${objectiveType}.`;
+  const seedText = options.seed?.trim();
+  const initialSituation = seedText
+    ? `${seedText.replace(/[.!?]+$/, "")}. ${objectiveType}.`
+    : `${incitingActor.charAt(0).toUpperCase() + incitingActor.slice(1)} has set events in motion. ${objectiveType}.`;
   const primaryObjective = secondaryPressure
     ? `${objectiveType} — driven by ${primaryPressure} and complicated by ${secondaryPressure}.`
     : `${objectiveType} — driven by ${primaryPressure}.`;

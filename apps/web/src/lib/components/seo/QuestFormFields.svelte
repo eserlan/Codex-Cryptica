@@ -4,6 +4,7 @@
     factionConfig,
     pickFrom,
     questGenreForTheme,
+    themedQuestPool,
   } from "#lib/services/seo/generator-config.js";
   import SelectWithCustomOption from "#lib/components/forms/SelectWithCustomOption.svelte";
 
@@ -36,22 +37,27 @@
 
   const questGenre = $derived(questGenreForTheme(theme));
   const activeTones = $derived(
-    questConfig.tonesByTheme[questGenre] ?? questConfig.tones,
+    themedQuestPool(questConfig.tonesByTheme, questGenre) ?? questConfig.tones,
   );
   const activeScopes = $derived(
-    questConfig.scopesByTheme[questGenre] ?? questConfig.scopes,
+    themedQuestPool(questConfig.scopesByTheme, questGenre) ??
+      questConfig.scopes,
   );
   const activeLocationTypes = $derived(
-    questConfig.locationTypesByTheme[questGenre] ?? questConfig.locationTypes,
+    themedQuestPool(questConfig.locationTypesByTheme, questGenre) ??
+      questConfig.locationTypes,
   );
   const activeThreats = $derived(
-    questConfig.threatsByTheme[questGenre] ?? questConfig.threats,
+    themedQuestPool(questConfig.threatsByTheme, questGenre) ??
+      questConfig.threats,
   );
   const activeTwists = $derived(
-    questConfig.twistsByTheme[questGenre] ?? questConfig.twists,
+    themedQuestPool(questConfig.twistsByTheme, questGenre) ??
+      questConfig.twists,
   );
   const activeRewards = $derived(
-    questConfig.rewardsByTheme[questGenre] ?? questConfig.rewards,
+    themedQuestPool(questConfig.rewardsByTheme, questGenre) ??
+      questConfig.rewards,
   );
   const builtInTones = questConfig.tones;
   const builtInScopes = questConfig.scopes;
@@ -177,9 +183,9 @@
 </div>
 
 <div class="flex flex-col gap-1.5">
-  <label for="quest-campaign-context" class={labelClass}
-    >Optional Campaign Context</label
-  >
+  <label for="quest-campaign-context" class={labelClass}>
+    Optional Campaign Context
+  </label>
   <textarea
     id="quest-campaign-context"
     name="campaign_context"

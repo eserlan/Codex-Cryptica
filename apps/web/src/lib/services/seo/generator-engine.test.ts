@@ -268,9 +268,13 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.content).toContain("merchant guild");
       expect(res.content).toContain("What they control");
       expect(res.content).toContain("What they want");
-      expect(res.content).toContain(
+      expect(res.lore).toContain(
+        "### Campaign Context\na canal city split by old guild rivalries",
+      );
+      expect(res.content).not.toContain(
         "a canal city split by old guild rivalries",
       );
+      expect(res.lore).toContain("a canal city split by old guild rivalries");
       expect(res.lore).toContain("Internal Conflict");
       expect(res.lore).toContain("At a Glance");
       expect(res.lore).toContain("- **📍 Base**");
@@ -1595,7 +1599,11 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.lore).toContain("### Entity Seeds");
       expect(res.lore).toContain("- **📍");
       expect(res.lore).toContain("- **👤");
-      expect(res.lore).toContain("- **👥");
+      const seedLines = (res.lore.split("### Entity Seeds")[1] ?? "")
+        .split("\n")
+        .filter((line) => line.startsWith("- **"));
+      expect(seedLines).toHaveLength(4);
+      expect(res.lore).not.toContain("Faction behind");
       expect(res.lore).not.toContain("- **Character**:");
       expect(res.lore).not.toContain("- **Location**:");
       expect(res.lore).not.toContain("- **Faction**:");
@@ -1611,7 +1619,10 @@ describe("DefaultGeneratorEngine", () => {
         useAI: false,
       });
 
-      expect(res.content).toContain("a lawless frontier town");
+      expect(res.lore).toContain(
+        "### Campaign Context\na lawless frontier town",
+      );
+      expect(res.content).not.toContain("a lawless frontier town");
     });
 
     it("should use genre-appropriate venue types in local fallback", async () => {
@@ -1699,7 +1710,11 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.lore).toContain("### Entity Seeds");
       expect(res.lore).toContain("- **📍");
       expect(res.lore).toContain("- **👤");
-      expect(res.lore).toContain("- **👥");
+      const seedLines = (res.lore.split("### Entity Seeds")[1] ?? "")
+        .split("\n")
+        .filter((line) => line.startsWith("- **"));
+      expect(seedLines).toHaveLength(4);
+      expect(res.lore).not.toContain("Faction behind");
       expect(res.lore).not.toContain("- **Character**:");
       expect(res.lore).not.toContain("- **Location**:");
       expect(res.lore).not.toContain("- **Faction**:");
@@ -1707,14 +1722,15 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.labels).toContain("imported-draft");
     });
 
-    it("should include campaign context in local fallback output", async () => {
+    it("should keep campaign context in the local fallback GM notes", async () => {
       const res = await engine.generateTavern({
         type: "Roadside Inn",
         campaignContext: "a cursed forest road",
         useAI: false,
       });
 
-      expect(res.content).toContain("a cursed forest road");
+      expect(res.lore).toContain("### Campaign Context\na cursed forest road");
+      expect(res.content).not.toContain("a cursed forest road");
     });
 
     it("should call clientManager when useAI is true and succeed", async () => {
@@ -1795,14 +1811,17 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.labels).toContain("imported-draft");
     });
 
-    it("should include campaign context in local fallback output", async () => {
+    it("should keep campaign context in the kingdom local fallback GM notes", async () => {
       const res = await engine.generateKingdom({
         polityType: "Empire",
         campaignContext: "a crumbling empire on the edge of civil war",
         useAI: false,
       });
 
-      expect(res.content).toContain(
+      expect(res.lore).toContain(
+        "### Campaign Context\na crumbling empire on the edge of civil war",
+      );
+      expect(res.content).not.toContain(
         "a crumbling empire on the edge of civil war",
       );
     });

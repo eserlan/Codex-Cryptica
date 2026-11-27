@@ -17,11 +17,22 @@ import {
 import { parseFencedJson, asString } from "./llm-response-utils";
 import { formatCampaignContextBlock } from "./campaign-context";
 import {
+  buildSocialHubDetails,
+  pickSocialHubNames,
+  toProse,
+} from "./public-social-hub-details";
+import { withArticle } from "./public-settlement-community";
+import {
   buildSocialHubSchema,
   buildTavernSchema,
 } from "./public-social-hub-schema";
 import { resolveSmart, type LockedValue } from "./smart";
 import { socialHubConfig } from "./public-social-hub-config";
+import { buildTavernDetails } from "./public-tavern-details";
+
+function capitalise(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
 
 export {
   buildSocialHubSchema,
@@ -368,33 +379,50 @@ export function parseTavernResponse(text: string): PublicGeneratorOutput {
   };
 }
 
+/** Space-faring genres name a venue after its operator: "Wren's Dock". */
+const SPACE_HUB_SUFFIXES = ["Bay", "Dock", "Zone", "Platform", "Hub"];
+const HUB_NAME_SUFFIXES: Record<string, readonly string[]> = {
+  Cyberpunk: ["Node", "Den", "Hub", "Spot", "Joint"],
+  "Sci-Fi": SPACE_HUB_SUFFIXES,
+  Lancer: SPACE_HUB_SUFFIXES,
+  "Space Opera Resistance": SPACE_HUB_SUFFIXES,
+  "Optimistic Exploration Sci-Fi": SPACE_HUB_SUFFIXES,
+  "Space Western": SPACE_HUB_SUFFIXES,
+};
+
+function capitaliseFirst(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/** GM-notes section for the campaign context; empty when none is given. */
+function hubCampaignSection(campaignContext?: string): string {
+  const text = campaignContext?.trim() ?? "";
+  return text ? `\n\n### Campaign Context\n${text}` : "";
+}
+
 export function generateSocialHubLocal(
   options: SocialHubGeneratorOptions = {},
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
   const resolved = resolveSocialHub(options, rng);
   const trouble = resolved.trouble || pickFrom(socialHubConfig.troubles, rng);
-  const ownerName = generateName(rng);
-  const patron1 = generateName(rng);
-  const patron2 = generateName(rng);
+  const [ownerName, patron1, patron2] = pickSocialHubNames(resolved.genre, rng);
+  const details = buildSocialHubDetails({ ...resolved, trouble }, rng);
+  const venueType = toProse(resolved.venueType);
+  const atmosphere = toProse(resolved.atmosphere);
+  const clientele = toProse(resolved.clientele);
 
-  const techSuffixes: Record<string, string[]> = {
-    Cyberpunk: ["Node", "Den", "Hub", "Spot", "Joint"],
-    "Sci-Fi": ["Bay", "Dock", "Zone", "Platform", "Hub"],
-  };
-  const isTechGenre =
-    resolved.genre === "Cyberpunk" || resolved.genre === "Sci-Fi";
-  const venueName = isTechGenre
-    ? `${ownerName.split(" ")[0]}'s ${pickFrom(techSuffixes[resolved.genre], rng)}`
+  const venueName = HUB_NAME_SUFFIXES[resolved.genre]
+    ? `${ownerName}'s ${pickFrom(HUB_NAME_SUFFIXES[resolved.genre], rng)}`
     : buildTavernName(rng);
 
-  const summary = `A ${resolved.atmosphere.toLowerCase()} ${resolved.venueType.toLowerCase()} serving ${resolved.clientele.toLowerCase()}.`;
+  const summary = `${capitaliseFirst(withArticle(atmosphere))} ${venueType} serving ${clientele}.`;
 
   const hubPeopleVariants = [
     `The operator, ${ownerName}, runs a tight establishment. Regular faces include ${patron1}, a well-known local, and ${patron2}, who rarely speaks about where they sleep.`,
     `${ownerName} keeps the place running through a combination of competence and deliberate incuriosity. ${patron1} has been coming here long enough to be furniture. ${patron2} arrived recently and has already become someone people notice.`,
     `The regular crowd cycles around ${patron1}, who provides social continuity, and ${patron2}, whose presence here raises questions nobody has yet asked aloud. ${ownerName} manages both without appearing to manage either.`,
-    `${ownerName} knows more about the regulars than they let on. ${patron1} is one of the faces who makes the place feel safe. ${patron2} is one of the faces that does not quite fit — and ${ownerName} has noticed.`,
+    `${ownerName} knows more about the regulars than they let on. ${patron1} is one of the faces who makes the place feel safe. ${patron2} is one of the faces that does not quite fit, and ${ownerName} has noticed.`,
     `Ask ${ownerName} about the regulars and you get polite generalities. Ask ${patron1} and you get opinions. Ask ${patron2} and they change the subject.`,
   ] as const;
 
@@ -408,14 +436,14 @@ export function generateSocialHubLocal(
 
   const hubHowToUseVariants = [
     `Use ${venueName} as a home base, an information hub, or a pressure point. The trouble beneath the surface gives any visit the potential to escalate.`,
-    `${venueName} works best as a recurring location — somewhere the party keeps returning to, where the regulars remember them and the trouble keeps developing.`,
+    `${venueName} works best as a recurring location: somewhere the party keeps returning to, where the regulars remember them and the trouble keeps developing.`,
     `Let the party treat ${venueName} as safe ground early. The hidden trouble is what eventually makes that assumption cost them something.`,
-    `Use ${venueName} to deliver information sideways — through regulars, overheard conversations, and things ${ownerName} says without quite saying.`,
+    `Use ${venueName} to deliver information sideways: through regulars, overheard conversations, and things ${ownerName} says without quite saying.`,
     `${venueName} is most effective as a place where the party feels comfortable and the GM knows they should not be.`,
   ] as const;
 
   const content = `### The Place
-${venueName} is a ${resolved.venueType.toLowerCase()} catering to ${resolved.clientele.toLowerCase()}. The atmosphere is ${resolved.atmosphere.toLowerCase()}, and the wealth level is ${resolved.wealthLevel.toLowerCase()}.${resolved.campaignContext ? ` In ${resolved.campaignContext}, it sits at the edge of the main conflict.` : ""}
+${venueName} is ${withArticle(venueType)} catering to ${clientele}. The atmosphere is ${atmosphere}. ${details.roomNote}
 
 ### The People
 ${pickFrom(hubPeopleVariants, rng)}
@@ -430,25 +458,24 @@ ${pickFrom(hubHowToUseVariants, rng)}`;
 - **Theme / Genre**: ${resolved.genre}
 - **Type**: ${resolved.venueType}
 - **Atmosphere**: ${resolved.atmosphere}
-- **Owner / Operator**: ${ownerName} — competent, guarded, and owed favours by the wrong people
-- **Signature Drink or Service**: The house special, served without questions
+- **Wealth Level**: ${resolved.wealthLevel}
+- **Owner / Operator**: ${ownerName}, who is ${details.ownerNote}
+- **Signature Drink or Service**: ${details.signature}
 - **Hidden Problem**: ${trouble}
-- **Immediate Hook**: A regular has not shown up for three days — their usual spot is still being held
+- **Immediate Hook**: ${details.hook}
 
 ### Notable Regulars
-- **${patron1}**: A reliable local who knows more than they let on
-- **${patron2}**: A recent arrival who pays in currency that raises questions
+- **${patron1}**: ${details.patronNotes[0]}
+- **${patron2}**: ${details.patronNotes[1]}
 
 ### Rumours
-- Someone was seen leaving through the back way well after hours
-- A back room was recently sealed off — the operator says maintenance, locals say otherwise
-- A faction has been asking after a specific regular who may have passed through recently
+${details.rumours.map((rumour) => `- ${rumour}`).join("\n")}
 
 ### Entity Seeds
 - **📍 ${venueName} (this venue)**: The main location of the venue.
 - **👤 ${ownerName} (operator)**: The operator of the venue.
 - **👤 ${patron1} (regular)**: A notable regular patron.
-- **👥 Faction behind ${trouble.split("—")[0].trim()}**: Whoever is behind the hidden trouble.`;
+- ${details.troubleSeed}${hubCampaignSection(resolved.campaignContext)}`;
 
   return {
     type: "location",
@@ -461,23 +488,53 @@ ${pickFrom(hubHowToUseVariants, rng)}`;
   };
 }
 
+/** Three different placeholder names, so the owner and patrons never share one. */
+export function distinctNames(rng: Rng): [string, string, string] {
+  const names: string[] = [];
+  for (let tries = 0; names.length < 3 && tries < 50; tries++) {
+    const name = generateName(rng);
+    if (!names.includes(name)) names.push(name);
+  }
+  while (names.length < 3) {
+    const base = names[0] ?? "Aeldar";
+    let candidate = base;
+    let suffix = 2;
+    while (names.includes(candidate)) {
+      candidate = `${base} ${suffix}`;
+      suffix += 1;
+    }
+    names.push(candidate);
+  }
+  return [names[0], names[1], names[2]];
+}
+
+/** GM-notes section for the campaign context; empty when none is given. */
+function tavernCampaignSection(campaignContext?: string): string {
+  const text = campaignContext?.trim() ?? "";
+  return text ? `\n\n### Campaign Context\n${text}` : "";
+}
+
 export function generateTavernLocal(
   options: TavernGeneratorOptions = {},
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
   const resolved = resolveTavern(options, rng);
   const trouble = resolved.trouble || pickFrom(socialHubConfig.troubles, rng);
-  const ownerName = generateName(rng);
-  const patron1 = generateName(rng);
-  const patron2 = generateName(rng);
+  const [ownerName, patron1, patron2] = distinctNames(rng);
   const tavernName = buildTavernName(rng);
+  const details = buildTavernDetails({ ...resolved, trouble }, rng);
+  // "Tavern / Inn" reads as "tavern and inn" in prose.
+  const tavernType = resolved.tavernType.toLowerCase().replace(" / ", " and ");
+  const settlement = resolved.settlementType.toLowerCase();
+  const clientele = resolved.clientele.toLowerCase();
+  const atmosphere = resolved.atmosphere.toLowerCase();
 
-  const summary = `A ${resolved.atmosphere.toLowerCase()} ${resolved.tavernType.toLowerCase()} serving ${resolved.clientele.toLowerCase()} in a ${resolved.settlementType.toLowerCase()}.`;
+  const summary = `${capitalise(withArticle(atmosphere))} ${tavernType} serving ${clientele} in ${withArticle(settlement)}.`;
 
   const tavernPeopleVariants = [
     `The owner, ${ownerName}, runs a tight establishment. Regular patrons include ${patron1}, a well-known local face, and ${patron2}, who rarely speaks about where they sleep.`,
     `${ownerName} keeps order here through reputation as much as authority. ${patron1} has been a fixture long enough that their absence would be noticed. ${patron2} is newer and harder to read.`,
-    `Ask ${ownerName} about anything delicate and you get polished deflection. The regulars — ${patron1} in particular — have sharper answers if approached correctly. ${patron2} is the one nobody has quite figured out yet.`,
+    `Ask ${ownerName} about anything delicate and you get polished deflection. The regulars, ${patron1} in particular, have sharper answers if approached correctly. ${patron2} is the one nobody has quite figured out yet.`,
     `${ownerName} manages the place and the people with equal competence. ${patron1} represents the reliable core of the regulars. ${patron2} is a recent addition who has already become a talking point.`,
     `The owner is ${ownerName}, who knows when to ask questions and when not to. ${patron1} has been here long enough to remember how things used to be. ${patron2} showed up three weeks ago and the other regulars have already started watching them.`,
   ] as const;
@@ -494,12 +551,12 @@ export function generateTavernLocal(
     `Use ${tavernName} as a home base, a rumour hub, or a pressure point. The trouble beneath the surface gives any visit the potential to escalate.`,
     `${tavernName} works best as a recurring location where the party builds relationships and the hidden trouble slowly becomes their problem.`,
     `Let the party feel at home here before the trouble surfaces. The contrast between comfort and complication is the point.`,
-    `Use the regulars to deliver information naturally — what ${patron1} says offhand and what ${patron2} avoids saying are both useful.`,
+    `Use the regulars to deliver information naturally: what ${patron1} says offhand and what ${patron2} avoids saying are both useful.`,
     `${tavernName} is the kind of place campaigns return to. Make it feel lived-in early, and the trouble will land harder when it arrives.`,
   ] as const;
 
   const content = `### The Place
-${tavernName} is a ${resolved.tavernType.toLowerCase()} in a ${resolved.settlementType.toLowerCase()}, catering to ${resolved.clientele.toLowerCase()}. The atmosphere is ${resolved.atmosphere.toLowerCase()}, and the wealth level is ${resolved.wealthLevel.toLowerCase()}.${resolved.campaignContext ? ` In ${resolved.campaignContext}, it sits at the edge of the main conflict.` : ""}
+${tavernName} is ${withArticle(tavernType)} in ${withArticle(settlement)}, catering to ${clientele}. The atmosphere is ${atmosphere}. ${details.roomNote}
 
 ### The People
 ${pickFrom(tavernPeopleVariants, rng)}
@@ -513,25 +570,23 @@ ${pickFrom(tavernHowToUseVariants, rng)}`;
   const lore = `### At a Glance
 - **Type**: ${resolved.tavernType}
 - **Atmosphere**: ${resolved.atmosphere}
-- **Owner**: ${ownerName} — competent, guarded, and owed favours by the wrong people
-- **Signature Drink**: House ale brewed in the cellar, served warm
+- **Owner**: ${ownerName}, who is ${details.ownerNote}
+- **Signature Drink or Dish**: ${details.signature}
 - **Hidden Problem**: ${trouble}
-- **Immediate Hook**: A regular patron has not shown up for three days — their usual table is still reserved
+- **Immediate Hook**: ${details.hook}
 
 ### Notable Patrons
-- **${patron1}**: A reliable local who knows more than they let on
-- **${patron2}**: A recent arrival who pays in coin that smells of somewhere far away
+- **${patron1}**: ${details.patronNotes[0]}
+- **${patron2}**: ${details.patronNotes[1]}
 
 ### Rumours
-- Someone was seen leaving through the back door well after midnight
-- The cellar was recently bricked up — the owner says rats, locals say otherwise
-- A faction has been asking after a specific traveller who may have stayed here recently
+${details.rumours.map((rumour) => `- ${rumour}`).join("\n")}
 
 ### Entity Seeds
 - **📍 ${tavernName} (this tavern)**: The main location of the tavern.
 - **👤 ${ownerName} (owner)**: The owner of the tavern.
 - **👤 ${patron1} (regular patron)**: A notable regular patron.
-- **👥 Faction behind ${trouble.split("—")[0].trim()}**: Whoever is behind the hidden trouble.`;
+- ${details.troubleSeed}${tavernCampaignSection(resolved.campaignContext)}`;
 
   return {
     type: "location",

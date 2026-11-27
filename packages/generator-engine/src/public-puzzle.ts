@@ -103,10 +103,18 @@ export interface PuzzlePrompt {
   resolved: ResolvedPuzzleOptions;
 }
 
+/** Matches the form's own-option input limit. */
+const MAX_CUSTOM_OPTION_LENGTH = 120;
+
 const text = (value: unknown) =>
   typeof value === "string" ? value.trim() : "";
+/**
+ * The form lets a GM type their own option for every select, so a non-empty
+ * custom value is kept (bounded to the form's limit) instead of being
+ * silently replaced by the first built-in choice.
+ */
 const pickOption = (value: string | undefined, options: readonly string[]) =>
-  value && options.includes(value) ? value : options[0];
+  text(value).slice(0, MAX_CUSTOM_OPTION_LENGTH) || options[0];
 
 export function resolvePuzzle(
   options: PuzzleGeneratorOptions = {},
@@ -127,12 +135,146 @@ export function resolvePuzzle(
       options.failurePressure,
       puzzleConfig.failurePressures,
     ),
-    system: puzzleConfig.systems.includes(options.system as never)
-      ? options.system!
-      : DEFAULT_PUZZLE_SYSTEM,
+    system: pickOption(options.system, [DEFAULT_PUZZLE_SYSTEM]),
     downstreamConsequence: text(options.downstreamConsequence),
     campaignContext: text(options.campaignContext),
   };
+}
+
+type PuzzleStyle = (typeof puzzleConfig.styles)[number];
+
+/**
+ * What physically or socially blocks the party, keyed by puzzle style so a
+ * Social puzzle is never a "locked mechanism". Every phrase starts with a
+ * consonant sound because the setup sentence uses "a".
+ */
+const focusByStyle: Record<PuzzleStyle, readonly string[]> = {
+  Environmental: [
+    "slowly flooding chamber",
+    "half-collapsed bridge",
+    "passage choked with shifting debris",
+  ],
+  Magical: [
+    "fading ward",
+    "circle of humming sigils",
+    "sealed glyph that answers to words",
+  ],
+  Mechanical: [
+    "locked mechanism",
+    "counterweighted gate",
+    "panel of interlocking gears",
+  ],
+  Logic: [
+    "wall of contradictory inscriptions",
+    "lock that accepts one true statement",
+    "row of numbered tiles with a missing rule",
+  ],
+  Spatial: [
+    "shifting chamber",
+    "maze of sliding panels",
+    "room whose floor tilts with every step",
+  ],
+  Pattern: [
+    "mosaic of repeating symbols",
+    "ring of rotating dials",
+    "floor of coloured tiles",
+  ],
+  Social: [
+    "suspicious gatekeeper",
+    "pair of guards who disagree about the rules",
+    "proud keeper who demands proof of worth",
+  ],
+  Sensory: [
+    "corridor of echoing tones",
+    "darkened room of textured walls",
+    "chamber where scents mark the safe path",
+  ],
+  "Combat-puzzle": [
+    "guardian that shrugs off direct attacks",
+    "pair of linked sentries that shield each other",
+    "sentinel powered by a device across the room",
+  ],
+};
+const customFocus = [
+  "puzzling obstacle",
+  "guarded threshold",
+  "strange device",
+] as const;
+
+/** How many linked actions the GM-only solution needs, by complexity. */
+const linkedActionsByComplexity: Record<string, string> = {
+  Simple: "two",
+  Moderate: "three",
+  Elaborate: "four",
+};
+
+const participationNotes: Record<string, string> = {
+  "Any character can contribute":
+    "Keep every component open to any character, so nobody waits for a specialist.",
+  "Spotlight one character":
+    "Build one component around a single character's background or ability, and let the rest of the party support that moment.",
+  [puzzleConfig.participationStyles[2]]:
+    "Split the key components between two or three characters, so each has a turn in the spotlight.",
+  "Whole-party cooperation":
+    "Make the components act at the same moment, so the whole party must coordinate to succeed.",
+  "Sequential individual challenges":
+    "Run the components one after another, giving a different character the lead at each stage.",
+};
+
+const failurePressureActions: Record<string, string> = {
+  Complication: "add a complication",
+  "Time pressure": "advance a visible clock",
+  Danger: "expose the party to harm",
+  Combat: "wake a guardian or bring in hostile reinforcements",
+};
+
+/** Lower-cases a custom label's first letter while keeping acronyms intact. */
+const lowerFirst = (value: string) =>
+  /^[A-Z][A-Z]/.test(value)
+    ? value
+    : value.charAt(0).toLowerCase() + value.slice(1);
+
+function describeGoal(purpose: string): {
+  clause: string;
+  partyClause: string;
+} {
+  const action = purposeActions[purpose as keyof typeof purposeActions];
+  if (action)
+    return {
+      clause: `their attempt to ${action}`,
+      partyClause: `the party's attempt to ${action}`,
+    };
+  const goal = lowerFirst(purpose);
+  return {
+    clause: `their goal: ${goal}`,
+    partyClause: `the party's goal: ${goal}`,
+  };
+}
+
+function formatCampaignContext(campaignContext: string): string {
+  return campaignContext ? `\n\n### Campaign Context\n${campaignContext}` : "";
+}
+
+function formatAtAGlance(resolved: ResolvedPuzzleOptions): string {
+  const tailored = resolved.system !== DEFAULT_PUZZLE_SYSTEM;
+  return [
+    "### At a Glance",
+    `- **Genre:** ${resolved.genre}`,
+    `- **Purpose:** ${resolved.purpose}`,
+    `- **Style:** ${resolved.style}`,
+    `- **Complexity:** ${resolved.complexity}`,
+    `- **Failure pressure:** ${resolved.failurePressure}`,
+    `- **System:** ${resolved.system}`,
+    tailored && resolved.partyLevel
+      ? `- **Party level:** ${resolved.partyLevel}`
+      : "",
+    tailored && resolved.playerCount
+      ? `- **Players:** ${resolved.playerCount}`
+      : "",
+    `- **Participation:** ${resolved.participationStyle}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 function render(
@@ -148,9 +290,7 @@ function render(
     title,
     summary,
     content,
-    lore:
-      lore ||
-      `### At a Glance\n- **Genre:** ${resolved.genre}\n- **Complexity:** ${resolved.complexity}\n- **System:** ${resolved.system}\n- **Participation:** ${resolved.participationStyle}`,
+    lore: lore || formatAtAGlance(resolved),
     labels: [
       "puzzle",
       "puzzle-generator",
@@ -167,69 +307,70 @@ export function generatePuzzleLocal(
 ): PublicGeneratorOutput {
   const resolved = resolvePuzzle(options);
   const focus = pickFrom(
-    ["locked mechanism", "fading ward", "shifting chamber"],
+    focusByStyle[resolved.style as PuzzleStyle] ?? customFocus,
     rng,
   );
-  const purposeAction =
-    purposeActions[resolved.purpose as keyof typeof purposeActions] ??
-    resolved.purpose.toLowerCase();
+  const goal = describeGoal(resolved.purpose);
+  const linkedActions =
+    linkedActionsByComplexity[resolved.complexity] ?? "three";
   const capabilityNote =
     resolved.capabilities ||
     "investigation, physical action, social insight, and creative magic or equipment";
+  const participationNote =
+    participationNotes[resolved.participationStyle] ??
+    `Shape the components around the chosen participation style: ${lowerFirst(resolved.participationStyle)}.`;
+  const pressureAction =
+    failurePressureActions[resolved.failurePressure] ??
+    `bring in the chosen pressure (${lowerFirst(resolved.failurePressure)})`;
   const content = [
     "## Player-Facing Setup",
-    `The party finds a ${focus} blocking their attempt to ${purposeAction}. Its details make the ${resolved.genre} fiction clear: it was built to test intent, not merely punish failure.`,
+    `The party finds a ${focus} blocking ${goal.clause}. The scene's details fit the ${resolved.genre} setting: the obstacle exists to test intent, not merely to punish failure.`,
     "",
     "## Clues",
     "- **Obvious clue:** Put one sensory detail in plain view that points to the pattern.",
-    "- **Discoverable clue:** Interaction, conversation, or an appropriate check reveals why the mechanism was built.",
-    "- **Emergency clue:** After meaningful effort, show the next safe action through a visible change in the room.",
+    "- **Discoverable clue:** Interaction, conversation, or an appropriate check reveals why the obstacle is here.",
+    "- **Emergency clue:** After meaningful effort, show the next safe action through a visible change in the scene.",
     "",
     "## Character Spotlight Opportunities",
     `Invite contributions from ${capabilityNote}. Frame each as a useful angle, not a requirement: a careful observer reads the pattern, a forceful character changes its physical state at a cost, and a magical or technical character can test its energy or controls.`,
+    participationNote,
     "",
     "## Alternate Solutions",
     "- Bypass one component while accepting a minor complication.",
-    "- Negotiate with, trick, or repurpose the guardian mechanism.",
+    "- Negotiate with, trick, or repurpose whatever guards the obstacle.",
     "- Use an improvised resource or an original interpretation of the fiction to create a new route forward.",
     "",
     "## Failure & Escalation",
     resolved.failurePressure === "None"
       ? "Failed attempts provide clear feedback without adding pressure, so the puzzle remains a safe point for experimentation."
-      : `On a failed attempt, apply ${resolved.failurePressure.toLowerCase()} rather than a dead end: reveal new information, change the situation, and let the party choose how to proceed.`,
+      : `On a failed attempt, ${pressureAction} rather than ending the scene: reveal new information, change the situation, and let the party choose how to proceed.`,
     "",
     "## Running the Puzzle",
     "Describe the visible parts and the first clue freely. Let checks add context or reduce risk, never hide the only path behind a roll. Ask what each player does before offering a hint, then reward experiments with concrete feedback.",
     "",
     "## Scaling",
-    "Simplify by making two actions sufficient or offering the emergency clue earlier. Increase complexity by adding a clock, a second interacting component, or a consequence that changes the next encounter.",
+    "Simplify by needing one fewer action or offering the emergency clue earlier. Increase complexity by adding a clock, a second interacting component, or a consequence that changes the next encounter.",
     resolved.downstreamConsequence
       ? `\n## Downstream Consequences\n${resolved.downstreamConsequence}`
       : "",
   ].join("\n");
   const lore = [
-    "### At a Glance",
-    `- **Genre:** ${resolved.genre}`,
-    `- **Complexity:** ${resolved.complexity}`,
-    `- **System:** ${resolved.system}`,
-    `- **Participation:** ${resolved.participationStyle}`,
+    formatAtAGlance(resolved),
     "",
     "### GM-Only Solution",
-    `The ${resolved.style.toLowerCase()} challenge responds to a pattern of three linked actions. Any credible approach that identifies, alters, bypasses, or reinterprets the pattern advances the puzzle; no class, spell, skill, or single answer is required.`,
+    `The ${lowerFirst(resolved.style)} challenge responds to a pattern of ${linkedActions} linked actions. Any credible approach that identifies, alters, bypasses, or reinterprets the pattern advances the puzzle; no class, spell, skill, or single answer is required.`,
     "",
     "### Escalating Hints",
     "1. Repeat the obvious clue in a new sensory form.",
     "2. Point out the component that changed after the party's last action.",
     "3. State the puzzle's immediate fictional goal without naming a solution.",
-  ]
-    .filter(Boolean)
-    .join("\n");
+  ].join("\n");
   return render(
     resolved,
     `${resolved.style} Trial: ${resolved.purpose}`,
     content,
-    lore,
-    `A ${focus} blocks the party's attempt to ${purposeAction}. Visible ${resolved.genre} details reveal how to manipulate it, while a wrong approach changes the situation instead of ending the encounter.`,
+    lore + formatCampaignContext(resolved.campaignContext),
+    `A ${focus} blocks ${goal.partyClause}. Visible ${resolved.genre} details show how to get past it, while a wrong approach changes the situation instead of ending the encounter.`,
   );
 }
 

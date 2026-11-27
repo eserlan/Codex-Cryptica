@@ -100,6 +100,19 @@ describe("generateNewsSheetLocal", () => {
       generateNewsSheetLocal({}, seededRng(9)),
     );
   });
+
+  it("avoids claiming stories were killed when censorLevel is Uncensored", () => {
+    const uncensored = generateNewsSheetLocal(
+      { censorLevel: "Uncensored" },
+      seededRng(7),
+    );
+    const censored = generateNewsSheetLocal(
+      { censorLevel: newsSheetConfig.censorLevels[1] },
+      seededRng(7),
+    );
+    expect(uncensored.lore).not.toContain("killed entirely");
+    expect(censored.lore).toContain("killed entirely");
+  });
 });
 
 describe("buildNewsSheetPrompt", () => {

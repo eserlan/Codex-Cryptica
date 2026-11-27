@@ -122,7 +122,7 @@ export const howDoYouDesignRpgPuzzlesThatDoNotStallTheGame: AnswerConfigInput =
       {
         title: "Puzzle generator",
         description:
-          "Free, no login. Mechanisms and riddles you can hang alternative routes off.",
+          "Free, no login. Mechanisms, gatekeepers and other obstacles you can hang alternative routes off.",
         href: "/generators/puzzle",
       },
       {

@@ -141,9 +141,9 @@
 </div>
 
 <div class="flex flex-col gap-1.5">
-  <label for="minor-magic-item-campaign-context" class={labelClass}
-    >Optional Campaign Context</label
-  >
+  <label for="minor-magic-item-campaign-context" class={labelClass}>
+    Optional Campaign Context
+  </label>
   <textarea
     id="minor-magic-item-campaign-context"
     name="campaign_context"
@@ -155,9 +155,9 @@
   ></textarea>
   <p
     id="minor-magic-item-campaign-context-help"
-    class="text-micro text-theme-muted leading-relaxed"
+    class="text-helper text-theme-text leading-relaxed"
   >
-    Add a world, region, merchant guild, or current situation to ground this
-    item in your table.
+    Add a world, region, merchant guild, or current situation. Offline drafts
+    keep it in the GM notes, and the AI draft is built around it.
   </p>
 </div>

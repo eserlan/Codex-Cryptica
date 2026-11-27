@@ -469,4 +469,56 @@ describe("public-constellation", () => {
       ).toThrow();
     });
   });
+
+  it("uses the correct indefinite article before a vowel-initial visual impression in every local sentence", () => {
+    const output = generateConstellationLocal(
+      { visualImpression: "Animal", practicalUse: "Navigation" },
+      () => 0,
+    );
+
+    expect(output.summary).toContain("read as an animal,");
+    expect(output.content).toContain("read as an animal. ");
+    expect(output.content).toContain("read as an animal, is how the story");
+    expect(
+      `${output.summary}\n${output.content}`.match(/\ba animal\b/),
+    ).toBeNull();
+  });
+
+  it("keeps the article before a consonant-initial visual impression", () => {
+    const output = generateConstellationLocal(
+      { visualImpression: "Weapon", practicalUse: "Navigation" },
+      () => 0,
+    );
+
+    expect(output.summary).toContain("read as a weapon,");
+    expect(output.content).toContain("read as a weapon. ");
+  });
+
+  it("chooses articles by sound for custom visual impressions in every sentence", () => {
+    const unicorn = generateConstellationLocal(
+      { visualImpression: "unicorn", practicalUse: "Navigation" },
+      () => 0,
+    );
+    expect(unicorn.summary).toContain("read as a unicorn,");
+    expect(unicorn.content).toContain("read as a unicorn. ");
+    expect(unicorn.content).toContain("read as a unicorn, is how the story");
+
+    const hourglass = generateConstellationLocal(
+      { visualImpression: "hourglass", practicalUse: "Navigation" },
+      () => 0,
+    );
+    expect(hourglass.summary).toContain("read as an hourglass,");
+    expect(hourglass.content).toContain("read as an hourglass. ");
+    expect(hourglass.content).toContain(
+      "read as an hourglass, is how the story",
+    );
+
+    const ukulele = generateConstellationLocal(
+      { visualImpression: "ukulele", practicalUse: "Navigation" },
+      () => 0,
+    );
+    expect(ukulele.summary).toContain("read as a ukulele,");
+    expect(ukulele.content).toContain("read as a ukulele. ");
+    expect(ukulele.content).toContain("read as a ukulele, is how the story");
+  });
 });

@@ -8,7 +8,10 @@ import {
   createOneShotRunControl,
   showsStagedProgress,
 } from "./generator-page-generation";
-import { preloadLocalGenerator } from "./generator-page-local-generation.js";
+import {
+  generateLocally,
+  preloadLocalGenerator,
+} from "./generator-page-local-generation.js";
 import { LOCAL_GENERATOR_SLUGS } from "./generator-page-local-generation.js";
 import { GENERATOR_SLUGS } from "./generator-slugs.js";
 import { BANNED_NAMES } from "generator-engine/naming-policy";
@@ -243,8 +246,8 @@ describe("generator-page-generation", () => {
       expect(isStreamableSlug("settlement" as ValidSlug)).toBe(true);
     });
 
-    it("exposes exactly twelve non-streamable slugs", () => {
-      expect(NON_STREAMABLE_SLUGS).toHaveLength(12);
+    it("exposes exactly thirteen non-streamable slugs", () => {
+      expect(NON_STREAMABLE_SLUGS).toHaveLength(13);
       expect([...NON_STREAMABLE_SLUGS].sort()).toEqual(
         [
           "adventure-generator",
@@ -254,6 +257,7 @@ describe("generator-page-generation", () => {
           "council-vote",
           "dungeon-generator",
           "heist",
+          "holiday",
           "language-generator",
           "mystery-investigation",
           "one-shot-adventure-generator",
@@ -718,6 +722,20 @@ describe("generator-page-generation", () => {
       );
     });
 
+    it("passes activeTheme as theme for magic-item and item (AI path)", async () => {
+      for (const slug of ["magic-item", "item"] as const) {
+        const ctx = makeCtx({ activeTheme: "Cyberpunk / Corporate" });
+        const handlers = createGeneratorHandlers(ctx);
+        await handlers[slug](true);
+        expect(
+          (ctx as unknown as { _engine: ReturnType<typeof makeFakeEngine> })
+            ._engine.generateMagicItem,
+        ).toHaveBeenCalledWith(
+          expect.objectContaining({ theme: "Cyberpunk / Corporate" }),
+        );
+      }
+    });
+
     it("includes avoidNames for world generation from session entities", async () => {
       const engine = makeFakeEngine();
       const ctx = makeCtx({ sessionEntities: [{ name: "Existing" }], engine });
@@ -986,5 +1004,173 @@ describe("generator-page-generation", () => {
       await generate({ useAI: true });
       expect(engine.generateFaction).toHaveBeenCalledTimes(1);
     });
+  });
+});
+
+describe("offline magic item wiring", () => {
+  it("uses the page's active theme for magic-item and item", async () => {
+    for (const slug of ["magic-item", "item"] as const) {
+      const output = await generateLocally(slug, {
+        magicItem: { type: "Amulet" },
+        getActiveTheme: () => "Cyberpunk / Corporate",
+      } as never);
+      expect(output.lore).toContain("- **Theme**: Cyberpunk / Corporate");
+    }
+  });
+
+  it("passes typed-in tavern options and context to the offline draft", async () => {
+    const output = await generateLocally("tavern", {
+      tavern: {
+        type: "Floating barge inn",
+        atmosphere: "Smoky and conspiratorial",
+        settlementType: "Swamp hamlet",
+        wealthLevel: "Ostentatious",
+        clientele: "River pilots",
+        campaignContext: "The flooded barony of Mere",
+      },
+      getActiveTheme: () => "Classic Fantasy",
+      getSessionEntities: () => [],
+    } as never);
+    expect(output.summary).toBe(
+      "A smoky and conspiratorial floating barge inn serving river pilots in a swamp hamlet.",
+    );
+    expect(output.lore).toContain(
+      "### Campaign Context\nThe flooded barony of Mere",
+    );
+    expect(output.content).not.toContain("The flooded barony of Mere");
+  });
+
+  it("passes typed-in kingdom options and context to the offline draft", async () => {
+    const output = await generateLocally("kingdom", {
+      kingdom: {
+        polityType: "Sky Barony",
+        governmentStyle: "Rule by lottery",
+        geography: "Floating isles",
+        scale: "Two valleys",
+        conflictLevel: "Cold war",
+        magicLevel: "Outlawed",
+        campaignContext: "The Shattered Heights",
+      },
+    } as never);
+    expect(output.summary).toBe(
+      "A sky barony in floating isles, ruled by a system of rule by lottery and facing cold war.",
+    );
+    expect(output.content).toContain("Magic in the realm is outlawed");
+    expect(output.lore).toContain("- **Scale**: Two valleys");
+    expect(output.lore).toContain(
+      "### Campaign Context\nThe Shattered Heights",
+    );
+    expect(output.content).not.toContain("The Shattered Heights");
+  });
+
+  it("uses the chosen vibe and keeps the campaign context in the offline roster GM notes", async () => {
+    const output = await generateLocally("faction-roster", {
+      factionRoster: {
+        factionContext: "[Faction Context]\nFaction: The Salt Guild",
+        theme: "Cyberpunk / Corporate",
+        campaignContext: "The Salt Guild controls the rail yards.",
+        size: "3",
+      },
+      getActiveTheme: () => "Cyberpunk / Corporate",
+      getSessionEntities: () => [],
+    } as never);
+    expect(output.lore).toContain("### Campaign Context");
+    expect(output.lore).toContain("The Salt Guild controls the rail yards.");
+    expect(output.content).not.toContain("rail yards");
+    expect(output.title).toBe("The Salt Guild's Notable Members");
+  });
+
+  it("keeps quest campaign context and scope in the offline GM notes", async () => {
+    const output = await generateLocally("quest", {
+      quest: {
+        genre: "Cyberpunk",
+        campaignContext: "The Salt Guild controls the rail yards.",
+      },
+      getActiveTheme: () => "Cyberpunk / Corporate",
+      getSessionEntities: () => [],
+    } as never);
+    expect(output.lore).toContain("### Campaign Context");
+    expect(output.lore).toContain("The Salt Guild controls the rail yards.");
+    expect(output.content).not.toContain("Salt Guild");
+    expect(output.lore).toContain("**🧭 Scope**: ");
+  });
+
+  it("keeps the artifact campaign context and form choices in the offline draft", async () => {
+    const output = await generateLocally("artifact-generator", {
+      artifact: {
+        campaignContext: "The Salt Guild of Brindel",
+        curseCost: "None (Pure Burden of Custody)",
+      },
+      getActiveTheme: () => "Classic Fantasy",
+      getSessionEntities: () => [],
+    } as never);
+    expect(output.lore).toContain("The Salt Guild of Brindel");
+    expect(output.lore).toContain("no supernatural price");
+    expect(output.lore).toContain("- **Setting / Theme**: Classic Fantasy");
+  });
+
+  it("keeps the faction campaign context in the offline GM notes", async () => {
+    const output = await generateLocally("faction", {
+      faction: {
+        campaignContext: "The Salt Guild of Brindel",
+        theme: "Classic Fantasy",
+      },
+      getActiveTheme: () => "Classic Fantasy",
+      getSessionEntities: () => [],
+    } as never);
+    expect(output.lore).toContain("### Campaign Context");
+    expect(output.lore).toContain("The Salt Guild of Brindel");
+    expect(output.content).not.toContain("Salt Guild");
+  });
+
+  it("passes typed-in social hub options and context to the offline draft", async () => {
+    const output = await generateLocally("social-hub", {
+      socialHub: {
+        genre: "Clockwork Venice",
+        venueType: "Floating gondola bar",
+        atmosphere: "Sleepy and gossipy",
+        wealthLevel: "Ruinously rich",
+        clientele: "Masked courtiers",
+        campaignContext: "The drowned doge's funeral week",
+      },
+      getActiveTheme: () => "Classic Fantasy",
+      getSessionEntities: () => [],
+    } as never);
+    expect(output.summary).toBe(
+      "A sleepy and gossipy floating gondola bar serving masked courtiers.",
+    );
+    expect(output.lore).toContain("**Theme / Genre**: Clockwork Venice");
+    expect(output.lore).toContain("**Wealth Level**: Ruinously rich");
+    expect(output.lore).toContain(
+      "### Campaign Context\nThe drowned doge's funeral week",
+    );
+    expect(output.content).not.toContain("funeral week");
+  });
+
+  it("falls back to built-in social hub options when the page passes none", async () => {
+    const output = await generateLocally("social-hub", {
+      socialHub: {},
+      getActiveTheme: () => "Classic Fantasy",
+      getSessionEntities: () => [],
+    } as never);
+    expect(output.labels).toContain("social-hub-generator");
+    expect(output.lore).not.toContain("### Campaign Context");
+  });
+
+  it("keeps the minor magic item campaign context in the offline GM notes", async () => {
+    const output = await generateLocally("minor-magic-item", {
+      minorMagicItem: { campaignContext: "The Salt Guild of Brindel" },
+      getActiveTheme: () => "Classic Fantasy",
+      getSessionEntities: () => [],
+    } as never);
+    expect(output.lore).toContain("The Salt Guild of Brindel");
+  });
+
+  it("keeps the campaign context in the offline GM notes", async () => {
+    const output = await generateLocally("magic-item", {
+      magicItem: { type: "Amulet", campaignContext: "The Ash Court of Veyra" },
+      getActiveTheme: () => "Classic Fantasy",
+    } as never);
+    expect(output.lore).toContain("The Ash Court of Veyra");
   });
 });

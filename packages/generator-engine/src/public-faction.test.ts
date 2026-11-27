@@ -11,6 +11,7 @@ import {
   generateDarkFactionLocal,
   darkFactionConfig,
   factionConfig,
+  resolveFaction,
 } from "./public-faction";
 import { NAME_BAN_PROMPT } from "./public-npc";
 import {
@@ -121,6 +122,107 @@ describe("generateFactionLocal", () => {
   });
 });
 
+describe("generateFactionLocal offline wording", () => {
+  const scope = "Single city";
+
+  it("uses 'An' before a vowel-led alignment and type", () => {
+    const out = generateFactionLocal(
+      {
+        theme: "Classic Fantasy",
+        alignment: factionConfig.alignments[1],
+        type: "Arcane Circle",
+        scope,
+      },
+      seededRng(3),
+    );
+    expect(out.summary).toMatch(
+      /^An idealistic but compromised arcane circle /,
+    );
+    expect(out.content).toContain(" is an arcane circle ");
+  });
+
+  it("uses 'A' before a consonant-led alignment", () => {
+    const out = generateFactionLocal(
+      {
+        theme: "Classic Fantasy",
+        alignment: factionConfig.alignments[2],
+        type: "Merchant Guild",
+        scope,
+      },
+      seededRng(3),
+    );
+    expect(out.summary).toMatch(
+      /^A pragmatic and profit-driven merchant guild /,
+    );
+  });
+
+  it.each([
+    ["Union Rapid Response Unit", "a union rapid response unit"],
+    ["NHP Research Consortium", "an nhp research consortium"],
+  ])("uses the spoken article for %s", (type, phrase) => {
+    const out = generateFactionLocal(
+      { theme: "Lancer", type, scope },
+      seededRng(3),
+    );
+    expect(out.content).toContain(` is ${phrase} `);
+  });
+
+  it("describes the scope as a place without a 'level' suffix", () => {
+    const out = generateFactionLocal({ theme: "Pirate", scope }, seededRng(3));
+    expect(out.summary).toContain("operating across the single city.");
+    expect(out.summary).not.toMatch(/\blevel\b/);
+  });
+
+  it("keeps the campaign context in the GM notes, not in the public text", () => {
+    const out = generateFactionLocal(
+      {
+        theme: "Classic Fantasy",
+        campaignContext: "The Salt Guild of Brindel",
+      },
+      seededRng(3),
+    );
+    expect(out.lore).toContain(
+      "### Campaign Context\nThe Salt Guild of Brindel",
+    );
+    expect(out.content).not.toContain("Salt Guild");
+    expect(out.content).toContain("Within the campaign setting");
+  });
+
+  it("omits the campaign section when the context is blank", () => {
+    const out = generateFactionLocal(
+      { theme: "Classic Fantasy", campaignContext: "  " },
+      seededRng(3),
+    );
+    expect(out.lore).not.toContain("Campaign Context");
+    expect(out.content).not.toContain("Within the campaign setting");
+  });
+
+  it("draws hooks and conflicts from the pool for the chosen vibe", () => {
+    for (let seed = 1; seed <= 20; seed++) {
+      const resolved = resolveFaction(
+        { theme: "Vampire / Gothic Noir" },
+        seededRng(seed),
+      );
+      expect(factionConfig.hooksByTheme["Vampire / Gothic Noir"]).toContain(
+        resolved.hook,
+      );
+      expect(factionConfig.conflictsByTheme["Vampire / Gothic Noir"]).toContain(
+        resolved.conflict,
+      );
+      expect(factionConfig.hooksByTheme["Cyberpunk / Corporate"]).not.toContain(
+        resolved.hook,
+      );
+    }
+  });
+
+  it("falls back to the Classic Fantasy pools for an unknown vibe", () => {
+    const resolved = resolveFaction({ theme: "Typed by a GM" }, seededRng(2));
+    expect(factionConfig.hooksByTheme["Classic Fantasy"]).toContain(
+      resolved.hook,
+    );
+  });
+});
+
 describe("buildFactionPrompt", () => {
   it("embeds theme voice, ban prompt, and session context", () => {
     const { systemInstruction, userMessage } = buildFactionPrompt(
@@ -174,6 +276,57 @@ describe("vampire clan", () => {
     expect(out.labels).toContain("vampire-clan");
   });
 
+  it("generateVampireLocal uses 'an' before a vowel-initial archetype", () => {
+    const out = generateVampireLocal(
+      { archetype: "Occult Coven" },
+      seededRng(7),
+    );
+    expect(out.content).toMatch(/operating as an occult coven in the /);
+    expect(out.content).not.toMatch(/\ba occult\b/);
+  });
+
+  it("generateVampireLocal keeps 'a' before a consonant-initial archetype", () => {
+    const out = generateVampireLocal(
+      { archetype: "Predatory Brood" },
+      seededRng(7),
+    );
+    expect(out.content).toMatch(/operating as a predatory brood in the /);
+    expect(out.content).not.toMatch(/\ban predatory\b/);
+  });
+
+  it("generateVampireLocal uses 'a' before a European Court archetype", () => {
+    const out = generateVampireLocal(
+      { archetype: "European Court" },
+      seededRng(7),
+    );
+    expect(out.content).toMatch(/operating as a european court in the /);
+    expect(out.content).not.toMatch(/\ban european\b/);
+  });
+
+  it("generateVampireLocal drops the bloodline hint from the overview but keeps it in the GM reference", () => {
+    const out = generateVampireLocal(
+      { bloodline: "Sanguine Nobles (Charismatic Mind-Benders)" },
+      seededRng(7),
+    );
+    expect(out.content).toContain("of the sanguine nobles lineage");
+    expect(out.content).not.toContain("(Charismatic Mind-Benders)");
+    expect(out.lore).toContain(
+      "- **Bloodline**: Sanguine Nobles (Charismatic Mind-Benders)",
+    );
+  });
+
+  it("generateVampireLocal describes the scope as a place, not a bare fragment", () => {
+    const out = generateVampireLocal({}, seededRng(7));
+    expect(out.content).toMatch(/ in the [^.]+\.\s/);
+    expect(out.content).not.toContain(" across ");
+  });
+
+  it("generateVampireLocal describes the clan as predators, not undead hunters", () => {
+    const out = generateVampireLocal({}, seededRng(7));
+    expect(out.content).toContain("coven of predators");
+    expect(out.content).not.toContain("undead hunters");
+  });
+
   it("buildVampirePrompt includes resolved options and ban prompt", () => {
     const { userMessage, resolved } = buildVampirePrompt(
       { archetype: "Occult Coven" },
@@ -216,6 +369,112 @@ describe("dark fantasy faction (#1136)", () => {
       seededRng(12),
     );
     expect(out.summary).toContain("plague cult");
+  });
+
+  it("writes a grammatical summary for every moral posture", () => {
+    for (const posture of darkFactionConfig.moralPostures) {
+      const out = generateDarkFactionLocal(
+        {
+          mode: "Plague City",
+          factionType: "Mercenary Barony",
+          scope: darkFactionConfig.scopes[0],
+          moralPosture: posture,
+        },
+        seededRng(21),
+      );
+      const head = posture.split(" — ")[0];
+      expect(out.summary).toBe(
+        `A mercenary barony operating through a plague city, with the moral posture “${head}”.`,
+      );
+    }
+  });
+
+  it("uses 'an' before a vowel-initial custom faction type or mode", () => {
+    const out = generateDarkFactionLocal(
+      {
+        mode: "Undead Empire",
+        factionType: "Inquisition",
+        scope: darkFactionConfig.scopes[0],
+        moralPosture: darkFactionConfig.moralPostures[0],
+      },
+      seededRng(22),
+    );
+    expect(
+      out.summary.startsWith(
+        "An inquisition operating through an undead empire",
+      ),
+    ).toBe(true);
+    expect(out.content).toContain(" is an inquisition with real authority");
+  });
+
+  it("states the posture as a clause in the danger section, without dash fragments", () => {
+    const out = generateDarkFactionLocal(
+      {
+        mode: "Plague City",
+        factionType: "Plague Cult",
+        scope: darkFactionConfig.scopes[0],
+        moralPosture: "Openly cruel — they no longer pretend otherwise",
+      },
+      seededRng(23),
+    );
+    expect(out.content).toContain(
+      "Their chosen posture is “Openly cruel”: they no longer pretend otherwise.",
+    );
+    expect(out.content).not.toContain("—");
+  });
+
+  it("quotes noun-phrase postures in the danger section", () => {
+    const out = generateDarkFactionLocal(
+      {
+        moralPosture: "Fallen idealists — they remember what they meant to be",
+      },
+      seededRng(25),
+    );
+    expect(out.content).toContain(
+      "Their chosen posture is “Fallen idealists”: they remember what they meant to be.",
+    );
+  });
+
+  it("frames campaign context as a sentence without doubled full stops", () => {
+    const plain = generateDarkFactionLocal(
+      { campaignContext: "The plague city of Ashford, under quarantine" },
+      seededRng(24),
+    );
+    expect(plain.content).toContain(
+      "Campaign context: The plague city of Ashford, under quarantine.",
+    );
+
+    const punctuated = generateDarkFactionLocal(
+      { campaignContext: "A cursed kingdom under siege." },
+      seededRng(24),
+    );
+    expect(punctuated.content).toContain(
+      "Campaign context: A cursed kingdom under siege.",
+    );
+    expect(punctuated.content).not.toContain("..");
+  });
+
+  it("never gives the rival or a second NPC the faction's or leader's name", () => {
+    for (let seed = 1; seed <= 500; seed++) {
+      const out = generateDarkFactionLocal({}, seededRng(seed));
+      const rival = /- \*\*👥 (.+?)\*\*/.exec(out.lore)?.[1];
+      const npcs = [...out.lore.matchAll(/- \*\*👤 (.+?)\*\*/g)].map(
+        (m) => m[1],
+      );
+      expect(rival).toBeDefined();
+      expect(rival).not.toBe(out.title);
+      expect(npcs).toHaveLength(2);
+      expect(npcs[1]).not.toBe(npcs[0]);
+    }
+  });
+
+  it("does not repeat the internal conflict as the secret, and fixes the agent sentence", () => {
+    const out = generateDarkFactionLocal({}, seededRng(25));
+    expect(out.lore).toContain("- **Secret**: see Internal Conflict below.");
+    expect(out.lore).not.toContain("Does the parts");
+    expect(out.lore).toContain(
+      "Handles the parts of the work no one else will",
+    );
   });
 
   it("is deterministic for a fixed seed", () => {
@@ -621,5 +880,92 @@ describe("urban fantasy faction (#1137)", () => {
         seed += 1;
       }
     }
+  });
+});
+
+describe("urban fantasy offline wording fixes", () => {
+  it("uses article-neutral wording for custom faction types", () => {
+    const occult = generateUrbanFantasyFactionLocal(
+      { factionType: "Occult Gang" },
+      seededRng(40),
+    );
+    expect(occult.summary).toContain("a faction of type occult gang");
+    expect(occult.content).toContain(
+      "is a faction of type occult gang with a foothold in",
+    );
+
+    const european = generateUrbanFantasyFactionLocal(
+      { factionType: "European Council" },
+      seededRng(40),
+    );
+    expect(european.summary).toContain("a faction of type european council");
+    expect(european.content).toContain(
+      "is a faction of type european council with a foothold in",
+    );
+  });
+
+  it("strips trailing punctuation from custom mode before interpolation", () => {
+    const out = generateUrbanFantasyFactionLocal(
+      { mode: "Monster diplomacy." },
+      seededRng(40),
+    );
+    expect(out.summary).toContain("operating through monster diplomacy and");
+    expect(out.content).toContain("Their work centres on monster diplomacy.");
+    expect(out.content).not.toContain("diplomacy..");
+  });
+
+  it("never puts a capital letter after the colon in the risk sentence", () => {
+    const out = generateUrbanFantasyFactionLocal({}, seededRng(41));
+    const riskLine = out.content
+      .split("\n")
+      .find((line) => line.includes("simple to name:"));
+    expect(riskLine).toBeDefined();
+    expect(riskLine).toMatch(/simple to name: [a-z]/);
+    expect(riskLine).not.toMatch(/simple to name: [A-Z]/);
+  });
+
+  it("describes the moral posture as a trait, not as a noun phrase used as a possessive", () => {
+    const out = generateUrbanFantasyFactionLocal(
+      { moralPosture: "Pragmatic brokers" },
+      seededRng(42),
+    );
+    expect(out.content).toContain("They are pragmatic brokers, and");
+    expect(out.content).not.toContain("posture is");
+    expect(out.lore).toContain(
+      "whether being pragmatic brokers still protects the people it claims to serve.",
+    );
+    expect(out.lore).not.toContain("its pragmatic brokers instincts");
+  });
+
+  it("ends the campaign-context sentence with one full stop", () => {
+    const out = generateUrbanFantasyFactionLocal(
+      {
+        campaignContext: "the Thames flood barrier, which is failing.",
+      },
+      seededRng(43),
+    );
+    expect(out.content).toContain(
+      "The faction's choices are shaped by the Thames flood barrier, which is failing.",
+    );
+    expect(out.content).not.toContain("..");
+  });
+
+  it("omits the campaign-context sentence when no context is given", () => {
+    const out = generateUrbanFantasyFactionLocal({}, seededRng(43));
+    expect(out.content).not.toContain("shaped by");
+  });
+
+  it("uses the selected urban fantasy mode in the offline draft body", () => {
+    const out = generateUrbanFantasyFactionLocal(
+      { mode: "Monster diplomacy" },
+      seededRng(44),
+    );
+    expect(out.content).toContain("Their work centres on monster diplomacy.");
+  });
+
+  it("does not capitalise 'The' in the mid-sentence faction name", () => {
+    const out = generateUrbanFantasyFactionLocal({}, seededRng(45));
+    expect(out.content).not.toMatch(/Bring The /);
+    expect(out.content).toMatch(/Bring (?:the |[A-Z])/);
   });
 });
