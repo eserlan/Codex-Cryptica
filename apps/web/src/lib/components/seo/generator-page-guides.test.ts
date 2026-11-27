@@ -878,6 +878,34 @@ describe("Quest editorial guide", () => {
   });
 });
 
+describe("Personality editorial guide", () => {
+  it("connects personality choices to relationships, flaws and pressure, with a reading progression", () => {
+    const guide = getGeneratorGuide("personality", "Personality Generator");
+    const detail = guide.tips.map(({ detail }) => detail).join(" ");
+    for (const label of [
+      "Role / Context",
+      "Optional Relationship Context",
+      "Social Style",
+      "Moral Outlook",
+      "Temperament",
+      "Reserved / Expressive",
+    ]) {
+      expect(detail).toContain(label);
+    }
+    expect(detail).toContain("guide your own edits to a non-AI profile");
+    expect(detail).not.toContain("Save to Codex");
+    expect(guide.linksTitle).toBe(
+      "Bring the personality to the table and back again",
+    );
+    expect(guide.links?.map(({ href }) => href)).toEqual([
+      "/answers/how-do-you-make-npcs-memorable-without-lots-of-prep",
+      "/answers/how-do-i-roleplay-npcs-if-im-not-good-at-acting",
+      "/answers/how-do-you-keep-track-of-npcs-in-a-long-campaign",
+    ]);
+    expect(guide.links?.every(({ description }) => description)).toBe(true);
+  });
+});
+
 describe("Faction Roster editorial guide", () => {
   it("uses roster controls and progresses from roleplay to negotiation and faction turns", () => {
     const guide = getGeneratorGuide(

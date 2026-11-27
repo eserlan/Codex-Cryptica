@@ -138,6 +138,12 @@ export const howDoIRoleplayNpcsIfImNotGoodAtActing: AnswerConfigInput = {
       href: "/generators/npc",
     },
     {
+      title: "Personality generator",
+      description:
+        "Develop a recurring character's speech habits, drives and reactions under pressure, then choose the cues you can sustain at the table.",
+      href: "/generators/personality",
+    },
+    {
       title: "D&D NPC generator",
       description:
         "Generate a D&D-flavoured NPC with ancestry, role, and hooks suited to a gatehouse or tavern encounter.",

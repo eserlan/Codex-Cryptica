@@ -829,6 +829,50 @@ describe("GeneratorOutputCard", () => {
       expect(onSaveToCodex).toHaveBeenCalledTimes(1);
     });
 
+    it("places Personality's callout before the document without changing Copy or the other draft actions", async () => {
+      const characterData: GeneratorOutput = {
+        ...sampleData,
+        type: "character",
+        kind: "personality",
+        title: "Iona Pell",
+        labels: ["personality", "personality-generator", "imported-draft"],
+      };
+      const onCopyMarkdown = vi.fn();
+      const onSendToMonsterLabs = vi.fn();
+      const { container, onSaveToCodex } = renderCard({
+        generatedData: characterData,
+        generatorType: "personality",
+        generatedSingular: "Character",
+        onCopyMarkdown,
+        onSendToMonsterLabs,
+      });
+      const callout = screen.getByTestId("generator-continuation-callout");
+      const copy = screen.getByRole("button", { name: /^Copy$/ });
+      const section = screen.getByText(
+        "Brotherhood of Hollow Crown is a fallen order with real authority.",
+      );
+      expect(
+        copy.compareDocumentPosition(callout) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(
+        callout.compareDocumentPosition(section) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(container.querySelectorAll("#save-to-codex-btn")).toHaveLength(1);
+      expect(callout.textContent).toContain("one new Character");
+      await fireEvent.click(copy);
+      expect(onCopyMarkdown).toHaveBeenCalledTimes(1);
+      await fireEvent.click(
+        screen.getByRole("button", { name: /Create D&D Monster/i }),
+      );
+      expect(onSendToMonsterLabs).toHaveBeenCalledWith(characterData);
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Add to my Codex" }),
+      );
+      expect(onSaveToCodex).toHaveBeenCalledTimes(1);
+    });
+
     it("puts the quest continuation between draft actions and the document without duplicating Save", async () => {
       const { container, onSaveToCodex } = renderCard({
         generatorType: "quest",

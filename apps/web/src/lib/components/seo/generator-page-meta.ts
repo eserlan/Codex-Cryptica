@@ -1342,11 +1342,11 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     pageTitle:
       "Personality Generator | Free RPG Character Personality Tool | Codex Cryptica",
     metaDescription:
-      "Generate a coherent, playable RPG character personality: drives, a connected virtue and flaw, a believable contradiction, behaviour under pressure, speech style, and roleplaying cues — not a flat trait list.",
+      "Draft a character's personality with drives, virtue and flaw, a contradiction, speech cues and behaviour under pressure. Prepare roleplay for your RPG.",
     introTitle: "Personality Generator",
     eyebrow: "Character Personality Generator",
     introText:
-      "Create a personality you can actually portray at the table: what they want, how they act under pressure, how they speak, and the one contradiction that makes them feel human. Works without login, then imports into your local vault.",
+      "Work out how a character speaks, what they protect and what makes them lose their composure. Tailor a personality with AI, or take a random non-AI profile as a starting point for the next conversation.",
     canonicalPath: "/generators/personality",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-personality.jpg",
@@ -1364,17 +1364,27 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "What does the Personality Generator create?",
         answer:
-          "A coherent personality profile: a core behavioural pattern, outward demeanour versus inner nature, drives (what they want, fear, protect, envy, and need from others), a connected virtue and flaw, a psychologically believable contradiction, how they change under pressure, social behaviour by relationship type, speech style, a restrained mannerism, a boundary or trigger, and 3-5 concrete roleplaying cues.",
+          "A character profile with a core personality, speech style, a tell and roleplaying cues. The GM reference covers outward demeanour versus inner nature, drives, virtue and flaw, contradiction, pressure response, social behaviour, boundaries and example reactions. It is not a complete rules or statistics sheet.",
       },
       {
-        question: "Does it just generate a list of adjectives?",
+        question: "Do the personality settings affect non-AI generation?",
         answer:
-          "No. The generator is deliberately built against adjective-soup output — every field is checked for internal consistency, so the drives, virtue/flaw, contradiction, and speech style all describe the same person rather than a pile of unrelated traits.",
+          "The AI prompt uses your selected traits, role and optional context to tailor a profile. Non-AI generation instead picks a prewritten personality at random, independent of those choices; it does not incorporate the context you enter. Use the settings as editing prompts if you are working without AI.",
       },
       {
-        question: "Can I use it to enrich an existing character?",
+        question: "How do I use the profile at the table?",
         answer:
-          "The standalone generator produces a new character personality you can save into your vault. Generating a personality directly from an existing entity, using its established facts as context, is supported from the entity's own detail view.",
+          "Choose a current want and one speech or physical cue for ordinary conversation. If the character is cornered, look at Under Pressure and Boundary / Trigger to work out what they do differently. Review the draft for consistency and adapt it to the character and situation.",
+      },
+      {
+        question: "What does Add to my Codex save?",
+        answer:
+          "It imports one new Character into your local vault. The quick roleplaying cues and speech style remain in the main description, with deeper drives and reactions in GM notes in the standard draft. Review AI drafts before sharing. It does not automatically add relationships, create a game-system stat block or replace an existing Character.",
+      },
+      {
+        question: "Can I enrich a character who already exists in my vault?",
+        answer:
+          "Yes. Copy the useful cues into the existing Character rather than importing a second one. For a Character already configured for Guest Character Chat, the edit-mode Chats panel also offers Generate Full Profile when AI is available; review and save the Personality & Voice lore on that entry.",
       },
     ],
     relatedLinks: [

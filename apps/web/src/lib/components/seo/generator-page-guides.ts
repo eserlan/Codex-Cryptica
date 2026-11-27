@@ -391,28 +391,43 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   personality: {
     summary:
-      "Memorable RPG characters come from a visible habit, a private pressure, and one contradiction—not a two-page monologue.",
+      "Keep a character recognisable across very different conversations. Choose a visible habit for their first appearance, then use their drives, virtue, flaw and contradiction to work out how their behaviour changes when the party puts them under pressure.",
     tips: [
       {
-        title: "Lead with one physical tell",
+        title: "Give them someone to answer to",
         detail:
-          "Pick a single posture, vocal cadence, or prop from the draft so you can drop straight into character without acting.",
+          "Use Role / Context and Optional Relationship Context to set a target for a tailored AI draft or to guide your own edits to a non-AI profile. A Contact / Informant who owes the party a favour still has a loyalty elsewhere: decide what they will tell a friend that they would never tell a stranger.",
       },
       {
-        title: "Play the want against the fear",
+        title: "Let a genuine strength cause a problem",
         detail:
-          "When players push an NPC, decide whether they protect their public reputation or chase their secret goal.",
+          "Try Guarded in Social Style with Loyalty above all in Moral Outlook. Read Virtue and Flaw together and decide when protecting an ally turns into withholding information the party needs; the players can then appeal to the same loyalty instead of simply rolling against a hostile character.",
       },
       {
-        title: "Save keepers to your vault",
+        title: "Know when the usual manner breaks",
         detail:
-          "Use Save to Codex to keep recurring contacts linked to the locations and factions where players met them.",
+          "Choose Calm in Temperament and Reserved in Reserved / Expressive for a character who keeps control in ordinary conversation. Pick a cue from Mannerism / Tell, then consult Under Pressure and Boundary / Trigger to decide what changes if the party crosses a line.",
       },
     ],
+    linksTitle: "Bring the personality to the table and back again",
     links: [
       {
+        href: "/answers/how-do-you-make-npcs-memorable-without-lots-of-prep",
+        label: "Reduce a profile to the cues players will notice",
+        description:
+          "Choose an immediate want, a recognisable habit and a contradiction, then add the relationship or sensory detail needed for the first scene.",
+      },
+      {
         href: "/answers/how-do-i-roleplay-npcs-if-im-not-good-at-acting",
-        label: "Roleplaying NPCs without acting",
+        label: "Portray a character without doing a voice",
+        description:
+          "Use a clear attitude, habitual behaviour and simple third-person narration to make the character identifiable as conversations shift.",
+      },
+      {
+        href: "/answers/how-do-you-keep-track-of-npcs-in-a-long-campaign",
+        label: "Remember what changed before they return",
+        description:
+          "Record the last meeting, current want and unresolved obligation so a recurring character remembers what the party did.",
       },
     ],
   },
