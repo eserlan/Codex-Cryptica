@@ -2,7 +2,6 @@
 <!-- fallow-ignore-file css-broken-reference -- overflow-y-auto is a valid Tailwind utility; the class check misreads it. -->
 <script lang="ts">
   import { tick } from "svelte";
-  import { featureFlags } from "#lib/stores/feature-flags.svelte.js";
   import { KeyboardInset } from "#lib/services/help-assistant/keyboard-inset.svelte.js";
   import { bodyPortal, containTab } from "./adventure-phone-surface";
   import {
@@ -46,17 +45,10 @@
   } from "./artwork/adventure-artwork-lightbox.svelte.js";
   import AdventureArtworkCueDetails from "./artwork/AdventureArtworkCueDetails.svelte";
   import ArtworkSettings from "./artwork/ArtworkSettings.svelte";
-  import type { ArtworkAsset } from "@codex/adventure-artwork-engine";
-  import type { ArtworkDisplayService } from "#lib/services/adventure/artwork/artwork-display-service.js";
-  import type { ArtworkBlobHandle } from "#lib/services/adventure/artwork/ports.js";
   import { artworkPreferences } from "#lib/services/adventure/artwork/artwork-preferences.js";
-  import { createDisplayService } from "#lib/services/adventure/artwork/create-display-service.js";
-  import { defaultArtworkCatalogue } from "#lib/services/adventure/artwork/default-artwork-catalogue.js";
-  import { summarizeArtworkCues } from "#lib/services/adventure/artwork/artwork-cue-summary.js";
-  import { artworkDemandReporter } from "#lib/services/adventure/artwork/artwork-demand-reporter.js";
-  import { selectPresentNpcPortrait } from "#lib/services/adventure/artwork/npc-portrait-selection.js";
   import { vault } from "#lib/stores/vault.svelte.js";
   import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { AdventureFocusArtwork } from "./adventure-focus-artwork.svelte.js";
   import {
     exitAdventureFullscreen,
     requestAdventureFullscreen,
@@ -224,143 +216,12 @@
     `${transcriptLength}:${manager.phase}:${pendingRollId ?? ""}:${manager.streamedNarration?.length ?? 0}:${oocEventVersion}:${manager.oocGenerating ? "1" : "0"}`,
   );
 
-  type AdventurePortraitProp = {
-    name: string;
-    src: string | null | undefined;
-    alt: string;
-    aiLabel?: string;
-    credits?: string;
-    description?: string;
-    loadFull?: (signal: AbortSignal) => Promise<ArtworkBlobHandle | null>;
-  };
-
-  const artworkFlagEnabled = $derived(
-    featureFlags.isEnabled("adventureArtwork"),
-  );
-  let artworkEnabled = $state(artworkPreferences.enabled);
-  let artworkCatalogue = $state<readonly ArtworkAsset[]>([]);
-  let artworkDisplay = $state<ArtworkDisplayService>();
-  let npcPortrait = $state<AdventurePortraitProp | null>(null);
-
-  $effect(() => {
-    artworkEnabled = artworkPreferences.enabled;
-    return artworkPreferences.subscribe((value) => {
-      artworkEnabled = value;
-    });
-  });
-
-  $effect(() => {
-    if (!artworkFlagEnabled) {
-      artworkDisplay = undefined;
-      artworkCatalogue = [];
-      return;
-    }
-    let active = true;
-    let resources: ReturnType<typeof createDisplayService> | undefined;
-    try {
-      resources = createDisplayService(artworkPreferences);
-      artworkDisplay = resources.display;
-    } catch {
-      /* Private Vault images still work. */
-    }
-    void defaultArtworkCatalogue.get().then((assets) => {
-      if (active && assets) artworkCatalogue = assets;
-    });
-    return () => {
-      active = false;
-      resources?.destroy();
-    };
-  });
-
-  const selectedNpcPortrait = $derived(
-    artworkFlagEnabled
-      ? selectPresentNpcPortrait(
-          manager.session,
-          vault.activeVaultId,
-          vault.entities,
-          artworkEnabled,
-          themeStore.worldThemeId,
-          artworkCatalogue,
-        )
-      : null,
-  );
-
-  const cueSummary = $derived(
-    artworkFlagEnabled
-      ? summarizeArtworkCues(
-          manager.session,
-          vault.activeVaultId,
-          vault.entities,
-          artworkEnabled,
-          themeStore.worldThemeId,
-          artworkCatalogue,
-        )
-      : null,
-  );
-
-  $effect(() => {
-    artworkDemandReporter.reportFromSummary(
-      cueSummary,
-      manager.session?.id ?? null,
-    );
-  });
-
-  $effect(() => {
-    const selection = selectedNpcPortrait;
-    const display = artworkDisplay;
-    if (!selection) {
-      npcPortrait = null;
-      return;
-    }
-    let cancelled = false;
-    const controller = new AbortController();
-    let owned: ArtworkBlobHandle | null = null;
-    npcPortrait = null;
-
-    if (selection.kind === "vault") {
-      void vault
-        .resolveImageUrl(selection.image)
-        .then((url) => {
-          if (cancelled || !url) return;
-          npcPortrait = {
-            name: selection.name,
-            src: url,
-            alt: selection.alt,
-            description: selection.description,
-          };
-        })
-        .catch(() => {});
-    } else if (display) {
-      void display
-        .load(selection.asset, controller.signal, "preview")
-        .then((handle) => {
-          if (cancelled || controller.signal.aborted) {
-            handle?.release();
-            return;
-          }
-          if (!handle) return;
-          owned = handle;
-          npcPortrait = {
-            name: selection.name,
-            src: handle.url,
-            alt: selection.alt,
-            aiLabel: selection.aiLabel,
-            credits: selection.credits,
-            description: selection.description,
-            loadFull: (signal) =>
-              display.load(selection.asset, signal, "display"),
-          };
-        })
-        .catch(() => {});
-    }
-
-    return () => {
-      cancelled = true;
-      controller.abort();
-      owned?.release();
-    };
-  });
-
+  const artwork = new AdventureFocusArtwork(() => ({
+    session: manager.session,
+    activeVaultId: vault.activeVaultId,
+    entities: vault.entities,
+    theme: themeStore.worldThemeId,
+  }));
   $effect.pre(() => {
     // These are the player-visible events that can add content below the
     // current viewport: a new turn, generation state, or a pending roll.
@@ -465,9 +326,9 @@
 {/snippet}
 
 {#snippet utilities()}
-  {#if artworkFlagEnabled}
+  {#if artwork.flagEnabled}
     <ArtworkSettings preferences={artworkPreferences} />
-    <AdventureArtworkCueDetails summary={cueSummary} />
+    <AdventureArtworkCueDetails summary={artwork.cueSummary} />
   {/if}
   <AdventurePackageProgress {manager} />
   <AdventurePackageAudit {manager} />
@@ -690,7 +551,7 @@
       >
         <AdventureStateSummary {manager} variant="panel">
           {#snippet media()}
-            {#if artworkFlagEnabled}
+            {#if artwork.flagEnabled}
               <AdventureArtworkFeature
                 session={manager.session}
                 entities={vault.entities}
@@ -700,7 +561,7 @@
                   (manager.phase !== "ready" && manager.phase !== "offline")}
                 theme={themeStore.worldThemeId}
                 mutate={(...args) => manager.mutateLocalArtwork(...args)}
-                portrait={npcPortrait}
+                portrait={artwork.portrait}
               />
             {/if}
           {/snippet}
