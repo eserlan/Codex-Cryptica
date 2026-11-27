@@ -6,7 +6,12 @@
 
 import type { PublicGeneratorOutput } from "./public-generator-types";
 import { parseFencedJson } from "./llm-response-utils";
-import { defaultRng, pickFrom, type Rng } from "./random-utils";
+import {
+  defaultRng,
+  indefiniteArticle,
+  pickFrom,
+  type Rng,
+} from "./random-utils";
 import { withPublicCreativeCue } from "./public-creative-diversity";
 import { BANNED_NAMES, NAME_BAN_PROMPT } from "./public-npc-constants";
 import {
@@ -633,12 +638,13 @@ export function generateWorldLocal(
       : `Its primary societal model is a ${societalModel.toLowerCase()}.`;
   const cultureDriver =
     genre === "Lancer"
-      ? "the Lancer world frame and its civilian institutions"
-      : `the ${societalModel.toLowerCase()}`;
+      ? "The Lancer world frame and its civilian institutions"
+      : `The ${societalModel.toLowerCase()}`;
+  const worldTypeArticle = indefiniteArticle(worldType.toLowerCase());
 
   const content = [
     "## Core Concept",
-    `${title} is a ${worldType.toLowerCase()} in a ${genre.toLowerCase()} setting, defined by ${dominantFeature}. ${societalModelDetail} Its campaign pressure is ${campaignPressure}. Its two world tags are ${worldTagOne} and ${worldTagTwo}; together they create the setting's main pressure rather than serving as decorative labels.${lancerDetails}`,
+    `${title} is ${worldTypeArticle} ${worldType.toLowerCase()} in a ${genre.toLowerCase()} setting, defined by ${dominantFeature}. ${societalModelDetail} Its campaign pressure is ${campaignPressure}. Its two world tags are ${worldTagOne} and ${worldTagTwo}; together they create the setting's main pressure rather than serving as decorative labels.${lancerDetails}`,
     "",
     "## World Profile",
     `A ${civilisation.toLowerCase()} world whose settlements, institutions, and rivalries are shaped by its difficult physical reality. The tags ${worldTagOne} and ${worldTagTwo} describe the social and material pressures that make it worth visiting.`,
@@ -672,7 +678,7 @@ export function generateWorldLocal(
     `The same conditions that made ${title} valuable have repeatedly stranded expeditions and reshaped local borders. Its history is still argued over because every surviving record serves someone's claim.`,
     "",
     "## Current Conflicts",
-    `Control of the planet's safest routes and life-support infrastructure is becoming more contested as established agreements fail. ${worldTagOneComplication} The campaign pressure is ${campaignPressure}, and its costs fall on ordinary people as well as the powerful.${lancerWorldFrame ? " In Lancer terms, pilots and civilians experience the same dispute through different risks and responsibilities." : ""}`,
+    `Control of the planet's safest routes and life-support infrastructure is becoming more contested as established agreements fail. ${worldTagOneComplication}. The campaign pressure is ${campaignPressure}, and its costs fall on ordinary people as well as the powerful.${lancerWorldFrame ? " In Lancer terms, pilots and civilians experience the same dispute through different risks and responsibilities." : ""}`,
     "",
     "## Mysteries",
     `A buried system connected to ${dominantFeature} is beginning to behave differently. The people who can explain it disagree on whether it is a warning, a weapon, or an opportunity. ${worldTagTwoThing}.`,
@@ -686,7 +692,7 @@ export function generateWorldLocal(
   return {
     type: "location",
     title,
-    summary: `${title} is a ${worldType.toLowerCase()} defined by ${dominantFeature}.`,
+    summary: `${title} is ${worldTypeArticle} ${worldType.toLowerCase()} defined by ${dominantFeature}.`,
     content,
     lore,
     labels: [

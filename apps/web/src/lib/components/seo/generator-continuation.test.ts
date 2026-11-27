@@ -104,12 +104,40 @@ describe("generator-continuation", () => {
     expect(config).not.toBeNull();
     expect(config?.capabilities.join(" ")).toContain("Note entry");
     expect(config?.capabilities.join(" ")).toContain("GM-only history");
+  });
+
+  it("configures the world generator as a Location import with GM-only lore", () => {
+    const config = getGeneratorContinuationConfig("world");
+    expect(config).not.toBeNull();
+    expect(config?.capabilities.join(" ")).toContain("Location entry");
+    expect(config?.capabilities.join(" ")).toContain("GM-only lore");
     expect(
       [config?.headline, config?.summary, ...(config?.capabilities ?? [])]
         .join(" ")
         .match(/[–—]/),
     ).toBeNull();
 
+    expect(
+      shouldShowGeneratorContinuation({
+        generatorType: "world",
+        userGenerationSucceeded: true,
+        isExampleDraft: false,
+        isBusy: false,
+        variant: "default",
+      }),
+    ).toBe(true);
+    expect(
+      shouldShowGeneratorContinuation({
+        generatorType: "world",
+        userGenerationSucceeded: false,
+        isExampleDraft: true,
+        isBusy: false,
+        variant: "default",
+      }),
+    ).toBe(false);
+  });
+
+  it("gates the holiday continuation on completed non-example generation", () => {
     expect(
       shouldShowGeneratorContinuation({
         generatorType: "holiday",
@@ -122,8 +150,8 @@ describe("generator-continuation", () => {
     expect(
       shouldShowGeneratorContinuation({
         generatorType: "holiday",
-        userGenerationSucceeded: true,
-        isExampleDraft: true,
+        userGenerationSucceeded: false,
+        isExampleDraft: false,
         isBusy: false,
         variant: "default",
       }),
