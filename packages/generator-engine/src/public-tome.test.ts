@@ -950,4 +950,54 @@ ${duplicatedParagraph}
       expect(out).toBeNull();
     });
   });
+
+  it("does not double the custodian's article or capitalise a location mid-sentence", () => {
+    const withCustodian = generateTomeLocal(
+      { custodian: "A convent of silent scribes" },
+      () => 0.3,
+    );
+    expect(withCustodian.summary).toContain(
+      "currently located in the convent of silent scribes.",
+    );
+    expect(withCustodian.content).toContain(
+      "reaching the convent of silent scribes.",
+    );
+    expect(withCustodian.content).not.toMatch(/\bthe (a|an) /i);
+
+    for (let seed = 1; seed <= 20; seed += 1) {
+      let state = seed * 9973;
+      const rng = () => {
+        state = (state * 1103515245 + 12345) % 2147483648;
+        return state / 2147483648;
+      };
+      const out = generateTomeLocal({}, rng);
+      expect(out.content).not.toMatch(/\b(to|near|beneath|at) The /);
+      expect(out.content).not.toMatch(/\bthe (a|an) /i);
+    }
+  });
+
+  it("agrees the verb with a plural physical format", () => {
+    const sheaves = generateTomeLocal(
+      { format: "Bound Loose-leaf Sheaves" },
+      () => 0.3,
+    );
+    expect(sheaves.content).toContain("The bound loose-leaf sheaves have ");
+    expect(sheaves.content).not.toContain("sheaves has ");
+
+    const quarto = generateTomeLocal(
+      { format: "Leather-bound Quarto" },
+      () => 0.3,
+    );
+    expect(quarto.content).toContain("The leather-bound quarto has ");
+  });
+
+  it("fills the offline At the Table Reference section with profile-neutral guidance", () => {
+    const out = generateTomeLocal({}, () => 0.3);
+    expect(out.lore).toMatch(
+      /### At the Table Reference\n\nLet the party uncover the Actionable Clue[^\n]*\n\n### Ground Truth for the GM/,
+    );
+    expect(out.lore).not.toContain(
+      "dated entries with the marginal corrections",
+    );
+  });
 });
