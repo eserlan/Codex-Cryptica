@@ -403,6 +403,22 @@ function extractMarkdownHeadings(
   return headings;
 }
 
+function hasFencedMarkdownHeading(markdown: string): boolean {
+  let inFence: string | null = null;
+  for (const line of markdown.split(/\r?\n/)) {
+    const fenceMatch = /^\s{0,3}(`{3,}|~{3,})/.exec(line);
+    if (fenceMatch) {
+      const marker = fenceMatch[1][0];
+      inFence = inFence === marker ? null : (inFence ?? marker);
+      continue;
+    }
+    if (inFence && /^\s{0,3}(?:>\s*)*#{1,6}\s+/.test(line)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export function readCouncilVoteFoundation(
   reply: string,
   resolved: ResolvedCouncilVote,
@@ -431,6 +447,7 @@ export function readCouncilVoteFoundation(
   ];
   const contentHeadings = extractMarkdownHeadings(parsed.content);
   if (
+    hasFencedMarkdownHeading(parsed.content) ||
     contentHeadings.some(
       ({ heading }) => !publicSections.has(heading.trim().toLowerCase()),
     )
@@ -439,23 +456,8 @@ export function readCouncilVoteFoundation(
   }
 
   const loreHeadings = extractMarkdownHeadings(parsed.lore);
-  const hasFencedHeading = (() => {
-    let inFence: string | null = null;
-    for (const line of parsed.lore.split(/\r?\n/)) {
-      const fenceMatch = /^\s{0,3}(`{3,}|~{3,})/.exec(line);
-      if (fenceMatch) {
-        const marker = fenceMatch[1][0];
-        inFence = inFence === marker ? null : (inFence ?? marker);
-        continue;
-      }
-      if (inFence && /^\s{0,3}#{1,6}\s+/.test(line)) {
-        return true;
-      }
-    }
-    return false;
-  })();
   if (
-    hasFencedHeading ||
+    hasFencedMarkdownHeading(parsed.lore) ||
     loreHeadings.length !== privateSections.length ||
     loreHeadings.some(
       ({ depth, heading }, index) =>
