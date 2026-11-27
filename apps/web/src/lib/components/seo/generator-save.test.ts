@@ -452,6 +452,55 @@ describe("generator save payloads", () => {
     expect(serialized).not.toContain(hiddenProblem!);
   });
 
+  it("keeps dark-fantasy-faction NPCs, internal conflict, rival, and secret out of guest exports", async () => {
+    const { generateDarkFactionLocal } = await import("generator-engine");
+    const faction = generateDarkFactionLocal(
+      {
+        mode: "Plague-ridden lands",
+        factionType: "Plague cult",
+        scope: "A walled quarantine district",
+        moralPosture: "Necessary evil",
+      },
+      () => 0.35,
+    ) as GeneratorOutput;
+    const layout = getGeneratorDocumentLayout(faction);
+    const payload = buildGeneratorSavePayload(faction, layout);
+
+    expect(payload.type).toBe("faction");
+    expect(payload.content).not.toContain("Notable NPCs");
+    expect(payload.content).not.toContain("Rival Faction");
+    expect(payload.lore).toContain("Notable NPCs");
+    expect(payload.lore).toContain("Internal Conflict");
+    expect(payload.lore).toContain("Rival Faction");
+    expect(payload.lore).toContain("Immediate Hook");
+
+    const entity = {
+      id: "dark-fantasy-faction-1",
+      type: payload.type,
+      title: payload.title,
+      content: payload.content,
+      lore: payload.lore,
+      labels: payload.labels,
+      status: payload.status,
+      aliases: [],
+      connections: [],
+    } satisfies Entity;
+    const bundle = GuestExporter.export({
+      entities: [entity],
+      defaultVisibility: "visible",
+      activeTheme: { primaryColor: "#000000" },
+      publishId: "dark-fantasy-faction-export-test",
+      vaultTitle: "Test Vault",
+      publisherVersion: "test",
+    });
+
+    const serialized = JSON.stringify(bundle);
+    expect(serialized).toContain(faction.title);
+    expect(serialized).not.toContain("Notable NPCs");
+    expect(serialized).not.toContain("Rival Faction");
+    expect(serialized).not.toContain("Immediate Hook");
+  });
+
   it("keeps adventure lore in the vault and omits empty map images", () => {
     const adventure = {
       ...baseOutput,

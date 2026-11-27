@@ -256,6 +256,7 @@ describe("generator-continuation", () => {
     for (const [generatorType, entryType] of [
       ["tome", "Item entry"],
       ["secret-society", "Faction entry"],
+      ["dark-fantasy-faction", "Faction entry"],
       ["nation", "Faction entry"],
       ["world", "Location entry"],
     ]) {

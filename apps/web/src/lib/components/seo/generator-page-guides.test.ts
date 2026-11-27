@@ -324,6 +324,17 @@ describe("generator guide distinctness", () => {
     ]) {
       expect(tipText).toContain(label);
     }
+    expect(guide.linksTitle).toBe("Make your faction matter at the table");
+    expect(guide.links).toHaveLength(3);
+    expect(guide.links?.map((link) => link.href)).toEqual([
+      "/answers/how-do-you-create-a-fantasy-faction",
+      "/answers/how-do-i-run-political-intrigue-and-faction-play",
+      "/answers/how-do-you-track-faction-turns-between-rpg-sessions",
+    ]);
+    for (const link of guide.links ?? []) {
+      expect(link.description).toBeTruthy();
+      expect([link.label, link.description].join(" ")).not.toMatch(/[–—]/);
+    }
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
