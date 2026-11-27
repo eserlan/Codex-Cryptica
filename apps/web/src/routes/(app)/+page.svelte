@@ -12,6 +12,7 @@
   import { safeJsonLd } from "#lib/utils/json-ld.js";
   import { onboardingStore } from "#lib/stores/ui/onboarding.svelte.js";
   import { onboardingFunnel } from "#lib/app/onboarding/onboarding-funnel.js";
+  import { handoffAfterPublicImport } from "#lib/app/onboarding/public-import-handoff.js";
   import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
   import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
   import { focusEntity } from "#lib/stores/ui/navigation.js";
@@ -234,8 +235,7 @@
 
   function handleImportResult(result: PendingImportResult) {
     importFailed = result.status === "failed";
-    onboardingStore.publicImportHandoff =
-      result.status === "imported" ? { rootId: result.rootId } : null;
+    onboardingStore.publicImportHandoff = handoffAfterPublicImport(result);
     if (result.status === "imported") {
       onboardingStore.dismissLandingPage();
       onboardingStore.dismissWorldPage();

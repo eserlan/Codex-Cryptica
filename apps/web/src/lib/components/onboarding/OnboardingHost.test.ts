@@ -5,6 +5,10 @@ import { flushSync, tick } from "svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const h = vi.hoisted(() => ({
+  page: {
+    url: new URL("http://localhost/"),
+    route: { id: "/(app)" as string },
+  },
   helpStore: {
     activeTour: null as unknown,
     hasSeen: vi.fn(() => false),
@@ -27,7 +31,7 @@ const h = vi.hoisted(() => ({
 
 vi.mock("$app/environment", () => ({ browser: true }));
 vi.mock("$app/state", () => ({
-  page: { url: new URL("http://localhost/") },
+  page: h.page,
 }));
 vi.mock("#lib/content/changelog/releases.json", () => ({
   default: [{ version: "0.9.0" }],
@@ -115,6 +119,8 @@ describe("OnboardingHost", () => {
   beforeEach(() => {
     vi.useRealTimers();
     localStorage.clear();
+    h.page.url = new URL("http://localhost/");
+    h.page.route.id = "/(app)";
     h.helpStore.hasSeen.mockReturnValue(false);
     reactiveHelp.activeTour = null;
     h.helpStore.startTour.mockClear();
@@ -154,6 +160,18 @@ describe("OnboardingHost", () => {
 
     onboardingStore.publicImportHandoff = null;
     await tick();
+    expect(screen.getByTestId("goal-invitation")).toBeTruthy();
+  });
+
+  it("releases the import blocker after leaving the root detail route", async () => {
+    h.vault.selectedEntityId = "imported-root";
+    onboardingStore.publicImportHandoff = { rootId: "imported-root" };
+    h.page.url = new URL("http://localhost/table");
+    h.page.route.id = "/(app)/table";
+
+    render(OnboardingHost);
+    await tick();
+
     expect(screen.getByTestId("goal-invitation")).toBeTruthy();
   });
 

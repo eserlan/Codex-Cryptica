@@ -38,6 +38,7 @@
   const publicImportActive = $derived(
     onboardingStore.publicImportHandoff === "pending" ||
       (!!onboardingStore.publicImportHandoff &&
+        page.route.id === "/(app)" &&
         onboardingStore.publicImportHandoff.rootId === vault.selectedEntityId),
   );
 

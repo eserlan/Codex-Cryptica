@@ -9,6 +9,7 @@ import {
   saveGeneratorOutput,
   saveSessionHubEntities,
 } from "./generator-save-flow";
+import { getGeneratorDocumentLayout } from "./generator-document-layout";
 import { preloadLocalGenerator } from "./generator-page-local-generation.js";
 
 const output: GeneratorOutput = {
@@ -240,6 +241,32 @@ describe("generator save flows", () => {
       relatedEntityCount: 2,
     });
     expect(log).not.toHaveBeenCalled();
+  });
+
+  it("uses the trusted Quest slug to keep mismatched-label lore private in the staged import", async () => {
+    const deps = dependencies();
+    const quest: GeneratorOutput = {
+      ...output,
+      type: "event",
+      title: "The Millrace Ultimatum",
+      content: "### The Hook\nThe village needs water.",
+      lore: "### The Twist\nThe deed is forged.",
+      labels: ["rpg-quest", "npc-generator", "imported-draft"],
+    };
+
+    await saveGeneratorOutput(
+      quest,
+      getGeneratorDocumentLayout(quest),
+      "quest",
+      deps,
+    );
+
+    const payload = JSON.parse(deps.store.mock.calls[0][1]) as {
+      content: string;
+      lore: string;
+    };
+    expect(payload.content).not.toContain("The deed is forged.");
+    expect(payload.lore).toContain("The deed is forged.");
   });
 
   it("continues saving when diagram export fails, but rejects storage failures", async () => {

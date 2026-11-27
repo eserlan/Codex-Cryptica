@@ -168,8 +168,9 @@ function resolveSaveBodyAndLore(
 function vaultSaveLayout(
   data: GeneratorOutput,
   layout: GeneratorSaveLayout,
+  generatorType?: string,
 ): GeneratorSaveLayout {
-  return data.labels.includes("quest-generator")
+  return generatorType === "quest"
     ? { content: data.content, lore: data.lore ?? "" }
     : layout;
 }
@@ -178,12 +179,13 @@ export function buildGeneratorSavePayload(
   data: GeneratorOutput,
   layout: GeneratorSaveLayout,
   mapImageDataUrl?: string,
+  generatorType?: string,
 ): GeneratorSavePayload {
   const isAdventure =
     data.kind === "adventure" || data.labels.includes("adventure");
   const { content, lore: initialLore } = resolveSaveBodyAndLore(
     data,
-    vaultSaveLayout(data, layout),
+    vaultSaveLayout(data, layout, generatorType),
   );
   let lore = initialLore;
 

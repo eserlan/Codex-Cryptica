@@ -117,7 +117,12 @@ export async function saveGeneratorOutput(
     return `?utm_source=generator-point-crawl&utm_medium=save-to-vault&utm_campaign=seo-funnel`;
   }
 
-  const payload = buildGeneratorSavePayload(data, layout, mapImageDataUrl);
+  const payload = buildGeneratorSavePayload(
+    data,
+    layout,
+    mapImageDataUrl,
+    generatorType,
+  );
   stagePendingImport(
     payload,
     { generatorType, isHubBatch: false, itemCount: 1 },
