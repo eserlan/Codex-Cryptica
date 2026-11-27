@@ -63,6 +63,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       ctaLabel: CTA_LABEL,
       placement: "near-result",
     },
+    "faction-roster": {
+      headline: "Keep the faction's people in play",
+      summary:
+        "Save this roster as one Note in your local Codex vault so you can revisit the members' obligations as their loyalties change.",
+      capabilities: [
+        "Keep each member's duties, motives, wants and named connections together",
+        "Link the Note to the faction and people already in your vault, and update it after play",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
     npc: NPC_CONTINUATION,
     "rpg-npc-generator": NPC_CONTINUATION,
     "dnd-npc": NPC_CONTINUATION,

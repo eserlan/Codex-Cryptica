@@ -727,22 +727,48 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "faction-roster": {
     summary:
-      "An offline draft is a note listing 3 to 6 members of one faction, each with a duty, motive, stance, immediate want, leverage point and connection to another member. The AI draft is prompted for the selected number and these details, though its returned structure can vary. Any people already named in the faction you paste in take the first places.",
+      "Give a faction faces the party can bargain with, not a single voice that speaks for everyone. Use the roster's duties, personal wants and connections to decide who has the power to grant a favour, who needs something in return and who objects.",
     tips: [
       {
-        title: "Paste in the named people",
+        title: "Choose who gets a seat in the scene",
         detail:
-          "In The faction field, paste a generated faction with its Notable NPCs list. Each named person keeps their name and description and takes a place before any new members are added.",
+          "Paste the faction and its Notable NPCs list into The faction, then set Roster size to include the people the party already knows. Three members can carry a disputed contract, while five or six give a council hearing several competing votes and witnesses.",
       },
       {
-        title: "Set the roster emphasis",
+        title: "Put authority in the right hands",
         detail:
-          "In Roster emphasis, Public face puts the authority figure and the true believer on the roster, and Internal dissent puts the conflicted member and the internal problem there. Field operators and New blood each bring the recent recruit in.",
+          "Use How the faction is organised to work out what a member can actually promise. In a Council, a spokesperson may need another vote before granting passage; in a Cell network, a contact might offer local help without knowing what other cells are planning.",
       },
       {
-        title: "Let the vibe name the new members",
+        title: "Give a bargain two interested parties",
         detail:
-          "The Choose a vibe field sets the names of members the faction does not already name, so a Cyberpunk roster gets names such as Mira and Kade. Text in Add campaign context (optional) goes into the GM notes under Campaign Context, not into the member text.",
+          "Choose Internal dissent in Roster emphasis when the party needs to exploit an internal fault line, or Public face when it must deal with representatives and their promises. Pick two members whose immediate wants collide, then use their leverage and named connection to decide what each would concede and whose trust the party might lose.",
+      },
+      {
+        title: "Let the next meeting change the roster",
+        detail:
+          "In Add campaign context (optional), note an approaching vote, missing delivery or debt the members cannot ignore. Use the roster's stance and current wants to decide who acts before the party returns, then record which obligation or alliance has changed.",
+      },
+    ],
+    linksTitle: "Put the faction's members into play",
+    links: [
+      {
+        href: "/answers/how-do-i-roleplay-npcs-if-im-not-good-at-acting",
+        label: "Give each member a recognisable voice at the table",
+        description:
+          "Combine a current want, an attitude and one observable habit to distinguish people without acting out the whole council meeting.",
+      },
+      {
+        href: "/answers/how-do-i-run-political-intrigue-and-faction-play",
+        label: "Make competing loyalties drive negotiation",
+        description:
+          "Use rival agendas, obligations and visible consequences to present political choices the party can influence.",
+      },
+      {
+        href: "/answers/how-do-you-track-faction-turns-between-rpg-sessions",
+        label: "Record who acted while the party was away",
+        description:
+          "Resolve one faction move, show what changed and update the member's commitments before the next session.",
       },
     ],
   },

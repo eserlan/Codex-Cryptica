@@ -877,3 +877,29 @@ describe("Quest editorial guide", () => {
     expect(guide.links?.every(({ description }) => description)).toBe(true);
   });
 });
+
+describe("Faction Roster editorial guide", () => {
+  it("uses roster controls and progresses from roleplay to negotiation and faction turns", () => {
+    const guide = getGeneratorGuide(
+      "faction-roster",
+      "Faction Roster Generator",
+    );
+    const detail = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const label of [
+      "The faction",
+      "Roster size",
+      "How the faction is organised",
+      "Roster emphasis",
+      "Add campaign context (optional)",
+    ]) {
+      expect(detail).toContain(label);
+    }
+    expect(guide.linksTitle).toBe("Put the faction's members into play");
+    expect(guide.links?.map(({ href }) => href)).toEqual([
+      "/answers/how-do-i-roleplay-npcs-if-im-not-good-at-acting",
+      "/answers/how-do-i-run-political-intrigue-and-faction-play",
+      "/answers/how-do-you-track-faction-turns-between-rpg-sessions",
+    ]);
+    expect(guide.links?.every(({ description }) => description)).toBe(true);
+  });
+});

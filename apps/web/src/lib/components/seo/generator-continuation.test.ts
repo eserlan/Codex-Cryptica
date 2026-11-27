@@ -333,6 +333,18 @@ describe("generator-continuation", () => {
     expect(getGeneratorContinuationConfig("npc")?.placement).toBeUndefined();
   });
 
+  it("configures the roster as one Note near the result, not a batch of Characters", () => {
+    const roster = getGeneratorContinuationConfig("faction-roster");
+    expect(roster).toMatchObject({
+      headline: "Keep the faction's people in play",
+      placement: "near-result",
+      ctaLabel: "Add to my Codex",
+      localFirstNotice: "No account needed; stored locally in this browser.",
+    });
+    expect(roster?.summary).toContain("one Note");
+    expect(roster?.capabilities.join(" ")).toContain("named connections");
+  });
+
   it("returns null for Wave 2, names, and unknown generator types", () => {
     for (const type of [
       "point-crawl",

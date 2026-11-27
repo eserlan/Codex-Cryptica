@@ -44,7 +44,7 @@
 
   // Other first-run prompts (theme prompt, phone coach marks) wait on this.
   $effect(() => {
-    const active = invitationOpen || journeyStore.active;
+    const active = invitationOpen || journeyStore.active || publicImportActive;
     untrack(() => (onboardingStore.firstRunGuidanceActive = active));
   });
 

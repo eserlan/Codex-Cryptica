@@ -252,3 +252,38 @@ describe("Quest editorial example", () => {
     ).toContain("one Event entry");
   });
 });
+
+describe("Faction Roster editorial example", () => {
+  it("has a named faction, four distinct complete members and connections to other members only", () => {
+    const draft = slugDrafts["faction-roster"]!;
+    expect(draft).toMatchObject({
+      type: "note",
+      title: "The Lantern Wardens' Notable Members",
+    });
+    const sections = draft.content.split("\n\n");
+    const names = sections.map((section) => section.match(/^### (.+?):/)?.[1]);
+    expect(names).toEqual(["Mara Fen", "Oren Pike", "Lin Voss", "Tess Reed"]);
+    for (const [index, section] of sections.entries()) {
+      for (const field of [
+        "Duty",
+        "Motive",
+        "Stance",
+        "Trait",
+        "Wants right now",
+        "Leverage",
+        "Connection",
+      ]) {
+        expect(section).toContain(`**${field}**:`);
+      }
+      const connection = section.match(
+        /- \*\*Connection\*\*: .+\(([^)]+)\)$/m,
+      )?.[1];
+      expect(names).toContain(connection);
+      expect(connection).not.toBe(names[index]);
+    }
+    expect(draft.lore).toContain("### How This Roster Divides");
+    expect(
+      slugMeta["faction-roster"].faqs?.map(({ answer }) => answer).join(" "),
+    ).toContain("not separate Character entries or graph links");
+  });
+});
