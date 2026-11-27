@@ -971,6 +971,15 @@ describe("readCouncilVoteFoundation & readCouncilVotePaths", () => {
       ),
     ).toBeNull();
     expect(
+      readCouncilVoteFoundation(
+        JSON.stringify({
+          ...validFoundation,
+          lore: `${validFoundation.lore}\n\n\`\`\`markdown\n### Hidden Ledger\nSecret bribe.\n\`\`\``,
+        }),
+        resolved,
+      ),
+    ).toBeNull();
+    expect(
       readCouncilVoteFoundation(JSON.stringify(validFoundation), resolved),
     ).not.toBeNull();
     expect(

@@ -653,6 +653,8 @@ describe("generator guide distinctness", () => {
       "Voting Rule",
       "Antagonist Influence",
       "Deadline",
+      "Council Members",
+      "aggregate tally",
       "Secret Ballot does not set a threshold",
     ]) {
       expect(tipText).toContain(label);

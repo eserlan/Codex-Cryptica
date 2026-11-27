@@ -141,6 +141,17 @@ describe("generator save payloads", () => {
     );
 
     expect(indentedLeaked).toBeNull();
+
+    const fencedLoreLeaked = readCouncilVoteFoundation(
+      JSON.stringify({
+        title: "Harbour Levy Vote",
+        content: "### The Proposal\nApprove the harbour levy.",
+        lore: "### Voting Procedure\nSimple majority.\n\n### Current Vote Estimate\nTwo support.\n\n### Council Members\n- **Ossian Thale** — Leaning.\n\n### Antagonist Influence\nNone.\n\n### Investigation Leads\nCheck the manifest.\n\n```markdown\n### Hidden Bribe\nOssian Thale took gold.\n```",
+      }),
+      resolved,
+    );
+
+    expect(fencedLoreLeaked).toBeNull();
   });
 
   it("keeps adventure lore in the vault and omits empty map images", () => {
