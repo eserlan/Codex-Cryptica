@@ -184,6 +184,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    "secret-society": {
+      headline: "Bring this society into your world",
+      summary:
+        "Save this secret society as a Faction entry in your local Codex vault so its public face, belief, and hidden truth stay connected to your campaign.",
+      capabilities: [
+        "Store the belief, ritual, public face, and secret truth in one Faction entry",
+        "Keep the leader, taboo, recruitment, and sacred object as GM-only lore",
+        "Link the society to its members, rival cells, and the places it meets inside your vault",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+    },
     world: {
       headline: "Keep this world connected",
       summary:
