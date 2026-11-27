@@ -638,24 +638,32 @@ describe("generator guide distinctness", () => {
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
-  it("serves the tome guide with tips naming its form labels and without dashes", () => {
-    const guide = getGeneratorGuide("tome", "Tome & Forbidden Book Generator");
-    expect(guide).toBe(SLUG_GUIDES.tome);
-    expect(guide).not.toEqual(
-      defaultGuideForSlug("tome", "Tome & Forbidden Book Generator"),
-    );
-    expect(guide.tips).toHaveLength(3);
-    expect(guide.links?.length).toBeGreaterThan(0);
-    const tipText = guide.tips.map((tip) => tip.detail).join(" ");
-    for (const label of [
-      "Primary Reading Hazard",
-      "Current Custodian",
-      "Concept",
-      "Campaign Context",
-    ]) {
-      expect(tipText).toContain(label);
+  it("serves the tome and world guides with form labels and without dashes", () => {
+    const cases = [
+      {
+        slug: "tome",
+        title: "Tome & Forbidden Book Generator",
+        labels: ["Primary Reading Hazard", "Current Custodian", "Concept", "Campaign Context"],
+      },
+      {
+        slug: "world",
+        title: "Sci-Fi World Generator",
+        labels: ["World Tag 1", "World Tag 2", "Habitability", "Civilisation", "Dominant feature (optional)"],
+      },
+    ] as const;
+
+    for (const { slug, title, labels } of cases) {
+      const guide = getGeneratorGuide(slug, title);
+      expect(guide).toBe(SLUG_GUIDES[slug]);
+      expect(guide).not.toEqual(defaultGuideForSlug(slug, title));
+      expect(guide.tips).toHaveLength(3);
+      expect(guide.links?.length).toBeGreaterThan(0);
+      const tipText = guide.tips.map((tip) => tip.detail).join(" ");
+      for (const label of labels) {
+        expect(tipText).toContain(label);
+      }
+      expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
     }
-    expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
   it("falls back to the default template for slugs without a specific guide", () => {
