@@ -665,6 +665,38 @@ describe("generator guide distinctness", () => {
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
+  it("serves the alien race guide with tips naming its form labels and without dashes", () => {
+    const guide = getGeneratorGuide("alien-race", "Alien Race Generator");
+    expect(guide).toBe(SLUG_GUIDES["alien-race"]);
+    expect(guide).not.toEqual(
+      defaultGuideForSlug("alien-race", "Alien Race Generator"),
+    );
+    expect(guide.tips).toHaveLength(3);
+    expect(guide.links).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          href: "/answers/how-do-you-make-an-alien-species-feel-believable",
+        }),
+        expect.objectContaining({
+          href: "/answers/what-kind-of-ship-should-a-sci-fi-rpg-party-start-with",
+        }),
+      ]),
+    );
+    const tipText = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const label of [
+      "Home Environment",
+      "Body Plan",
+      "Psychology",
+      "Relationship to Other Species",
+    ]) {
+      expect(tipText).toContain(label);
+    }
+    expect(tipText).toContain(
+      "A custom relationship appears in the section, but uses the first built-in friction line.",
+    );
+    expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
+  });
+
   it("serves the secret society guide with tips naming its form labels and without dashes", () => {
     const guide = getGeneratorGuide(
       "secret-society",
