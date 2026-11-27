@@ -33,7 +33,6 @@ import {
   adventureConfig,
   forAdventureGenre,
   forAdventureGenreTables,
-  ADVENTURE_GENRE_HINTS,
   ADVENTURE_SAMPLE_TITLES_BY_GENRE,
   ADVENTURE_INCITING_ACTORS_BY_GENRE,
   ADVENTURE_OBJECTIVE_TYPES_BY_GENRE,
@@ -507,10 +506,7 @@ export function buildAdventurePrompt(
   rng: Rng = defaultRng,
 ): AdventurePrompt {
   const adventure = resolveAdventure(options);
-  const genreHint =
-    ADVENTURE_GENRE_HINTS[adventure.genre] ||
-    ADVENTURE_GENRE_HINTS["Fantasy"] ||
-    ADVENTURE_GENRE_HINTS["Classic Fantasy"];
+  const genreHint = forAdventureGenreTables(adventure.genre).hint;
 
   const systemInstruction = `You are a master worldbuilder and TTRPG adventure designer. You write original ${adventure.genre} adventure concepts that a GM can run at the table.
 
