@@ -51,12 +51,12 @@ export class AdventureFocusToolsState {
     }
   };
 
-  handleKeydown(event: KeyboardEvent, hasNestedModal: boolean): void {
+  handleKeydown(event: KeyboardEvent, hasNestedModal: () => boolean): void {
     if (
       !this.open ||
       event.key !== "Escape" ||
       event.defaultPrevented ||
-      hasNestedModal
+      hasNestedModal()
     )
       return;
     event.preventDefault();

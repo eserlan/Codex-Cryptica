@@ -62,12 +62,20 @@ describe("AdventureFocusToolsState", () => {
 
   it("lets Escape close the sheet only after nested dialogs have handled it", () => {
     const { tools } = setup();
+    const hasNestedModal = vi.fn(() => false);
+    const closedEscape = new KeyboardEvent("keydown", {
+      key: "Escape",
+      cancelable: true,
+    });
+    tools.handleKeydown(closedEscape, hasNestedModal);
+    expect(hasNestedModal).not.toHaveBeenCalled();
+
     tools.open = true;
     const nested = new KeyboardEvent("keydown", {
       key: "Escape",
       cancelable: true,
     });
-    tools.handleKeydown(nested, true);
+    tools.handleKeydown(nested, () => true);
     expect(tools.open).toBe(true);
     expect(nested.defaultPrevented).toBe(false);
     const handled = new KeyboardEvent("keydown", {
@@ -75,11 +83,17 @@ describe("AdventureFocusToolsState", () => {
       cancelable: true,
     });
     handled.preventDefault();
-    tools.handleKeydown(handled, false);
+    tools.handleKeydown(handled, hasNestedModal);
+    expect(hasNestedModal).not.toHaveBeenCalled();
     expect(tools.open).toBe(true);
-    tools.handleKeydown(new KeyboardEvent("keydown", { key: "Enter" }), false);
+    tools.handleKeydown(
+      new KeyboardEvent("keydown", { key: "Enter" }),
+      hasNestedModal,
+    );
+    expect(hasNestedModal).not.toHaveBeenCalled();
     expect(tools.open).toBe(true);
-    tools.handleKeydown(nested, false);
+    tools.handleKeydown(nested, hasNestedModal);
+    expect(hasNestedModal).toHaveBeenCalledOnce();
     expect(tools.open).toBe(false);
     expect(nested.defaultPrevented).toBe(true);
   });

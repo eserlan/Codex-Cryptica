@@ -82,7 +82,8 @@
 
 <svelte:document bind:fullscreenElement={viewport.fullscreenElement} />
 <svelte:window
-  onkeydown={(event) => tools.handleKeydown(event, viewport.hasNestedModal())}
+  onkeydown={(event) =>
+    tools.handleKeydown(event, () => viewport.hasNestedModal())}
 />
 
 {#snippet adventureControls(inToolsSheet: boolean)}
