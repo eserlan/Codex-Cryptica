@@ -38,22 +38,28 @@ This section applies when replacing a public \`/generators/*\` fallback guide, r
 an existing slug-specific guide, or changing the page's educational and
 product-continuation copy. **The goal is useful, distinctive pages, not simply
 the removal of duplicate sentences.** Treat each migration as a small
-content-and-product review, not a synonym-replacement exercise.
+content-and-product review, not a synonym-replacement exercise. Apply the [write-generator-guide skill](../../.agent/skills/write-generator-guide/SKILL.md) to migrations and existing-page reviews alike. Its editorial rubric is the source of truth: GM guidance (3), intro/example/FAQ (2), curated learning (2), vault transition (3), with a minimum of 8/10 per slug and explicit evidence, eligibility exceptions and blockers. Do not score the creativity or semantic quality of newly generated results in an editorial review.
 
 ## 1. Inspect the shipped generator before drafting
 
 Record the following in the PR notes (a concise table is fine):
 
 - Actual controls and defaults, and which outputs they affect.
-- A representative real generation in **non-AI and AI modes** where available;
-  distinguish a static/demo example from a generated result.
+- At least one representative explicit generation in an available mode for an
+  editorial review; distinguish the static/demo example from the result. Verify
+  mode-specific product claims against the relevant mode or implementation.
+  Deeper AI/non-AI semantic and variation checks belong to separate
+  generation-engine work when that behaviour is in scope.
 - Section headings, output schema/entity types, and the most useful
   distinctive feature(s) for a GM.
 - The actual public **Copy / Save to Codex / regenerate** behaviour, including
   whether a result must be explicitly generated before a save CTA appears.
-- The **real import/handoff shape**: one Markdown entity, structured entities,
-  NPCs, relationships, maps and other linked data may differ by generator.
-  **Never promise linked entities or preservation of structure without testing.**
+- The **real import/handoff shape and arrival**: one Markdown entity, structured
+  entities, NPCs, relationships and maps may differ by generator. Follow a
+  representative click into an isolated local vault; verify the entity/root is
+  selected, saved and not obscured by unrelated onboarding. Named references
+  in text are not graph connections. **Never promise linked entities or
+  preservation of structure without testing.**
 - Existing relevant Answers, hubs and complementary generators, checking
   canonical destinations instead of relying on plausible slugs.
 
@@ -73,8 +79,10 @@ Then author an introduction and guide that fulfil those promises:
 
 - Refer to **actual named controls** and explain why a specific combination
   matters, rather than instructing users to "customize genre and tone".
-- Include at least one **concrete play consequence**: an actionable decision,
-  conflict, lead, encounter, relationship, or changing situation.
+- Make every guide tip teach a **distinct, concrete GM decision or action and
+  its play/worldbuilding consequence**: a conflict, lead, encounter,
+  relationship or changing situation. Mere field-to-output mappings or
+  generation-mode descriptions are not GM guidance.
 - Prefer sharp, generator-specific examples over abstract "refine this draft"
   advice. Provide helpful specificity without inventing product capabilities.
 - Keep lore-creation advice in the **GM guide** and saving/adoption guidance
@@ -160,14 +168,16 @@ Test/review the **rendered staging page**, not just the TypeScript string:
 
 - [ ] Intro, guide, example and FAQ feel specific to the selected generator,
       not a name-swapped sibling page.
-- [ ] Each product claim is verified against visible controls, representative
-      AI/non-AI output and supported import shape; limitations are honest.
-- [ ] At least one piece of advice yields a concrete next-session decision
-      or consequence. Guide and CTA have separate editorial jobs.
+- [ ] Each product claim is verified against visible controls, a representative
+      result (relevant modes for mode-specific claims) and supported import
+      shape; limitations are honest.
+- [ ] Every tip teaches a distinct concrete GM decision/action and consequence.
+      Guide and CTA have separate editorial jobs.
 - [ ] Answer links resolve in staging/production, are contextual and
       accessible; reciprocal links are assessed, not blindly added.
 - [ ] Completed-result continuation is accurate, discoverable, compact and
-      shares the existing handler; copy-first use remains frictionless.
+      shares the existing handler; verified arrival at the imported entity/root
+      is unobstructed and persisted. Copy-first use remains frictionless.
 - [ ] Example/default distinctions, grammar and FAQ specifics are reviewed.
 - [ ] At roughly 360px, 390px and desktop: no clipping, horizontal overflow,
       hidden actions, huge promotional block or broken focus order.
@@ -176,7 +186,9 @@ Test/review the **rendered staging page**, not just the TypeScript string:
       tests and preserve privacy boundaries.
 - [ ] PR includes **"Public copy reviewed"** with a brief list of actual
       controls/output inspected, the editorial proposition, curated link
-      choices, save/import capabilities verified and any deferred issue(s).
+      choices, save/import capabilities verified, before/after per-slug scores
+      and any deferred issues or verification blockers. Do not mark an
+      unresolved journey as passing simply because a bounded PR can ship.
 
 **Scope management:** The per-page migration can ship as one bounded PR. Where
 a missing import contract, product-wide CTA rollout, analytics or in-vault
