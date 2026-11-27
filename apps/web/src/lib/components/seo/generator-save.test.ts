@@ -89,6 +89,7 @@ describe("generator save payloads", () => {
         "### Possible Approaches\n- Jam the sluice gate to flood the lower floor.",
         "### Complication / Twist\nCanary Complication: lanterns ignite spilled lamp oil.",
         "### Outcomes & Consequences\n- **Success**: Canary Outcome: ledger recovered at a cost.\n- **Failure**: Smugglers escape.\n- **Avoidance**: Cargo moves.\n- **Escalation**: Reinforcements arrive.",
+        "### Participants\n- Duplicate conflicting participant section.",
       ].join("\n\n"),
       labels: ["encounter", "encounter-generator", "imported-draft"],
     } satisfies GeneratorOutput;
@@ -101,6 +102,9 @@ describe("generator save payloads", () => {
     expect(payload.content).not.toContain("Canary Complication");
     expect(payload.content).not.toContain("Canary Outcome");
     expect(payload.lore).toContain("Canary Smuggler Captain");
+    expect(payload.lore).not.toContain(
+      "Duplicate conflicting participant section.",
+    );
     expect(payload.lore).toContain("Canary Complication");
     expect(payload.lore).toContain("Canary Outcome");
 

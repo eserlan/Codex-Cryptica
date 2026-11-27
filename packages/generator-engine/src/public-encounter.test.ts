@@ -210,5 +210,27 @@ describe("parseEncounterResponse", () => {
         resolved,
       ),
     ).toThrow("must include Escalation");
+
+    const proseOnlyOutcome = validLore.replace(
+      "- **Escalation**: Reinforcements arrive.",
+      "Escalation may happen if they linger.",
+    );
+    expect(() =>
+      parseEncounterResponse(
+        JSON.stringify({ content: "x", lore: proseOnlyOutcome }),
+        resolved,
+      ),
+    ).toThrow("must include Escalation");
+
+    const emptyOutcomeRow = validLore.replace(
+      "- **Escalation**: Reinforcements arrive.",
+      "- **Escalation**:   ",
+    );
+    expect(() =>
+      parseEncounterResponse(
+        JSON.stringify({ content: "x", lore: emptyOutcomeRow }),
+        resolved,
+      ),
+    ).toThrow("must include Escalation");
   });
 });

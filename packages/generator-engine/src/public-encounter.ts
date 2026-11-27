@@ -336,11 +336,17 @@ function validateEncounterLore(rawLore: string): void {
   );
   const rest = lines.slice(outcomesStart + 1);
   const outcomesEnd = rest.findIndex((line) => /^###\s/.test(line));
-  const outcomesSection = (
-    outcomesEnd === -1 ? rest : rest.slice(0, outcomesEnd)
-  ).join("\n");
+  const outcomeLines = outcomesEnd === -1 ? rest : rest.slice(0, outcomesEnd);
   for (const label of REQUIRED_OUTCOME_LABELS) {
-    if (!new RegExp(`\\b${label}\\b`, "i").test(outcomesSection)) {
+    const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const labelPattern = new RegExp(`^${escapedLabel}\\s*[:\\-–—]\\s*\\S`, "i");
+    const hasOutcomeRow = outcomeLines.some((line) => {
+      const bulletMatch = /^\s*[-*+]\s+(.+)$/.exec(line);
+      if (!bulletMatch) return false;
+      const body = bulletMatch[1].replace(/[*_]/g, "").trim();
+      return labelPattern.test(body);
+    });
+    if (!hasOutcomeRow) {
       throw new Error(
         `Encounter Outcomes & Consequences must include ${label}`,
       );

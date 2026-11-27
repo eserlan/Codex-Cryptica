@@ -8,6 +8,7 @@ import type {
   ProvenanceRecord,
   SessionEntity,
 } from "generator-engine/session-hub-helpers";
+import { deduplicateMarkdownSections } from "./generator-document-layout";
 
 export interface GeneratorSaveLayout {
   content: string;
@@ -147,12 +148,19 @@ function resolveSaveBodyAndLore(
   const isEncounter =
     data.labels.includes("encounter") ||
     data.labels.includes("encounter-generator");
-  const body = isEncounter ? data.content : layout.content;
+  const seenHeadings = new Set<string>();
+  const body = isEncounter
+    ? deduplicateMarkdownSections(data.content, seenHeadings)
+    : layout.content;
   const content =
     summaryPrefix && body
       ? `${summaryPrefix}\n\n${body}`
       : summaryPrefix || body;
-  const lore = isEncounter ? data.lore || layout.lore : layout.lore;
+  const lore = isEncounter
+    ? data.lore
+      ? deduplicateMarkdownSections(data.lore, seenHeadings)
+      : layout.lore
+    : layout.lore;
   return { content, lore };
 }
 
