@@ -164,6 +164,16 @@ function resolveSaveBodyAndLore(
   return { content, lore };
 }
 
+/** The preview's reading layout is not always the vault's secrecy boundary. */
+function vaultSaveLayout(
+  data: GeneratorOutput,
+  layout: GeneratorSaveLayout,
+): GeneratorSaveLayout {
+  return data.labels.includes("quest-generator")
+    ? { content: data.content, lore: data.lore ?? "" }
+    : layout;
+}
+
 export function buildGeneratorSavePayload(
   data: GeneratorOutput,
   layout: GeneratorSaveLayout,
@@ -171,7 +181,10 @@ export function buildGeneratorSavePayload(
 ): GeneratorSavePayload {
   const isAdventure =
     data.kind === "adventure" || data.labels.includes("adventure");
-  const { content, lore: initialLore } = resolveSaveBodyAndLore(data, layout);
+  const { content, lore: initialLore } = resolveSaveBodyAndLore(
+    data,
+    vaultSaveLayout(data, layout),
+  );
   let lore = initialLore;
 
   const { markdown, metadata } = resolveMechanicsSaveExtension(data.mechanics);

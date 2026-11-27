@@ -46,6 +46,8 @@ export interface FirstRunState {
   goalInvitationResolved: boolean;
   /** A guided-setup journey card is showing. */
   journeyActive: boolean;
+  /** A public draft is being imported or its imported root is still open. */
+  publicImportActive: boolean;
   /** A guided tour is already running. */
   activeTour: boolean;
   /** Any modal is currently open. */
@@ -78,7 +80,8 @@ export function decideFirstRunAction(state: FirstRunState): FirstRunAction {
     state.isDemoMode ||
     state.isLandingVisible ||
     state.hasDemoQueryParam ||
-    state.vaultSwitcherOpen
+    state.vaultSwitcherOpen ||
+    state.publicImportActive
   ) {
     return { kind: "none" };
   }

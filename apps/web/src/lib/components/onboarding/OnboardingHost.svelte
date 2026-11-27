@@ -35,6 +35,11 @@
    */
 
   let invitationOpen = $state(false);
+  const publicImportActive = $derived(
+    onboardingStore.publicImportHandoff === "pending" ||
+      (!!onboardingStore.publicImportHandoff &&
+        onboardingStore.publicImportHandoff.rootId === vault.selectedEntityId),
+  );
 
   // Other first-run prompts (theme prompt, phone coach marks) wait on this.
   $effect(() => {
@@ -82,6 +87,7 @@
       hasSeenTour: helpStore.hasSeen("initial-onboarding"),
       goalInvitationResolved: onboardingStore.goalInvitation !== null,
       journeyActive: journeyStore.active || invitationOpen,
+      publicImportActive,
       activeTour: !!helpStore.activeTour,
       anyModalOpen: modalUIStore.isAnyModalOpen || modalUIStore.showZenMode,
       hasUnseenRelease: hasUnseenMinorRelease(
@@ -102,7 +108,8 @@
             !helpStore.activeTour &&
             !modalUIStore.showZenMode &&
             !sessionModeStore.isDemoMode &&
-            !onboardingStore.showChangelog
+            !onboardingStore.showChangelog &&
+            !publicImportActive
           ) {
             onboardingStore.showChangelog = true;
           }
@@ -112,6 +119,14 @@
       case "none":
       default:
         break;
+    }
+  });
+
+  // A generator import takes priority even if an invitation already opened
+  // before the page started staging the handoff.
+  $effect(() => {
+    if (publicImportActive && invitationOpen) {
+      untrack(() => (invitationOpen = false));
     }
   });
 

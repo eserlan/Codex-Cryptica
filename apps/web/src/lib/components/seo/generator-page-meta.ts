@@ -405,15 +405,37 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     pageTitle:
       "RPG Quest Hook Generator | Free Fantasy & Cyberpunk Adventure Tool | Codex Cryptica",
     metaDescription:
-      "Generate detailed RPG quest hooks with complications, twists, rewards, and key NPCs. Perfect for fantasy, cyberpunk, or sci-fi tabletop campaigns.",
+      "Create RPG quest hooks with a location, key NPC, threat, complication, twist and reward. Set the stakes and keep the hidden details in your local Codex.",
     introTitle: "RPG Quest Generator",
     eyebrow: "Quest Hook Generator",
     introText:
-      "Create campaign-ready adventure seeds and quest hooks. Choose a vibe, then set the tone, threat, and twist. Import the result into your local vault.",
+      "Need a job for tonight or a problem the party might return to? Draft a quest hook with a location, key NPC, threat, hidden complication, twist and reward. Set the scale and give players a reason to investigate.",
     canonicalPath: "/generators/quest",
     ogImage: "https://assets.codexcryptica.com/screenshots/generator-quest.jpg",
     ogImageAlt:
       "Codex Cryptica quest hook generator showing adventure seeds with twists, complications, and rewards",
+    faqs: [
+      {
+        question: "Is a quest hook a complete adventure?",
+        answer:
+          "No. It provides a starting situation, people involved, hidden complications and a reward. Decide which encounters, approaches and outcomes make sense for your table rather than treating the hook as a fixed itinerary.",
+      },
+      {
+        question: "Can I connect a quest to my existing campaign?",
+        answer:
+          "Use Optional Campaign Context to name an existing NPC, place or unresolved problem. With AI enabled, the context is included in the generation prompt; without AI, it is kept in the GM notes for you to adapt.",
+      },
+      {
+        question: "Can I share the hook without giving away the twist?",
+        answer:
+          "Review the hook and copy only the information you want players to know. The full Copy action includes GM notes, so keep hidden complications, the twist and any undisclosed rewards out of the player handout.",
+      },
+      {
+        question: "What is saved when I add a quest to my Codex?",
+        answer:
+          "The quest becomes one Event entry in your local vault, with the hook, location, contact and threat in its content and hidden details in GM lore. Named people and places are not created as separate entries; you can link existing entries yourself.",
+      },
+    ],
     keywords: [
       "rpg quest hook generator",
       "adventure seed generator",

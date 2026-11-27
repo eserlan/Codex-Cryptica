@@ -19,7 +19,9 @@
 <aside
   aria-labelledby="generator-continuation-heading"
   data-testid="generator-continuation-callout"
-  class="mt-8 rounded-2xl border border-theme-primary/30 bg-theme-surface/50 p-4 md:p-6 shadow-sm"
+  class="{config.placement === 'near-result'
+    ? 'mb-6'
+    : 'mt-8'} rounded-2xl border border-theme-primary/30 bg-theme-surface/50 p-4 md:p-6 shadow-sm"
 >
   <div class="flex flex-col gap-4">
     <div class="space-y-1.5">

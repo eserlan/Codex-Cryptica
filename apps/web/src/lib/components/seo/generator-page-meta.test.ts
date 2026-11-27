@@ -233,3 +233,22 @@ describe("generator-page-meta completeness and social preview tags", () => {
     });
   });
 });
+
+describe("Quest editorial example", () => {
+  it("provides a coherent Event example and four substantive FAQs", () => {
+    expect(slugDrafts.quest).toMatchObject({
+      title: "The Millrace Ultimatum",
+      type: "event",
+    });
+    for (const section of ["The Hook", "Location", "Key NPC", "Threat"]) {
+      expect(slugDrafts.quest!.content).toContain("### " + section);
+    }
+    for (const section of ["Complication", "The Twist", "Reward"]) {
+      expect(slugDrafts.quest!.lore).toContain("### " + section);
+    }
+    expect(slugMeta.quest.faqs).toHaveLength(4);
+    expect(
+      slugMeta.quest.faqs?.map(({ answer }) => answer).join(" "),
+    ).toContain("one Event entry");
+  });
+});

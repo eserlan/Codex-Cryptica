@@ -320,6 +320,19 @@ describe("generator-continuation", () => {
     ).toBe(false);
   });
 
+  it("configures the quest Event handoff near the result", () => {
+    const config = getGeneratorContinuationConfig("quest");
+    expect(config).toMatchObject({
+      headline: "Keep this quest alive between sessions",
+      placement: "near-result",
+      ctaLabel: "Add to my Codex",
+      localFirstNotice: "No account needed; stored locally in this browser.",
+    });
+    expect(config?.summary).toContain("Event");
+    expect(config?.capabilities.join(" ")).toContain("GM-only lore");
+    expect(getGeneratorContinuationConfig("npc")?.placement).toBeUndefined();
+  });
+
   it("returns null for Wave 2, names, and unknown generator types", () => {
     for (const type of [
       "point-crawl",

@@ -680,22 +680,48 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   quest: {
     summary:
-      "Each result is a quest with a hook, a location, a key NPC, a threat, a complication, a twist and a reward. The vibe sets the hook, the complication and the names, and the GM notes hold the scope and any campaign context.",
+      "Treat a quest as a situation that will evolve with or without the party. The hook is an invitation, not a sequence of required scenes. Prepare what the people involved want and what happens if nobody intervenes.",
     tips: [
       {
-        title: "Pick the vibe first",
+        title: "Set stakes the party can reach",
         detail:
-          "Choose a vibe changes the Tone, Scope, Location Type, Main Threat, Twist and Reward options, so each vibe offers its own choices. It also sets the hook, the complication and the key NPC's name.",
+          "Choose a vibe, then use Scope to decide how far the consequences spread. In Classic Fantasy, Local (village / district) could mean a mill that stops supplying flour; World-threatening needs signs of danger beyond the first location. Show the next consequence rather than explaining the entire crisis.",
       },
       {
-        title: "Read the scope in the GM notes",
+        title: "Give the hook more than one entrance",
         detail:
-          "Scope appears as a Core Field in the GM notes, drawn from the labels of the vibe you chose, such as City-wide for Cyberpunk or Territory-scale (frontier) for Western.",
+          "Pair Location Type with Main Threat to decide what the party can discover before meeting the patron. At a Cursed Ruin threatened by a Corrupt Noble, a missing supply wagon, a frightened witness and a disputed deed could each lead to the same problem. The party can investigate without taking the offered job.",
       },
       {
-        title: "Give the campaign context a situation",
+        title: "Let the reversal change the bargain",
         detail:
-          "Optional Campaign Context is preserved in a dedicated GM-note section, separate from the hook and threat. Write a situation the GM can connect to the quest.",
+          "Use Twist and Reward to decide what the players stand to gain or lose once they learn the hidden truth. If the patron hired them to recover a stolen deed, revealing that it was forged gives them a choice: collect the promised reward or earn the villagers' trust by exposing it.",
+      },
+      {
+        title: "Anchor the quest to something already in play",
+        detail:
+          "In Optional Campaign Context, name a person, place or unresolved promise the party already knows. After drafting, choose one way the quest changes that relationship, even if the party leaves it unfinished.",
+      },
+    ],
+    linksTitle: "Turn a quest hook into playable choices",
+    links: [
+      {
+        href: "/answers/how-do-you-create-quest-hooks-without-railroading",
+        label: "Present the hook without dictating the solution",
+        description:
+          "Give players clear reasons to investigate and room to choose a different approach.",
+      },
+      {
+        href: "/answers/how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
+        label: "Make the threat matter without forcing the party's hand",
+        description:
+          "Use visible consequences and other actors' plans to build urgency without punishing every delay.",
+      },
+      {
+        href: "/answers/how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
+        label: "Keep unanswered hooks useful across sessions",
+        description:
+          "Record leads, their current state and when to bring them back into play.",
       },
     ],
   },

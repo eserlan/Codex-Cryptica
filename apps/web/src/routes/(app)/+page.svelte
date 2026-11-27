@@ -234,6 +234,8 @@
 
   function handleImportResult(result: PendingImportResult) {
     importFailed = result.status === "failed";
+    onboardingStore.publicImportHandoff =
+      result.status === "imported" ? { rootId: result.rootId } : null;
     if (result.status === "imported") {
       onboardingStore.dismissLandingPage();
       onboardingStore.dismissWorldPage();
@@ -253,6 +255,7 @@
 
   async function retryImport() {
     isRetryingImport = true;
+    onboardingStore.publicImportHandoff = "pending";
     try {
       handleImportResult(await seoImportService.checkAndHandlePendingImport());
     } finally {
@@ -262,6 +265,7 @@
 
   function discardImport() {
     seoImportService.discardPendingImport();
+    onboardingStore.publicImportHandoff = null;
     importFailed = false;
   }
 
@@ -277,6 +281,7 @@
       typeof localStorage !== "undefined" &&
       localStorage.getItem("__codex_pending_import")
     ) {
+      onboardingStore.publicImportHandoff = "pending";
       onboardingStore.dismissLandingPage();
       onboardingStore.dismissWorldPage();
     }

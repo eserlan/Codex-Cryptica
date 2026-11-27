@@ -7,6 +7,8 @@ export interface GeneratorContinuationConfig {
   capabilities: readonly string[];
   /** Explicit local-first privacy and storage notice. */
   localFirstNotice: string;
+  /** Opt in to displaying the continuation immediately below result actions. */
+  placement?: "near-result";
   /** Primary action button label. */
   ctaLabel: string;
 }
@@ -48,6 +50,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       ],
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
+    },
+    quest: {
+      headline: "Keep this quest alive between sessions",
+      summary:
+        "Save this quest as an Event in your local Codex vault so you can revisit the lead and record how the party responds.",
+      capabilities: [
+        "Keep the complication, twist and reward in GM-only lore",
+        "Link the Event to campaign NPCs and places, and update it as the party decides",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
     },
     npc: NPC_CONTINUATION,
     "rpg-npc-generator": NPC_CONTINUATION,

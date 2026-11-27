@@ -11,7 +11,11 @@ const h = vi.hoisted(() => ({
     startTour: vi.fn(),
     skipTour: vi.fn(),
   },
-  vault: { isInitialized: true, activeVaultId: "v1" as string | null },
+  vault: {
+    isInitialized: true,
+    activeVaultId: "v1" as string | null,
+    selectedEntityId: null as string | null,
+  },
   session: { isGuestMode: false, isDemoMode: false },
   modal: {
     isAnyModalOpen: false,
@@ -122,6 +126,8 @@ describe("OnboardingHost", () => {
     onboardingStore.showChangelog = false;
     onboardingStore.dismissedLandingPage = true;
     onboardingStore.firstRunGuidanceActive = false;
+    onboardingStore.publicImportHandoff = null;
+    h.vault.selectedEntityId = null;
     journeyStore.exit();
     journeyStore.done();
   });
@@ -132,6 +138,23 @@ describe("OnboardingHost", () => {
     expect(screen.getByTestId("goal-invitation")).toBeTruthy();
     expect(h.helpStore.startTour).not.toHaveBeenCalled();
     expect(onboardingStore.firstRunGuidanceActive).toBe(true);
+  });
+
+  it("defers the invitation while importing or viewing the imported root without recording a choice", async () => {
+    onboardingStore.publicImportHandoff = "pending";
+    render(OnboardingHost);
+    await tick();
+    expect(screen.queryByTestId("goal-invitation")).toBeNull();
+
+    h.vault.selectedEntityId = "imported-root";
+    onboardingStore.publicImportHandoff = { rootId: "imported-root" };
+    await tick();
+    expect(screen.queryByTestId("goal-invitation")).toBeNull();
+    expect(onboardingStore.goalInvitation).toBeNull();
+
+    onboardingStore.publicImportHandoff = null;
+    await tick();
+    expect(screen.getByTestId("goal-invitation")).toBeTruthy();
   });
 
   it("does not show it to a user who already took the tour, or in a demo", async () => {
