@@ -188,11 +188,69 @@ Return only the JSON object. Do not include markdown code block formatting like 
   };
 }
 
+function stripFencedCodeLines(lore: string): string[] {
+  const lines: string[] = [];
+  let inFence: { char: string; length: number } | null = null;
+  for (const line of lore.split(/\r?\n/)) {
+    if (!inFence) {
+      const openMatch = /^\s{0,3}(`{3,}|~{3,})/.exec(line);
+      if (openMatch) {
+        inFence = { char: openMatch[1][0], length: openMatch[1].length };
+        continue;
+      }
+      lines.push(line);
+      continue;
+    }
+    const closeMatch = /^\s{0,3}(`{3,}|~{3,})\s*$/.exec(line);
+    if (
+      closeMatch &&
+      closeMatch[1][0] === inFence.char &&
+      closeMatch[1].length >= inFence.length
+    ) {
+      inFence = null;
+    }
+  }
+  return lines;
+}
+
+function extractSchemeStagesSection(lore: string): string {
+  const lines = stripFencedCodeLines(lore);
+  const stageHeadingPattern = /^ {0,3}###\s+Scheme Stages\b/;
+  const stageHeadings = lines.filter((line) => stageHeadingPattern.test(line));
+  if (stageHeadings.length !== 1) return "";
+  const start = lines.findIndex((line) => stageHeadingPattern.test(line));
+  const rest = lines.slice(start + 1);
+  const end = rest.findIndex((line) => /^ {0,3}###\s/.test(line));
+  return (end === -1 ? rest : rest.slice(0, end)).join("\n");
+}
+
 export function parseVillainSchemeResponse(
   text: string,
   resolved: ResolvedVillainScheme,
 ): PublicGeneratorOutput {
   const data = asRecord(parseFencedJson<unknown>(text));
+  const lore = asString(data.lore);
+  const stagesSection = extractSchemeStagesSection(lore);
+  const stageMatches = Array.from(
+    stagesSection.matchAll(
+      /^ {0,3}(?:(?:[-*+]|\d+\.) +)?\*\*Stage\s+(\d+)\s*:\s*(.+)$/gm,
+    ),
+    (match) => ({
+      num: Number(match[1]),
+      name: match[2].replace(/\*+/g, "").trim(),
+    }),
+  );
+  const hasSequentialStages =
+    stageMatches.length >= 4 &&
+    stageMatches.length <= 6 &&
+    stageMatches.every(
+      (stage, index) => stage.num === index + 1 && stage.name.length > 0,
+    );
+  if (!hasSequentialStages) {
+    throw new Error(
+      "Villain scheme lore must contain four to six numbered stages",
+    );
+  }
   const labels = asArray(data.labels).filter(
     (label): label is string => typeof label === "string",
   );
@@ -201,7 +259,7 @@ export function parseVillainSchemeResponse(
     title: asString(data.title) || resolved.schemeName,
     summary: asString(data.summary),
     content: asString(data.content),
-    lore: asString(data.lore),
+    lore,
     labels: labels.length > 0 ? labels : [...DEFAULT_VILLAIN_SCHEME_LABELS],
     status: "active",
   };
@@ -239,6 +297,11 @@ const COMPLICATIONS_POOL = [
   "Local authorities are already involved and moving slowly on purpose — someone with real power benefits from the delay.",
 ] as const;
 
+function lowerFirst(value: string): string {
+  if (!value) return value;
+  return value.charAt(0).toLowerCase() + value.slice(1);
+}
+
 /**
  * Local (non-AI) fallback. Deliberately lighter than the AI prompt's full
  * checklist — a usable, internally consistent draft rather than an attempt to
@@ -253,7 +316,7 @@ export function generateVillainSchemeLocal(
     SUPERHERO_POWER_SCALE_FALLBACKS[resolved.powerScale as SuperheroPowerScale];
   const finalStageNumber = scaleFallback?.planStages.length ?? 4;
   const publicActivity = scaleFallback
-    ? `Coordinated disruptions are being reported around ${scaleFallback.territory.charAt(0).toLowerCase()}${scaleFallback.territory.slice(1)}, all following an unexplained pattern.`
+    ? `Coordinated disruptions are being reported around ${lowerFirst(scaleFallback.territory).replace(/\.+$/, "")}, all following an unexplained pattern.`
     : pickFrom(PUBLIC_ACTIVITY_POOL, rng);
   const rumourOne = pickFrom(RUMOUR_POOL, rng);
   const rumourTwo = pickFrom(
@@ -286,7 +349,7 @@ The ${resolved.villainProfile.toLowerCase()} behind ${resolved.schemeName} wants
 Their reasoning holds together on its own terms: a ${resolved.tone.toLowerCase()}, ${resolved.schemeType.toLowerCase()}-flavoured plan that makes sense from inside their own priorities, whatever the wider world would think of it.
 
 ### Current Activity
-The reported public incidents are a cover for quieter work: ${scaleFallback?.methods ?? "positioning people, resources, and cover stories so that by the time anyone official asks the right question, the answer is already unreachable."}
+The reported public incidents are a cover for quieter work. ${scaleFallback?.methods ?? "They are positioning people, resources, and cover stories so that by the time anyone official asks the right question, the answer is already unreachable."}
 
 ### Resources & Minions
 - **${minionName}** — handles the operation's day-to-day logistics; loyal enough to follow orders, not loyal enough to die for them.

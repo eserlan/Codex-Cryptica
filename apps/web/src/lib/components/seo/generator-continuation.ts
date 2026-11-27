@@ -184,6 +184,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    "villain-scheme-generator": {
+      headline: "Keep this plot moving in your vault",
+      summary:
+        "Stage this villain scheme for your local Codex vault so public signs, scheme stages, and GM-only consequences stay ready across sessions.",
+      capabilities: [
+        "Keep public activity and rumours separate from GM-only scheme stages, minions, and fallout",
+        "Attach the scheme to an existing villain, faction, or city inside your vault",
+        "Track stage progression and hand the plot off to the Plot Twist Generator anytime",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+    },
     encounter: {
       headline: "Run this encounter from your vault",
       summary:
