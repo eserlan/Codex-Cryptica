@@ -172,6 +172,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    tome: {
+      headline: "Shelve this book in your campaign",
+      summary:
+        "Save this tome to your local Codex vault so its physical details, provenance, reading hazard, and the people and places that want it stay in one reference.",
+      capabilities: [
+        "Store the physical description, provenance, and contents in one Item entry",
+        "Keep the ground truth, the deception, and the actionable clue as GM-only lore",
+        "Record the book's author, custodian, associated location, and interested factions inside the Item entry",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+    },
     "alien-race": {
       headline: "Give this species a place in your world",
       summary:
@@ -192,6 +204,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
         "Store the belief, ritual, public face, and secret truth in one Faction entry",
         "Keep the leader, taboo, recruitment, and sacred object as GM-only lore",
         "Link the society to its members, rival cells, and the places it meets inside your vault",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+    },
+    constellation: {
+      headline: "Keep this sky lore in your world",
+      summary:
+        "Save this constellation or full sky as a Note entry in your local Codex vault so its stories and uses stay connected to the cultures that read them.",
+      capabilities: [
+        "Store origin myths, practical uses, and a single constellation's star pattern in one Note entry",
+        "Keep omens and adventure hooks as GM-only lore; the Night Sky season index stays in public Note content",
+        "Link the sky lore to the cultures and places that read it inside your vault",
       ],
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,

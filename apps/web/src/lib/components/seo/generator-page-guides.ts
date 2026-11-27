@@ -28,6 +28,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  tome: {
+    summary:
+      "Generate an in-world book with its physical format, provenance, a deception, a reading hazard, and the ground truth the GM keeps, so a forbidden text can drive a scene rather than sit on a shelf.",
+    tips: [
+      {
+        title: "Choose the Primary Reading Hazard first",
+        detail:
+          "Primary Reading Hazard sets the main risk in Risks & Costs of Study, and the same hazard appears in the Failure Condition and Safe Handling notes. Pick it before the other fields, since it decides what reading the book costs the party.",
+      },
+      {
+        title: "Use Current Custodian to decide who wants the book",
+        detail:
+          "Current Custodian is the place or group that holds the book. It appears in the summary, the provenance, the Connected Entities list, and, in the offline draft, the first adventure hook, where either an agent of the custodian hires the party or a source hires them before the custodian purges access logs. Pick one that gives the party a reason to visit.",
+      },
+      {
+        title: "Use Campaign Context with the AI draft",
+        detail:
+          "Optional Campaign Context is not used by the offline draft. It reaches the AI prompt, so use the AI draft when the book has to connect to your campaign's people or places.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-i-give-players-immersive-handouts-in-an-online-rpg",
+        label: "Giving players immersive handouts and props",
+      },
+      {
+        href: "/answers/how-to-write-an-in-world-newspaper-for-an-rpg",
+        label: "Writing an in-world newspaper for an RPG",
+      },
+    ],
+  },
   "alien-race": {
     summary:
       "Generate a non-human species whose biology, homeworld, senses and culture follow from one another, with a weakness, a relationship to outsiders and a split inside the species the party can use at the table.",
@@ -87,6 +118,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       {
         href: "/answers/how-do-you-run-factions-in-a-sandbox-campaign",
         label: "Running factions that act between sessions",
+      },
+    ],
+  },
+  constellation: {
+    summary:
+      "Generate a constellation with a star pattern, an origin myth, a practical use and an omen, so the night sky becomes something a culture in your world reads, relies on and fears.",
+    tips: [
+      {
+        title: "Let Visual Impression carry the myth",
+        detail:
+          "In Single Constellation mode, Visual Impression sets the shape the culture sees in the stars, such as a Weapon, a Beast or a Crown or Regalia. The Origin Myth then explains why that shape is in the sky, so choose it first and the myth has something to explain (Full Night Sky mode chooses these automatically).",
+      },
+      {
+        title: "Pair Practical Use with an omen",
+        detail:
+          "In Single Constellation mode, Practical Use names what people rely on the constellation for, such as Navigation or Planting and harvest timing. Read it with the Omens line in the GM-only lore, since a sign that appears while people depend on the stars turns a practical fact into a problem for the party.",
+      },
+      {
+        title: "Open with the Adventure Hook",
+        detail:
+          "In Single Constellation mode, Cultural Meaning sets how the culture treats the constellation, as a deity, a warning or an ancestor. The Adventure Hook in the GM-only lore gives a ready scene that tests that meaning, such as someone insisting the constellation rose out of season.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-you-start-worldbuilding-from-scratch",
+        label: "Starting a setting from a single idea",
+      },
+      {
+        href: "/answers/where-do-worldbuilding-ideas-come-from",
+        label: "Finding worldbuilding ideas at the table",
       },
     ],
   },
