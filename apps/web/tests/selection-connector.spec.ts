@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { dismissFrontPage, waitForVaultReady } from "./test-helpers";
 
 test.describe("Selection Connector", () => {
   test("should show connect button when two nodes are selected and create connection", async ({
@@ -13,25 +14,13 @@ test.describe("Selection Connector", () => {
     });
 
     await page.goto("/");
+    await waitForVaultReady(page);
+    await dismissFrontPage(page);
+    await expect(
+      page.getByRole("button", { name: "Dismiss front page" }),
+    ).not.toBeVisible();
     await expect(page.getByTestId("graph-canvas")).toBeVisible({
       timeout: 10000,
-    });
-
-    // Wait for vault initialization
-    await page.evaluate(async () => {
-      const waitForVault = () =>
-        new Promise((resolve) => {
-          const check = () => {
-            const vault = (window as any).vault;
-            if (vault && vault.status === "idle") {
-              resolve(true);
-            } else {
-              setTimeout(check, 100);
-            }
-          };
-          check();
-        });
-      await waitForVault();
     });
 
     // Create two entities via API
@@ -140,25 +129,13 @@ test.describe("Selection Connector", () => {
     });
 
     await page.goto("/");
+    await waitForVaultReady(page);
+    await dismissFrontPage(page);
+    await expect(
+      page.getByRole("button", { name: "Dismiss front page" }),
+    ).not.toBeVisible();
     await expect(page.getByTestId("graph-canvas")).toBeVisible({
       timeout: 10000,
-    });
-
-    // Wait for vault initialization
-    await page.evaluate(async () => {
-      const waitForVault = () =>
-        new Promise((resolve) => {
-          const check = () => {
-            const vault = (window as any).vault;
-            if (vault && vault.status === "idle") {
-              resolve(true);
-            } else {
-              setTimeout(check, 100);
-            }
-          };
-          check();
-        });
-      await waitForVault();
     });
 
     // Create two entities via API
