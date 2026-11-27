@@ -493,4 +493,24 @@ describe("public-constellation", () => {
     expect(output.summary).toContain("read as a weapon,");
     expect(output.content).toContain("read as a weapon. ");
   });
+
+  it("chooses articles by sound for custom visual impressions in every sentence", () => {
+    const unicorn = generateConstellationLocal(
+      { visualImpression: "unicorn", practicalUse: "Navigation" },
+      () => 0,
+    );
+    expect(unicorn.summary).toContain("read as a unicorn,");
+    expect(unicorn.content).toContain("read as a unicorn. ");
+    expect(unicorn.content).toContain("read as a unicorn, is how the story");
+
+    const hourglass = generateConstellationLocal(
+      { visualImpression: "hourglass", practicalUse: "Navigation" },
+      () => 0,
+    );
+    expect(hourglass.summary).toContain("read as an hourglass,");
+    expect(hourglass.content).toContain("read as an hourglass. ");
+    expect(hourglass.content).toContain(
+      "read as an hourglass, is how the story",
+    );
+  });
 });

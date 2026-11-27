@@ -47,10 +47,17 @@ export function generatePlaceholderName(rng: Rng = defaultRng): string {
 /** "an" before a vowel sound, otherwise "a": "an amulet", "a wand". */
 export function indefiniteArticle(noun: string): string {
   const trimmed = noun.trim();
-  // These supported faction types start with a consonant sound despite their
-  // written initial, or a spoken initialism whose first letter is a vowel sound.
+  // These words start with a consonant sound despite their written initial,
+  // or a spoken initialism whose first letter is a vowel sound.
   if (/^union\b/i.test(trimmed)) return "a";
   if (/^euro/i.test(trimmed)) return "a";
+  if (
+    /^(?:uni(?:corn|form|vers|que|son|cycle|t)|use|usual|user|utility|ubiquit)/i.test(
+      trimmed,
+    )
+  )
+    return "a";
+  if (/^(?:hour|honest|honor|heir)/i.test(trimmed)) return "an";
   if (/^NHP\b/i.test(trimmed)) return "an";
   // "One" starts with a /w/ sound when used as a standalone word or prefix.
   if (/^one(?:\b|-)/i.test(trimmed)) return "a";
