@@ -11,16 +11,7 @@ export class AdventureFocusCompletion {
   private dismissedIds = $state<string[]>([]);
   busy = $state(false);
 
-  constructor(
-    private readonly getManager: () => AdventureManager,
-    private readonly restoreFocus: () => void,
-    private readonly notifications: Pick<
-      typeof notificationStore,
-      "notify"
-    > = notificationStore,
-  ) {}
-
-  get pending() {
+  private rawPending = $derived.by(() => {
     const manager = this.getManager();
     if (
       !manager.session ||
@@ -30,13 +21,17 @@ export class AdventureFocusCompletion {
     ) {
       return null;
     }
-    const pending = selectPendingAdventureCompletion(manager.session);
+    return selectPendingAdventureCompletion(manager.session);
+  });
+
+  readonly pending = $derived.by(() => {
+    const pending = this.rawPending;
     return pending && !this.dismissedIds.includes(pending.eventId)
       ? pending
       : null;
-  }
+  });
 
-  get continuations() {
+  readonly continuations = $derived.by(() => {
     const pending = this.pending;
     const session = this.getManager().session;
     return pending && session
@@ -44,7 +39,16 @@ export class AdventureFocusCompletion {
           sourceOutcomeId: pending.eventId,
         })
       : null;
-  }
+  });
+
+  constructor(
+    private readonly getManager: () => AdventureManager,
+    private readonly restoreFocus: () => void,
+    private readonly notifications: Pick<
+      typeof notificationStore,
+      "notify"
+    > = notificationStore,
+  ) {}
 
   continueExploring(eventId: string): Promise<void> {
     return this.run(() => this.dismiss(eventId));
