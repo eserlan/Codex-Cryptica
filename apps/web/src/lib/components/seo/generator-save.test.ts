@@ -166,6 +166,69 @@ describe("generator save payloads", () => {
     expect(fencedContentLeaked).toBeNull();
   });
 
+  it("keeps encounter participants, complication, and outcomes out of guest exports", () => {
+    const encounter = {
+      ...baseOutput,
+      type: "event",
+      kind: "encounter",
+      status: "active",
+      title: "Ambush at the Old Mill",
+      summary: "A tense ambush unfolds at an abandoned mill.",
+      content: "### What the Players See\nRain drums on the broken mill wheel.",
+      lore: [
+        "### At a Glance\n- **Type:** Combat",
+        "### Situation & Stakes\nThe smugglers are protecting a stolen ledger.",
+        "### Participants\n- **Canary Smuggler Captain**: wants the ledger out before dawn.",
+        "### Environment\nSlick timber planks above a flooded sluice.",
+        "### Possible Approaches\n- Jam the sluice gate to flood the lower floor.",
+        "### Complication / Twist\nCanary Complication: lanterns ignite spilled lamp oil.",
+        "### Outcomes & Consequences\n- **Success**: Canary Outcome: ledger recovered at a cost.\n- **Failure**: Smugglers escape.\n- **Avoidance**: Cargo moves.\n- **Escalation**: Reinforcements arrive.",
+        "### Participants\n- Duplicate conflicting participant section.",
+      ].join("\n\n"),
+      labels: ["encounter", "encounter-generator", "imported-draft"],
+    } satisfies GeneratorOutput;
+
+    const layout = getGeneratorDocumentLayout(encounter);
+    const payload = buildGeneratorSavePayload(encounter, layout);
+
+    expect(payload.content).toContain("Rain drums on the broken mill wheel.");
+    expect(payload.content).not.toContain("Canary Smuggler Captain");
+    expect(payload.content).not.toContain("Canary Complication");
+    expect(payload.content).not.toContain("Canary Outcome");
+    expect(payload.lore).toContain("Canary Smuggler Captain");
+    expect(payload.lore).not.toContain(
+      "Duplicate conflicting participant section.",
+    );
+    expect(payload.lore).toContain("Canary Complication");
+    expect(payload.lore).toContain("Canary Outcome");
+
+    const entity = {
+      id: "encounter-1",
+      type: payload.type,
+      title: payload.title,
+      content: payload.content,
+      lore: payload.lore,
+      labels: payload.labels,
+      status: payload.status,
+      aliases: [],
+      connections: [],
+    } satisfies Entity;
+    const bundle = GuestExporter.export({
+      entities: [entity],
+      defaultVisibility: "visible",
+      activeTheme: { primaryColor: "#000000" },
+      publishId: "encounter-export-test",
+      vaultTitle: "Test Vault",
+      publisherVersion: "test",
+    });
+
+    const serialized = JSON.stringify(bundle);
+    expect(serialized).toContain("Rain drums on the broken mill wheel.");
+    expect(serialized).not.toContain("Canary Smuggler Captain");
+    expect(serialized).not.toContain("Canary Complication");
+    expect(serialized).not.toContain("Canary Outcome");
+  });
+
   it("keeps adventure lore in the vault and omits empty map images", () => {
     const adventure = {
       ...baseOutput,
