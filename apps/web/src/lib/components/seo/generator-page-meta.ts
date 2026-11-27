@@ -760,9 +760,9 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
           "Yes. Generate and copy faction notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
       },
       {
-        question: "Which RPG systems does it work with?",
+        question: "How do I make a morally compromised faction believable?",
         answer:
-          "The generator is system-agnostic and works for any dark fantasy or grimdark campaign — OSR, Warhammer-adjacent settings, cursed kingdoms, plague-ridden cities, or your own homebrew. It makes no claim of official affiliation with any third-party system.",
+          "Give them a real crisis nobody else is solving, such as holding a plague cordon or guarding a demon-haunted pass, then tie their cruelty to how they keep that bargain. The generator is system-agnostic and works with any dark fantasy or grimdark campaign without claiming official affiliation with any third-party system.",
       },
       {
         question: "Can I aim the faction at my current campaign?",

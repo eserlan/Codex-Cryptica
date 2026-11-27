@@ -795,28 +795,41 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "dark-fantasy-faction": {
     summary:
-      "Each result is a named dark fantasy faction shaped by the mode, type, scope and moral posture you pick. You get what it wants, what is tearing it apart, named NPCs, a rival and a hook. Use it when the table needs a power whose cruelty or compromise still makes sense from the inside, such as a plague cult or a corpse guild.",
+      "Make your faction dangerous, necessary, and difficult to destroy. Each result is shaped by the mode, type, scope and moral posture you pick, giving you what it wants, what is tearing it apart, named NPCs, a rival and a hook.",
     tips: [
       {
-        title: "Let the mode set the pressure",
+        title: "Start with the price of survival",
         detail:
-          "Dark fantasy mode is the disaster the faction is built on. The draft says they stand on it in What they control and names it as the place they operate through in the summary, so pick the mode that matches your campaign's crisis.",
+          "Combine Dark fantasy mode and Moral posture to produce a faction that solves a real crisis at a troubling price, such as a plague cult that genuinely contains disease. Openly cruel marks institutions that no longer hide their methods, while Fallen idealists leaves room to bargain.",
       },
       {
-        title: "Match the moral posture to the danger",
+        title: "Make the players need them first",
         detail:
-          "Moral posture drives the Why they are dangerous section. Openly cruel shows a faction that no longer hides its methods, while Fallen idealists describes a group that once meant well, which gives the party someone to negotiate with.",
+          "Use Operating scope to place a guarded road, cure, shelter or archive under their control before the hidden cost surfaces in Why they are dangerous. When the party relies on what the faction protects, opposing them carries immediate consequences.",
       },
       {
-        title: "Use the scope and campaign context for place",
+        title: "Give the faction a breaking point",
         detail:
-          "Operating scope sets the area named in What they control, so a single plague-stricken village and an entire doomed barony put very different pressure on the party. In the offline draft, anything typed into Add campaign context is added to the end of How to use them at the table as Campaign context.",
+          "Pair Internal Conflict, Rival Faction, Notable NPCs and Immediate Hook with Add campaign context so schemes and fractures keep advancing between sessions. In offline drafts, anything entered in Add campaign context appears at the end of How to use them at the table.",
       },
     ],
+    linksTitle: "Make your faction matter at the table",
     links: [
       {
+        href: "/answers/how-do-you-create-a-fantasy-faction",
+        label: "How do you create a fantasy faction?",
+        description: "Define its resources, weaknesses and relationships.",
+      },
+      {
         href: "/answers/how-do-i-run-political-intrigue-and-faction-play",
-        label: "Running faction play",
+        label: "How do I run political intrigue and faction play?",
+        description:
+          "Turn rival groups into active decisions and consequences.",
+      },
+      {
+        href: "/answers/how-do-you-track-faction-turns-between-rpg-sessions",
+        label: "How do you track faction turns between RPG sessions?",
+        description: "Keep schemes moving when the party does not intervene.",
       },
     ],
   },

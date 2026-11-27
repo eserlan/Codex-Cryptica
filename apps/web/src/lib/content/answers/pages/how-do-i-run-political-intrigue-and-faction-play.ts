@@ -288,6 +288,12 @@ export const howDoIRunPoliticalIntrigueAndFactionPlay: AnswerConfigInput = {
       href: "/generators/secret-society",
     },
     {
+      title: "Dark Fantasy Faction Generator",
+      description:
+        "Morally compromised powers with internal fractures, secrets and rival factions.",
+      href: "/generators/dark-fantasy-faction",
+    },
+    {
       title: "Nation Generator",
       description:
         "Named states with a leader, competing power blocs and a hidden problem.",

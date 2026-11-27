@@ -122,6 +122,12 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
       href: "/generators/faction",
     },
     {
+      title: "Dark Fantasy Faction Generator",
+      description:
+        "Morally compromised powers with a base, a secret, named NPCs and a rival.",
+      href: "/generators/dark-fantasy-faction",
+    },
+    {
       title: "Secret society generator",
       description:
         "For factions whose membership is itself the secret: cells, oaths and recognition signs.",

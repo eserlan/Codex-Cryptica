@@ -124,6 +124,12 @@ export const howDoYouTrackFactionTurnsBetweenRpgSessions: AnswerConfigInput = {
       href: "/generators/faction",
     },
     {
+      title: "Dark Fantasy Faction Generator",
+      description:
+        "Compromised powers with an agenda, internal conflict and rival pressure to advance between sessions.",
+      href: "/generators/dark-fantasy-faction",
+    },
+    {
       title: "Council vote generator",
       description:
         "Turn political faction moves into dramatic voting scenes with shifting NPC allegiances.",

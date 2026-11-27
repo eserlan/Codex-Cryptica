@@ -208,6 +208,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    "dark-fantasy-faction": {
+      headline: "Keep this faction in play",
+      summary:
+        "Save this faction as a Faction entry in your local Codex vault so its agenda, secrets, internal conflict, and rival stay ready across sessions.",
+      capabilities: [
+        "Store what they control, want, and risk in one Faction entry",
+        "Keep notable NPCs, internal conflict, rival faction, and immediate hook in GM-only lore",
+        "Develop the people and places connected to it into linked entries inside your vault",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+    },
     nation: {
       headline: "Keep building this nation",
       summary:
