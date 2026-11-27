@@ -350,6 +350,21 @@ describe("parseVillainSchemeResponse", () => {
         resolved,
       ),
     ).toThrow("four to six numbered stages");
+
+    const indentedCodeLore = [
+      "### Scheme Stages",
+      "",
+      "    **Stage 1: Quiet Recon**",
+      "    **Stage 2: Supply Squeeze**",
+      "    **Stage 3: Public Distraction**",
+      "    **Stage 4: Vault Breach**",
+    ].join("\n");
+    expect(() =>
+      parseVillainSchemeResponse(
+        JSON.stringify({ lore: indentedCodeLore }),
+        resolved,
+      ),
+    ).toThrow("four to six numbered stages");
   });
 
   it("writes a finite Current Activity clause for a custom Power Scale", () => {

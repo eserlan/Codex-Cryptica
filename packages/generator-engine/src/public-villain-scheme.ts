@@ -233,7 +233,7 @@ export function parseVillainSchemeResponse(
   const stagesSection = extractSchemeStagesSection(lore);
   const stageMatches = Array.from(
     stagesSection.matchAll(
-      /^\s*(?:[-*+]|\d+\.)?\s*\*\*Stage\s+(\d+)\s*:\s*(.+)$/gm,
+      /^ {0,3}(?:(?:[-*+]|\d+\.) +)?\*\*Stage\s+(\d+)\s*:\s*(.+)$/gm,
     ),
     (match) => ({
       num: Number(match[1]),
