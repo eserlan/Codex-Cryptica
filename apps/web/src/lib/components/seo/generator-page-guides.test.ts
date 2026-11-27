@@ -643,12 +643,23 @@ describe("generator guide distinctness", () => {
       {
         slug: "tome",
         title: "Tome & Forbidden Book Generator",
-        labels: ["Primary Reading Hazard", "Current Custodian", "Concept", "Campaign Context"],
+        labels: [
+          "Primary Reading Hazard",
+          "Current Custodian",
+          "Concept",
+          "Campaign Context",
+        ],
       },
       {
         slug: "world",
         title: "Sci-Fi World Generator",
-        labels: ["World Tag 1", "World Tag 2", "Habitability", "Civilisation", "Dominant feature (optional)"],
+        labels: [
+          "World Tag 1",
+          "World Tag 2",
+          "Habitability",
+          "Civilisation",
+          "Dominant feature (optional)",
+        ],
       },
     ] as const;
 
