@@ -407,7 +407,10 @@ function keepFirstOccurrence(
   return kept;
 }
 
-function deduplicateMarkdownSections(markdown: string, seen: Set<string>) {
+export function deduplicateMarkdownSections(
+  markdown: string,
+  seen: Set<string>,
+) {
   const sections = splitMarkdownSections(markdown);
   return sections.length
     ? keepFirstOccurrence(sections, seen)

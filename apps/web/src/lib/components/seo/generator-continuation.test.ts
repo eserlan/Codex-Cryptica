@@ -107,6 +107,37 @@ describe("generator-continuation", () => {
     expect(config?.capabilities.join(" ")).toContain("remove table hooks");
   });
 
+  it("configures the encounter as an Event import with GM-only lore and gates it on completed generation", () => {
+    const config = getGeneratorContinuationConfig("encounter");
+    expect(config).not.toBeNull();
+    expect(config?.capabilities.join(" ")).toContain("Event entry");
+    expect(config?.capabilities.join(" ")).toContain("GM-only lore");
+    expect(
+      [config?.headline, config?.summary, ...(config?.capabilities ?? [])]
+        .join(" ")
+        .toLowerCase(),
+    ).not.toContain("undefined");
+
+    expect(
+      shouldShowGeneratorContinuation({
+        generatorType: "encounter",
+        userGenerationSucceeded: true,
+        isExampleDraft: false,
+        isBusy: false,
+        variant: "default",
+      }),
+    ).toBe(true);
+    expect(
+      shouldShowGeneratorContinuation({
+        generatorType: "encounter",
+        userGenerationSucceeded: true,
+        isExampleDraft: false,
+        isBusy: true,
+        variant: "default",
+      }),
+    ).toBe(false);
+  });
+
   it("configures the constellation as a Note import with GM-only lore and gates it on completed generation", () => {
     const config = getGeneratorContinuationConfig("constellation");
     expect(config).not.toBeNull();
