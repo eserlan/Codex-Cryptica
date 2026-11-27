@@ -215,6 +215,7 @@ const LAYOUT_RULES: LayoutRule[] = [
     railSections: new Set([
       "Voting Procedure",
       "Current Vote Estimate",
+      "Council Members",
       "Antagonist Influence",
     ]),
   },

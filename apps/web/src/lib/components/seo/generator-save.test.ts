@@ -217,6 +217,124 @@ describe("generator save payloads", () => {
     expect(JSON.stringify(bundle)).not.toContain(secret);
   });
 
+  it("keeps council member stances and persuasion routes out of guest exports", () => {
+    const roster =
+      "### Council Members\n- **Ossian Thale** — Initial stance: Leaning. A recorded vote can expose his secret allegiance.";
+    const output = {
+      ...baseOutput,
+      type: "event",
+      content: "### The Proposal\nApprove the harbour levy.",
+      lore: `${roster}\n\n### Investigation Leads\nReview the harbourmaster's manifest.`,
+      labels: ["council-vote", "political-intrigue"],
+      status: "active",
+    } satisfies GeneratorOutput;
+    const layout = getGeneratorDocumentLayout(output);
+    const payload = buildGeneratorSavePayload(output, layout);
+
+    expect(payload.lore).toContain(roster);
+    expect(payload.content).not.toContain("Council Members");
+
+    const entity = {
+      id: "council-vote-1",
+      type: payload.type,
+      title: payload.title,
+      content: payload.content,
+      lore: payload.lore,
+      labels: payload.labels,
+      status: payload.status,
+      aliases: [],
+      connections: [],
+    } satisfies Entity;
+    const bundle = GuestExporter.export({
+      entities: [entity],
+      defaultVisibility: "visible",
+      activeTheme: { primaryColor: "#000000" },
+      publishId: "council-vote-export-test",
+      vaultTitle: "Test Vault",
+      publisherVersion: "test",
+    });
+
+    expect(JSON.stringify(bundle)).not.toContain("Ossian Thale");
+    expect(JSON.stringify(bundle)).not.toContain("Initial stance: Leaning");
+    expect(JSON.stringify(bundle)).not.toContain("secret allegiance");
+  });
+
+  it("rejects council-vote payloads with a renamed roster heading before they can reach guest exports", async () => {
+    const { buildCouncilVoteFoundationPrompt, readCouncilVoteFoundation } =
+      await import("generator-engine");
+    const { resolved } = buildCouncilVoteFoundationPrompt({});
+    const leaked = readCouncilVoteFoundation(
+      JSON.stringify({
+        title: "Harbour Levy Vote",
+        content:
+          "### The Proposal\nApprove the harbour levy.\n\n### Voting Roster\n- **Ossian Thale** — Initial stance: Leaning. Secret allegiance.",
+        lore: "### Voting Procedure\nSimple majority.\n\n### Current Vote Estimate\nTwo support.\n\n### Council Members\n- **Ossian Thale** — Leaning.\n\n### Antagonist Influence\nNone.\n\n### Investigation Leads\nCheck the manifest.",
+      }),
+      resolved,
+    );
+
+    expect(leaked).toBeNull();
+
+    const indentedLeaked = readCouncilVoteFoundation(
+      JSON.stringify({
+        title: "Harbour Levy Vote",
+        content:
+          "### The Proposal\nApprove the harbour levy.\n\n   ### Council Members\n- **Ossian Thale** — Initial stance: Leaning. Secret allegiance.",
+        lore: "### Voting Procedure\nSimple majority.\n\n### Current Vote Estimate\nTwo support.\n\n### Council Members\n- **Ossian Thale** — Leaning.\n\n### Antagonist Influence\nNone.\n\n### Investigation Leads\nCheck the manifest.",
+      }),
+      resolved,
+    );
+
+    expect(indentedLeaked).toBeNull();
+
+    const fencedLoreLeaked = readCouncilVoteFoundation(
+      JSON.stringify({
+        title: "Harbour Levy Vote",
+        content: "### The Proposal\nApprove the harbour levy.",
+        lore: "### Voting Procedure\nSimple majority.\n\n### Current Vote Estimate\nTwo support.\n\n### Council Members\n- **Ossian Thale** — Leaning.\n\n### Antagonist Influence\nNone.\n\n### Investigation Leads\nCheck the manifest.\n\n```markdown\n### Hidden Bribe\nOssian Thale took gold.\n```",
+      }),
+      resolved,
+    );
+
+    expect(fencedLoreLeaked).toBeNull();
+
+    const fencedContentLeaked = readCouncilVoteFoundation(
+      JSON.stringify({
+        title: "Harbour Levy Vote",
+        content:
+          "### The Proposal\nApprove the harbour levy.\n\n```markdown\n### Council Members\n- **Ossian Thale** — Secret allegiance.\n```",
+        lore: "### Voting Procedure\nSimple majority.\n\n### Current Vote Estimate\nTwo support.\n\n### Council Members\n- **Ossian Thale** — Leaning.\n\n### Antagonist Influence\nNone.\n\n### Investigation Leads\nCheck the manifest.",
+      }),
+      resolved,
+    );
+
+    expect(fencedContentLeaked).toBeNull();
+
+    const htmlHeadingContentLeaked = readCouncilVoteFoundation(
+      JSON.stringify({
+        title: "Harbour Levy Vote",
+        content:
+          "### The Proposal\nApprove the harbour levy.\n\n<h3>Council Members</h3>\n<p>Ossian Thale — Secret allegiance.</p>",
+        lore: "### Voting Procedure\nSimple majority.\n\n### Current Vote Estimate\nTwo support.\n\n### Council Members\n- **Ossian Thale** — Leaning.\n\n### Antagonist Influence\nNone.\n\n### Investigation Leads\nCheck the manifest.",
+      }),
+      resolved,
+    );
+
+    expect(htmlHeadingContentLeaked).toBeNull();
+
+    const fourSpaceIndentedLeaked = readCouncilVoteFoundation(
+      JSON.stringify({
+        title: "Harbour Levy Vote",
+        content:
+          "### The Proposal\nApprove the harbour levy.\n\n    ### Council Members\n    - **Ossian Thale** — Secret allegiance.",
+        lore: "### Voting Procedure\nSimple majority.\n\n### Current Vote Estimate\nTwo support.\n\n### Council Members\n- **Ossian Thale** — Leaning.\n\n### Antagonist Influence\nNone.\n\n### Investigation Leads\nCheck the manifest.",
+      }),
+      resolved,
+    );
+
+    expect(fourSpaceIndentedLeaked).toBeNull();
+  });
+
   it("keeps encounter participants, complication, and outcomes out of guest exports", () => {
     const encounter = {
       ...baseOutput,

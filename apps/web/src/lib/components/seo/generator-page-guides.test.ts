@@ -638,6 +638,31 @@ describe("generator guide distinctness", () => {
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
+  it("serves the council vote guide with tips naming its form labels and without dashes", () => {
+    const guide = getGeneratorGuide("council-vote", "Council Vote Generator");
+    expect(guide).toBe(SLUG_GUIDES["council-vote"]);
+    expect(guide).not.toEqual(
+      defaultGuideForSlug("council-vote", "Council Vote Generator"),
+    );
+    expect(guide.summary).toContain("voting procedure");
+    expect(guide.summary).not.toContain("voting threshold");
+    expect(guide.tips).toHaveLength(3);
+    expect(guide.links?.length).toBeGreaterThan(0);
+    const tipText = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const label of [
+      "Council Size",
+      "Voting Rule",
+      "Antagonist Influence",
+      "Deadline",
+      "Council Members",
+      "Current Vote Estimate",
+      "Secret Ballot does not set a threshold",
+    ]) {
+      expect(tipText).toContain(label);
+    }
+    expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
+  });
+
   it("serves the holiday guide with tips naming its form labels and without dashes", () => {
     const guide = getGeneratorGuide("holiday", "Holiday & Festival Generator");
     expect(guide).toBe(SLUG_GUIDES.holiday);

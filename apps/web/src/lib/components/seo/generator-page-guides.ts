@@ -28,6 +28,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  "council-vote": {
+    summary:
+      "Generate a political vote with a named council, a deadline and a voting procedure, where each voter has a stance and a route the party can use to win them over before the decision is called.",
+    tips: [
+      {
+        title: "Count the seats before the speeches",
+        detail:
+          "Council Size sets the seats, Voting Rule describes how the vote is decided or cast, and Deadline sets when the decision is called. Simple Majority, Supermajority and Unanimous define approval thresholds; Veto Power adds a blocking power, and Secret Ballot does not set a threshold. Check the governing body's rule before planning around Current Vote Estimate and each councillor's starting stance in Council Members.",
+      },
+      {
+        title: "Pick the members the party can reach",
+        detail:
+          "Every council member line pairs an Initial stance with a persuasion route, such as a face-saving concession for a Beleaguered Ally or a contract for a Greedy Broker. Choose two or three voters the party can reach before the deadline, and leave the rest for the vote itself.",
+      },
+      {
+        title: "Set the pressure with Antagonist Influence",
+        detail:
+          "Antagonist Influence ranges from None to Dominant, and at Subtle, Entrenched or Dominant a hostile hand is already on the council. Investigation Leads say where to start looking, since asking around the usual haunts of the body is the fastest way to find out who can be swayed.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-i-run-political-intrigue-and-faction-play",
+        label: "Running political intrigue between sessions",
+      },
+      {
+        href: "/answers/how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg",
+        label: "Playing the nobles and courtiers who sway a vote",
+      },
+    ],
+  },
   holiday: {
     summary:
       "Generate one observance or a connected calendar of festivals, memorials and civic days, each with its origin, traditions, who keeps it, and a tension the party can walk into at the table.",

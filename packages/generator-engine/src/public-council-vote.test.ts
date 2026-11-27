@@ -901,6 +901,10 @@ describe("Superhero theme regression (#3108)", () => {
 
 describe("readCouncilVoteFoundation & readCouncilVotePaths", () => {
   const { resolved } = buildCouncilVoteFoundationPrompt({}, "", seededRng(3));
+  const validFoundation = {
+    content: "### The Proposal\nA player-facing hook.",
+    lore: `### Voting Procedure\nSimple majority.\n\n### Current Vote Estimate\nTwo support, one opposes.\n\n### Council Members\n- A councillor's private agenda.\n\n### Antagonist Influence\nA rival faction applies pressure.\n\n### Investigation Leads\nInspect the harbour ledger.`,
+  };
 
   it("rejects empty or non-JSON replies instead of returning blank strings", () => {
     expect(readCouncilVoteFoundation("not json", resolved)).toBeNull();
@@ -919,6 +923,94 @@ describe("readCouncilVoteFoundation & readCouncilVotePaths", () => {
       ),
     ).toBeNull();
   });
+
+  it("rejects misplaced or non-public content headings and unrecognized lore headings", () => {
+    expect(
+      readCouncilVoteFoundation(
+        JSON.stringify({
+          ...validFoundation,
+          content: `${validFoundation.content}\n\n### Council Members\nPrivate stances.`,
+        }),
+        resolved,
+      ),
+    ).toBeNull();
+    expect(
+      readCouncilVoteFoundation(
+        JSON.stringify({
+          ...validFoundation,
+          content: `${validFoundation.content}\n\n### Voting Roster\n- **Ossian Thale** — Initial stance: Leaning.`,
+        }),
+        resolved,
+      ),
+    ).toBeNull();
+    expect(
+      readCouncilVoteFoundation(
+        JSON.stringify({
+          ...validFoundation,
+          content: `${validFoundation.content}\n\n   ### Council Members\n- **Ossian Thale** — Initial stance: Leaning.`,
+        }),
+        resolved,
+      ),
+    ).toBeNull();
+    expect(
+      readCouncilVoteFoundation(
+        JSON.stringify({
+          ...validFoundation,
+          content: `${validFoundation.content}\n\n> ### Council Members\n> - **Ossian Thale** — Initial stance: Leaning.`,
+        }),
+        resolved,
+      ),
+    ).toBeNull();
+    expect(
+      readCouncilVoteFoundation(
+        JSON.stringify({
+          ...validFoundation,
+          lore: `${validFoundation.lore}\n\n> ### Hidden Ledger\n> Ossian Thale took gold.`,
+        }),
+        resolved,
+      ),
+    ).toBeNull();
+    expect(
+      readCouncilVoteFoundation(
+        JSON.stringify({
+          ...validFoundation,
+          content: `${validFoundation.content}\n\nCouncil Members\n---\n- **Ossian Thale** — Initial stance: Leaning.`,
+        }),
+        resolved,
+      ),
+    ).toBeNull();
+    expect(
+      readCouncilVoteFoundation(
+        JSON.stringify({
+          ...validFoundation,
+          lore: `${validFoundation.lore}\n\n### Unclassified Secrets\nA private detail.`,
+        }),
+        resolved,
+      ),
+    ).toBeNull();
+    expect(
+      readCouncilVoteFoundation(
+        JSON.stringify({
+          ...validFoundation,
+          lore: `${validFoundation.lore}\n\n\`\`\`markdown\n### Hidden Ledger\nSecret bribe.\n\`\`\``,
+        }),
+        resolved,
+      ),
+    ).toBeNull();
+    expect(
+      readCouncilVoteFoundation(JSON.stringify(validFoundation), resolved),
+    ).not.toBeNull();
+    expect(
+      readCouncilVoteFoundation(
+        JSON.stringify({
+          ...validFoundation,
+          content:
+            "### The Proposal\nA player-facing hook.\n\n### Campaign Fit\nTied to the harbour.\n\n### The Deadline\nBefore dusk.",
+        }),
+        resolved,
+      ),
+    ).not.toBeNull();
+  });
 });
 
 describe("runCouncilVoteStaged", () => {
@@ -931,7 +1023,7 @@ describe("runCouncilVoteStaged", () => {
     JSON.stringify({
       title: "The Salt Road Levy",
       content: `### The Proposal\nContent${suffix}`,
-      lore: `### Voting Procedure\nSimple majority, 5 seats${suffix}.\n\n### Council Members\n${["A", "B", "C", "D", "E"].map((name, index) => `- **Councillor ${name}** (Member) — Initial stance: ${index < 3 ? "Support" : "Oppose"}. Would genuinely persuade them: verified settlement terms.`).join("\n")}`,
+      lore: `### Voting Procedure\nSimple majority, 5 seats${suffix}.\n\n### Current Vote Estimate\nThree support and two oppose.\n\n### Council Members\n${["A", "B", "C", "D", "E"].map((name, index) => `- **Councillor ${name}** (Member) — Initial stance: ${index < 3 ? "Support" : "Oppose"}. Would genuinely persuade them: verified settlement terms.`).join("\n")}\n\n### Antagonist Influence\nNone.\n\n### Investigation Leads\nInspect the settlement records.`,
       labels: ["council-vote", "political-intrigue"],
     });
   const pathsJson = (suffix = "") =>
@@ -1131,5 +1223,20 @@ describe("extractCouncilVoteNames", () => {
       lore: "Voting procedure is majority.",
     };
     expect(extractCouncilVoteNames(output)).toEqual([]);
+  });
+
+  it("capitalises the default proposal and avoids a possessive on a multi-word governing body", () => {
+    const output = generateCouncilVoteLocal(
+      { governingBodyType: "Council of Elders" },
+      () => 0,
+    );
+
+    expect(output.content).toContain(
+      "### The Proposal\nA contested proposal that will reshape the region",
+    );
+    expect(output.lore).toContain(
+      "asking around the usual haunts of the council of elders is",
+    );
+    expect(output.lore).not.toContain("elders's");
   });
 });
