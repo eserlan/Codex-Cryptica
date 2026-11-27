@@ -149,19 +149,75 @@ Return only the JSON object. Do not include markdown code block formatting.`;
   };
 }
 
+function hasLeakedHolidayHiddenTruth(
+  rawObservances: unknown[],
+  playerFacingFields: string[],
+): boolean {
+  return rawObservances.some((entry) => {
+    if (entry === null || typeof entry !== "object") return false;
+    const hiddenTruth = (entry as Record<string, unknown>).hiddenTruth;
+    const secret = typeof hiddenTruth === "string" ? hiddenTruth.trim() : "";
+    return (
+      secret.length > 0 &&
+      playerFacingFields.some((field) => field.includes(secret))
+    );
+  });
+}
+
+const REQUIRED_HOLIDAY_OBSERVANCE_FIELDS = [
+  "name",
+  "type",
+  "when",
+  "observers",
+  "origin",
+  "traditions",
+  "foodOrDress",
+  "taboos",
+  "variations",
+  "outsiderMisunderstanding",
+  "publicBelief",
+  "tension",
+] as const;
+
+function areHolidayObservancesValid(
+  rawObservances: unknown[],
+  content: string,
+  expectedCount: number,
+): boolean {
+  return (
+    rawObservances.length === expectedCount &&
+    rawObservances.every(
+      (entry) =>
+        entry !== null &&
+        typeof entry === "object" &&
+        REQUIRED_HOLIDAY_OBSERVANCE_FIELDS.every((key) => {
+          const value = (entry as Record<string, unknown>)[key];
+          return typeof value === "string" && value.trim().length > 0;
+        }) &&
+        REQUIRED_HOLIDAY_OBSERVANCE_FIELDS.every((key) =>
+          content.includes((entry as Record<string, string>)[key]),
+        ),
+    )
+  );
+}
+
+function parseHolidayJsonObject(text: string): Record<string, unknown> {
+  try {
+    const parsed = parseFencedJson<unknown>(text);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return parsed as Record<string, unknown>;
+    }
+  } catch {
+    // Fall through to empty record so caller uses the complete local result.
+  }
+  return {};
+}
+
 export function parseHolidayResponse(
   text: string,
   resolved: ResolvedHoliday,
 ): PublicGeneratorOutput {
-  let data: Record<string, unknown> = {};
-  try {
-    const parsed = parseFencedJson<unknown>(text);
-    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-      data = parsed as Record<string, unknown>;
-    }
-  } catch {
-    // Fall through to the complete local result for malformed model output.
-  }
+  const data = parseHolidayJsonObject(text);
   const fallback = generateHolidayLocal({
     genre: resolved.genre,
     scope: resolved.scope,
@@ -183,47 +239,16 @@ export function parseHolidayResponse(
     ? data.observances
     : [];
   const content = typeof data.content === "string" ? data.content : "";
-  const requiredObservanceFields = [
-    "name",
-    "type",
-    "when",
-    "observers",
-    "origin",
-    "traditions",
-    "foodOrDress",
-    "taboos",
-    "variations",
-    "outsiderMisunderstanding",
-    "publicBelief",
-    "tension",
-  ] as const;
   const structuredObservancesAreValid =
-    rawObservances.length === resolved.count &&
-    rawObservances.every(
-      (entry) =>
-        entry !== null &&
-        typeof entry === "object" &&
-        requiredObservanceFields.every((key) => {
-          const value = (entry as Record<string, unknown>)[key];
-          return typeof value === "string" && value.trim().length > 0;
-        }) &&
-        requiredObservanceFields.every((key) =>
-          content.includes((entry as Record<string, string>)[key]),
-        ),
-    ) &&
+    areHolidayObservancesValid(rawObservances, content, resolved.count) &&
     typeof data.title === "string" &&
     data.title.trim().length > 0 &&
-    typeof data.content === "string" &&
-    data.content.trim().length > 0;
-  const hasLeakedHiddenTruth = rawObservances.some((entry) => {
-    if (entry === null || typeof entry !== "object") return false;
-    const hiddenTruth = (entry as Record<string, unknown>).hiddenTruth;
-    return (
-      typeof hiddenTruth === "string" &&
-      hiddenTruth.trim().length > 0 &&
-      content.includes(hiddenTruth.trim())
-    );
-  });
+    content.trim().length > 0;
+  const hasLeakedHiddenTruth = hasLeakedHolidayHiddenTruth(rawObservances, [
+    typeof data.title === "string" ? data.title : "",
+    typeof data.summary === "string" ? data.summary : "",
+    content,
+  ]);
   if (!structuredObservancesAreValid || hasLeakedHiddenTruth) return fallback;
   return {
     type: "note",

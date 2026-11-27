@@ -126,6 +126,43 @@ describe("generator save payloads", () => {
       publisherVersion: "test",
     });
     expect(JSON.stringify(bundle)).not.toContain(aiHiddenTruth);
+
+    const summaryLeakOutput = parseHolidayResponse(
+      JSON.stringify({
+        title: "Lantern Tide",
+        summary: `Remembering the storm — ${aiHiddenTruth}`,
+        content: Object.values(publicFields).join("\n"),
+        lore: `### Hidden Truth\n${aiHiddenTruth}`,
+        observances: [{ ...publicFields, hiddenTruth: aiHiddenTruth }],
+      }),
+      resolved,
+    ) as GeneratorOutput;
+    const summaryLeakPayload = buildGeneratorSavePayload(
+      summaryLeakOutput,
+      getGeneratorDocumentLayout(summaryLeakOutput),
+    );
+    expect(summaryLeakPayload.content).not.toContain(aiHiddenTruth);
+    const summaryLeakBundle = GuestExporter.export({
+      entities: [
+        {
+          id: "holiday-summary-leak",
+          type: summaryLeakPayload.type,
+          title: summaryLeakPayload.title,
+          content: summaryLeakPayload.content,
+          lore: summaryLeakPayload.lore,
+          labels: summaryLeakPayload.labels,
+          status: summaryLeakPayload.status,
+          aliases: [],
+          connections: [],
+        } satisfies Entity,
+      ],
+      defaultVisibility: "visible",
+      activeTheme: { primaryColor: "#000000" },
+      publishId: "holiday-summary-leak-test",
+      vaultTitle: "Test Vault",
+      publisherVersion: "test",
+    });
+    expect(JSON.stringify(summaryLeakBundle)).not.toContain(aiHiddenTruth);
   });
 
   it("builds a normal vault payload from the rendered document layout", () => {
