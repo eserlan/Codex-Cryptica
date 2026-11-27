@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { GuestExporter } from "@codex/vault-engine";
 import type { Entity } from "schema";
 import type { SessionEntity } from "generator-engine";
+import { generateHolidayLocal } from "generator-engine";
 import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 import {
   buildGeneratorSavePayload,
@@ -20,6 +21,50 @@ const baseOutput: GeneratorOutput = {
 };
 
 describe("generator save payloads", () => {
+  it("keeps controversial holiday history out of saved content and guest exports", () => {
+    const output = {
+      ...generateHolidayLocal(
+        {
+          setSize: "A calendar of 6 observances",
+          includeControversial: true,
+        },
+        () => 0.21,
+      ),
+      type: "note",
+    } satisfies GeneratorOutput;
+    const hiddenTruth = output.observances?.[0]?.hiddenTruth;
+    expect(hiddenTruth).toBeTruthy();
+
+    const payload = buildGeneratorSavePayload(
+      output,
+      getGeneratorDocumentLayout(output),
+    );
+    expect(payload.content).not.toContain(hiddenTruth);
+    expect(payload.lore).toContain(hiddenTruth);
+
+    const entity = {
+      id: "holiday-calendar",
+      type: payload.type,
+      title: payload.title,
+      content: payload.content,
+      lore: payload.lore,
+      labels: payload.labels,
+      status: payload.status,
+      aliases: [],
+      connections: [],
+    } satisfies Entity;
+    const bundle = GuestExporter.export({
+      entities: [entity],
+      defaultVisibility: "visible",
+      activeTheme: { primaryColor: "#000000" },
+      publishId: "holiday-export-test",
+      vaultTitle: "Test Vault",
+      publisherVersion: "test",
+    });
+
+    expect(JSON.stringify(bundle)).not.toContain(hiddenTruth);
+  });
+
   it("builds a normal vault payload from the rendered document layout", () => {
     expect(
       buildGeneratorSavePayload(baseOutput, {

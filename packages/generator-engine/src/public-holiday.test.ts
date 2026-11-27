@@ -87,6 +87,9 @@ describe("public holiday generator", () => {
       rng,
     );
     expect(contested.lore).toContain("GM-only history");
+    const hiddenTruth = contested.observances?.[0]?.hiddenTruth;
+    expect(hiddenTruth).toBeTruthy();
+    expect(contested.content).not.toContain(hiddenTruth);
   });
 
   it("parses valid JSON and safely falls back for malformed JSON", () => {
