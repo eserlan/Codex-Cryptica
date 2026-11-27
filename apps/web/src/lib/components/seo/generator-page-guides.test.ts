@@ -678,7 +678,6 @@ describe("generator guide distinctness", () => {
         labels: [
           "Primary Reading Hazard",
           "Current Custodian",
-          "Concept",
           "Campaign Context",
         ],
       },

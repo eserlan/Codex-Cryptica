@@ -991,10 +991,13 @@ ${duplicatedParagraph}
     expect(quarto.content).toContain("The leather-bound quarto has ");
   });
 
-  it("fills the offline At the Table Reference section rather than leaving it empty", () => {
+  it("fills the offline At the Table Reference section with profile-neutral guidance", () => {
     const out = generateTomeLocal({}, () => 0.3);
     expect(out.lore).toMatch(
-      /### At the Table Reference\n\nLet the party find the Actionable Clue[^\n]*\n\n### Ground Truth for the GM/,
+      /### At the Table Reference\n\nLet the party uncover the Actionable Clue[^\n]*\n\n### Ground Truth for the GM/,
+    );
+    expect(out.lore).not.toContain(
+      "dated entries with the marginal corrections",
     );
   });
 });

@@ -806,7 +806,7 @@ ${details.clue} The author's central interpretation is compromised by deliberate
 
   const lore = `### At the Table Reference
 
-Let the party find the Actionable Clue by comparing dated entries with the marginal corrections, and keep the Objective Truth hidden until they act on the flawed premise.
+Let the party uncover the Actionable Clue through careful study of the volume's evidence and provenance, and keep the Objective Truth hidden until they act on the flawed premise.
 
 ### Ground Truth for the GM
 - **What the Book Claims**: ${resolved.bookClaim}.
