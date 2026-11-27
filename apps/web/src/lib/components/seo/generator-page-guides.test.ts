@@ -666,6 +666,21 @@ describe("generator guide distinctness", () => {
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
+  it("serves the encounter guide with tips naming its form labels and without dashes", () => {
+    const guide = getGeneratorGuide("encounter", "RPG Encounter Generator");
+    expect(guide).toBe(SLUG_GUIDES.encounter);
+    expect(guide).not.toEqual(
+      defaultGuideForSlug("encounter", "RPG Encounter Generator"),
+    );
+    expect(guide.tips).toHaveLength(3);
+    expect(guide.links?.length).toBeGreaterThan(0);
+    const tipText = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const label of ["Threat", "Encounter Type", "Environment", "Tone"]) {
+      expect(tipText).toContain(label);
+    }
+    expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
+  });
+
   it("serves the alien race guide with tips naming its form labels and without dashes", () => {
     const guide = getGeneratorGuide("alien-race", "Alien Race Generator");
     expect(guide).toBe(SLUG_GUIDES["alien-race"]);

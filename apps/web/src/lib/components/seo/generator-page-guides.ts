@@ -28,6 +28,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  encounter: {
+    summary:
+      "Generate a playable encounter with a situation, participants, an environment, possible approaches, a complication and four outcomes, so the table has a scene to run rather than just a monster list.",
+    tips: [
+      {
+        title: "Set Threat to decide what failure costs",
+        detail:
+          "Threat changes the Failure outcome: at Trivial / Low it is a small, easily recovered setback, while at Severe / Deadly it is a devastating loss that may be permanent. Set it first, so the outcomes match how much the party can afford to lose.",
+      },
+      {
+        title: "Give players a way in besides the fight",
+        detail:
+          "Possible Approaches lists options that are not the obvious fight, such as a signal to call for help, a stash of supplies, a truce, or a way around the danger. Offer one or two before the Complication / Twist surfaces once the party commits to a course of action.",
+      },
+      {
+        title: "Use Encounter Type and Environment to set the scene",
+        detail:
+          "Encounter Type shapes who is in the scene, from creatures and armed patrols to signs of a group that has just passed through. Environment names the Location and the Environment section, so pick both before Tone, which only colours the atmosphere wording.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-i-balance-rpg-combat-encounters-without-a-tpk",
+        label: "Balancing combat encounters so they stay fair",
+      },
+      {
+        href: "/answers/how-do-i-save-my-party-from-an-overpowered-encounter",
+        label: "Rescuing a party from an overpowered encounter",
+      },
+    ],
+  },
   tome: {
     summary:
       "Generate an in-world book with its physical format, provenance, a deception, a reading hazard, and the ground truth the GM keeps, so a forbidden text can drive a scene rather than sit on a shelf.",
