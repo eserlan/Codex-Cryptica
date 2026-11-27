@@ -419,6 +419,10 @@ function hasFencedMarkdownHeading(markdown: string): boolean {
   return false;
 }
 
+function hasRawHtmlHeading(markdown: string): boolean {
+  return /<h[1-6](?=[\s>/])[^>]*>/i.test(markdown);
+}
+
 export function readCouncilVoteFoundation(
   reply: string,
   resolved: ResolvedCouncilVote,
@@ -445,9 +449,11 @@ export function readCouncilVoteFoundation(
     "Antagonist Influence",
     "Investigation Leads",
   ];
+
   const contentHeadings = extractMarkdownHeadings(parsed.content);
   if (
     hasFencedMarkdownHeading(parsed.content) ||
+    hasRawHtmlHeading(parsed.content) ||
     contentHeadings.some(
       ({ heading }) => !publicSections.has(heading.trim().toLowerCase()),
     )
@@ -458,6 +464,7 @@ export function readCouncilVoteFoundation(
   const loreHeadings = extractMarkdownHeadings(parsed.lore);
   if (
     hasFencedMarkdownHeading(parsed.lore) ||
+    hasRawHtmlHeading(parsed.lore) ||
     loreHeadings.length !== privateSections.length ||
     loreHeadings.some(
       ({ depth, heading }, index) =>
