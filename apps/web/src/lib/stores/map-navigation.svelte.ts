@@ -17,6 +17,15 @@ type NavigationState = {
   navigationStack: string[];
   worldMap: Map | null;
 };
+type MapNavigationTimerDependencies =
+  | {
+      scheduleTimeout: (
+        callback: () => void,
+        delay: number,
+      ) => ReturnType<typeof setTimeout>;
+      cancelTimeout: (timeoutId: ReturnType<typeof setTimeout>) => void;
+    }
+  | { scheduleTimeout?: never; cancelTimeout?: never };
 
 /** Map selection history, per-vault page state and viewport persistence. */
 export class MapNavigation {
@@ -37,6 +46,7 @@ export class MapNavigation {
     > = defaultVault,
     private readonly canSelectFirstMap = () =>
       !sessionModeStore.isGuestMode || !!guestVault.publishId,
+    private readonly timers: MapNavigationTimerDependencies = {},
   ) {}
 
   start() {
@@ -224,11 +234,28 @@ export class MapNavigation {
 
   private schedulePersistPageState() {
     if (this._viewportPersistTimer !== null) {
-      clearTimeout(this._viewportPersistTimer);
+      this.cancelTimeout(this._viewportPersistTimer);
     }
-    this._viewportPersistTimer = setTimeout(() => {
+    this._viewportPersistTimer = this.scheduleTimeout(() => {
       this._viewportPersistTimer = null;
       this.persistPageState();
     }, 250);
+  }
+
+  private scheduleTimeout(
+    callback: () => void,
+    delay: number,
+  ): ReturnType<typeof setTimeout> {
+    return this.timers.scheduleTimeout
+      ? this.timers.scheduleTimeout(callback, delay)
+      : globalThis.setTimeout(callback, delay);
+  }
+
+  private cancelTimeout(timeoutId: ReturnType<typeof setTimeout>): void {
+    if (this.timers.cancelTimeout) {
+      this.timers.cancelTimeout(timeoutId);
+    } else {
+      globalThis.clearTimeout(timeoutId);
+    }
   }
 }
