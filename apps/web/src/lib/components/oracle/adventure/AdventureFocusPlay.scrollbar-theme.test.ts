@@ -4,9 +4,9 @@ import { describe, expect, it } from "vitest";
 import * as schema from "schema";
 import { FANTASY_DARK, SCIFI_LIGHT, THEMES } from "schema";
 
-const playSurface = resolve(
+const scrollbarStyles = resolve(
   process.cwd(),
-  "src/lib/components/oracle/adventure/AdventureFocusPlay.svelte",
+  "src/lib/components/oracle/adventure/adventure-focus-scrollbar.css",
 );
 const themeStore = resolve(process.cwd(), "src/lib/theme/theme-dom.ts");
 const BASE_THUMB_ACCENT_SHARE = 0.8;
@@ -94,8 +94,7 @@ const allPalettes = [
 
 describe("Adventure Mode scrollbar theme contract (#5069)", () => {
   it("uses live world-theme tokens, not a fixed sci-fi scrollbar palette", async () => {
-    const component = await readFile(playSurface, "utf8");
-    const stylesheet = component.slice(component.lastIndexOf("<style>"));
+    const stylesheet = await readFile(scrollbarStyles, "utf8");
 
     expect(stylesheet).toContain("var(--color-accent-primary)");
     expect(stylesheet).toContain("var(--color-bg-primary)");
@@ -134,8 +133,7 @@ describe("Adventure Mode scrollbar theme contract (#5069)", () => {
   });
 
   it("keeps base and hover scrollbar thumbs visible across every theme palette", async () => {
-    const component = await readFile(playSurface, "utf8");
-    const stylesheet = component.slice(component.lastIndexOf("<style>"));
+    const stylesheet = await readFile(scrollbarStyles, "utf8");
 
     expect(stylesheet).toContain("var(--color-accent-primary) 80%");
     expect(stylesheet).toContain("var(--color-accent-primary) 90%");
@@ -169,10 +167,9 @@ describe("Adventure Mode scrollbar theme contract (#5069)", () => {
   });
 
   it("reverts custom scrollbar styling in forced-colours mode", async () => {
-    const component = await readFile(playSurface, "utf8");
-    const stylesheet = component.slice(component.lastIndexOf("<style>"));
+    const stylesheet = await readFile(scrollbarStyles, "utf8");
     const forcedColours = stylesheet.match(
-      /@media \(forced-colors:\s+active\)\s*\{([\s\S]*?)\n\s{2}\}/,
+      /@media \(forced-colors:\s+active\)\s*\{([\s\S]*?)\n\}/,
     )?.[1];
 
     expect(forcedColours).toBeDefined();
