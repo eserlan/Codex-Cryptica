@@ -1,5 +1,5 @@
 {
-  "updated_at": 1795721514,
+  "updated_at": 1795762258,
   "candidates": [
     {
       "id": "reddit-45669588322-preview-a-generator-before-using-it-for-",
@@ -10,6 +10,16 @@
       "source_id": "45669588322",
       "status": "approved",
       "created_at": 1795632390
+    },
+    {
+      "id": "reddit-45953862371-bring-more-generator-results-into-your-c",
+      "title": "Bring more generator results into your campaign",
+      "body": "A useful generator result can still mean retyping it before it fits into a campaign. I built Add to my Codex handoffs so results from more public generators can be staged as campaign entries.\n\n- Keep a result with the campaign you\u2019re preparing\n- Share player-facing details\n- Keep GM-only lore separate\n\nWhen you bring a generated result into a campaign, what details do you want players to see first?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/screenshots/generator-faction.jpg)",
+      "url": "",
+      "image_url": "https://assets.codexcryptica.com/screenshots/generator-faction.jpg",
+      "source_id": "45953862371",
+      "status": "approved",
+      "created_at": 1795762258
     }
   ]
 }
