@@ -97,6 +97,15 @@ describe("generator-continuation", () => {
       ctaLabel: "Add to my Codex",
       localFirstNotice: "No account needed; stored locally in this browser.",
     });
+
+    const villainScheme = getGeneratorContinuationConfig(
+      "villain-scheme-generator",
+    );
+    expect(villainScheme).toMatchObject({
+      headline: "Keep this plot moving in your vault",
+      ctaLabel: "Add to my Codex",
+      localFirstNotice: "No account needed; stored locally in this browser.",
+    });
   });
 
   it("configures the holiday as a Note import with GM-only lore and gates it on completed generation", () => {

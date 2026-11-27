@@ -78,6 +78,15 @@ describe("generateVillainSchemeLocal", () => {
     }
   });
 
+  it("avoids period-comma punctuation and mid-sentence capitals in scale fallbacks", () => {
+    const out = generateVillainSchemeLocal(
+      { powerScale: "Street" },
+      seededRng(5),
+    );
+    expect(out.content).not.toContain(".,");
+    expect(out.lore).toContain("quieter work. Keep the operation");
+  });
+
   it("keeps the local fallback aligned with a built-in Power Scale", () => {
     const out = generateVillainSchemeLocal(
       { powerScale: "Multiversal" },
@@ -168,10 +177,19 @@ describe("buildVillainSchemePrompt", () => {
 
 describe("parseVillainSchemeResponse", () => {
   const { resolved } = buildVillainSchemePrompt({}, "", seededRng(3));
+  const loreWithStages = (count: number) =>
+    `### Objective\nReach the objective.\n\n### Scheme Stages\n${Array.from(
+      { length: count },
+      (_, index) => `**Stage ${index + 1}: Stage ${index + 1}**`,
+    ).join("\n")}\n\n### Complications\n- Watchers notice.`;
 
   it("parses fenced JSON and keeps the rich body", () => {
-    const json =
-      '```json\n{"title":"Operation Blackout Signal","content":"### Public Activity\\ny","lore":"### Objective","labels":["villain-scheme"]}\n```';
+    const json = `\`\`\`json\n${JSON.stringify({
+      title: "Operation Blackout Signal",
+      content: "### Public Activity\\ny",
+      lore: loreWithStages(4),
+      labels: ["villain-scheme"],
+    })}\n\`\`\``;
     const out = parseVillainSchemeResponse(json, resolved);
     expect(out.title).toBe("Operation Blackout Signal");
     expect(out.content).toContain("Public Activity");
@@ -180,7 +198,7 @@ describe("parseVillainSchemeResponse", () => {
 
   it("falls back to the resolved scheme name and throws on bad JSON", () => {
     const out = parseVillainSchemeResponse(
-      '{"content":"x","lore":"y"}',
+      JSON.stringify({ content: "x", lore: loreWithStages(4) }),
       resolved,
     );
     expect(out.title).toBe(resolved.schemeName);
@@ -193,7 +211,7 @@ describe("parseVillainSchemeResponse", () => {
         title: { unexpected: true },
         summary: 42,
         content: { unexpected: true },
-        lore: [],
+        lore: loreWithStages(4),
         labels: [{}],
       }),
       resolved,
@@ -201,11 +219,190 @@ describe("parseVillainSchemeResponse", () => {
     expect(out.title).toBe(resolved.schemeName);
     expect(out.summary).toBe("");
     expect(out.content).toBe("");
-    expect(out.lore).toBe("");
+    expect(out.lore).toBe(loreWithStages(4));
     expect(out.labels).toEqual([
       "villain-scheme",
       "villain-scheme-generator",
       "imported-draft",
     ]);
+  });
+
+  it.each([4, 6])("accepts %i numbered Scheme Stages", (count) => {
+    const out = parseVillainSchemeResponse(
+      JSON.stringify({ lore: loreWithStages(count) }),
+      resolved,
+    );
+    expect(out.lore.match(/^\s*\*\*Stage\s+\d+\s*:/gm)).toHaveLength(count);
+  });
+
+  it.each([3, 7, 0])("rejects %i numbered Scheme Stages", (count) => {
+    expect(() =>
+      parseVillainSchemeResponse(
+        JSON.stringify({ lore: loreWithStages(count) }),
+        resolved,
+      ),
+    ).toThrow("four to six numbered stages");
+  });
+
+  it("rejects stage markers placed outside the Scheme Stages section", () => {
+    const misplacedLore = [
+      "### Objective",
+      "**Stage 1: Misplaced**",
+      "**Stage 2: Misplaced**",
+      "**Stage 3: Misplaced**",
+      "**Stage 4: Misplaced**",
+    ].join("\n");
+    expect(() =>
+      parseVillainSchemeResponse(
+        JSON.stringify({ lore: misplacedLore }),
+        resolved,
+      ),
+    ).toThrow("four to six numbered stages");
+  });
+
+  it("accepts list-prefixed numbered Scheme Stages", () => {
+    const listPrefixedLore = [
+      "### Scheme Stages",
+      "- **Stage 1: Quiet Recon**",
+      "* **Stage 2: Supply Squeeze**",
+      "3. **Stage 3: Public Distraction**",
+      "4. **Stage 4: Vault Breach**",
+    ].join("\n");
+    const out = parseVillainSchemeResponse(
+      JSON.stringify({ lore: listPrefixedLore }),
+      resolved,
+    );
+    expect(out.lore).toBe(listPrefixedLore);
+  });
+
+  it("rejects duplicate Scheme Stages sections and empty stage names", () => {
+    const duplicateSectionLore = `${loreWithStages(4)}\n\n${loreWithStages(4)}`;
+    const emptyNameLore = [
+      "### Scheme Stages",
+      "**Stage 1: **",
+      "**Stage 2: Supply Squeeze**",
+      "**Stage 3: Public Distraction**",
+      "**Stage 4: Vault Breach**",
+    ].join("\n");
+    expect(() =>
+      parseVillainSchemeResponse(
+        JSON.stringify({ lore: duplicateSectionLore }),
+        resolved,
+      ),
+    ).toThrow("four to six numbered stages");
+    expect(() =>
+      parseVillainSchemeResponse(
+        JSON.stringify({ lore: emptyNameLore }),
+        resolved,
+      ),
+    ).toThrow("four to six numbered stages");
+  });
+
+  it("accepts indented Scheme Stages and subsequent section headings", () => {
+    const indentedLore = [
+      "   ### Scheme Stages",
+      "**Stage 1: Quiet Recon**",
+      "**Stage 2: Supply Squeeze**",
+      "**Stage 3: Public Distraction**",
+      "**Stage 4: Vault Breach**",
+      "",
+      "  ### Contingency",
+      "**Stage 1: Misplaced**",
+    ].join("\n");
+    const out = parseVillainSchemeResponse(
+      JSON.stringify({ lore: indentedLore }),
+      resolved,
+    );
+    expect(out.lore).toBe(indentedLore);
+  });
+
+  it("ignores stage markers inside fenced code blocks", () => {
+    const fencedLore = [
+      "### Scheme Stages",
+      "```markdown",
+      "**Stage 1: Quiet Recon**",
+      "**Stage 2: Supply Squeeze**",
+      "**Stage 3: Public Distraction**",
+      "**Stage 4: Vault Breach**",
+      "```",
+    ].join("\n");
+    expect(() =>
+      parseVillainSchemeResponse(
+        JSON.stringify({ lore: fencedLore }),
+        resolved,
+      ),
+    ).toThrow("four to six numbered stages");
+
+    const nestedFourBacktickLore = [
+      "### Scheme Stages",
+      "````markdown",
+      "```",
+      "**Stage 1: Quiet Recon**",
+      "**Stage 2: Supply Squeeze**",
+      "**Stage 3: Public Distraction**",
+      "**Stage 4: Vault Breach**",
+      "```",
+      "````",
+    ].join("\n");
+    expect(() =>
+      parseVillainSchemeResponse(
+        JSON.stringify({ lore: nestedFourBacktickLore }),
+        resolved,
+      ),
+    ).toThrow("four to six numbered stages");
+
+    const indentedCodeLore = [
+      "### Scheme Stages",
+      "",
+      "    **Stage 1: Quiet Recon**",
+      "    **Stage 2: Supply Squeeze**",
+      "    **Stage 3: Public Distraction**",
+      "    **Stage 4: Vault Breach**",
+    ].join("\n");
+    expect(() =>
+      parseVillainSchemeResponse(
+        JSON.stringify({ lore: indentedCodeLore }),
+        resolved,
+      ),
+    ).toThrow("four to six numbered stages");
+  });
+
+  it("writes a finite Current Activity clause for a custom Power Scale", () => {
+    const out = generateVillainSchemeLocal(
+      { powerScale: "Multiversal Threat" },
+      seededRng(2),
+    );
+    expect(out.lore).toContain(
+      "They are positioning people, resources, and cover stories",
+    );
+  });
+
+  it("rejects duplicate or out-of-order stage numbers", () => {
+    const duplicateLore = [
+      "### Scheme Stages",
+      "**Stage 1: First**",
+      "**Stage 1: Repeated**",
+      "**Stage 1: Again**",
+      "**Stage 1: Still One**",
+    ].join("\n");
+    const outOfOrderLore = [
+      "### Scheme Stages",
+      "**Stage 1: First**",
+      "**Stage 3: Skipped**",
+      "**Stage 2: Late**",
+      "**Stage 4: Fourth**",
+    ].join("\n");
+    expect(() =>
+      parseVillainSchemeResponse(
+        JSON.stringify({ lore: duplicateLore }),
+        resolved,
+      ),
+    ).toThrow("four to six numbered stages");
+    expect(() =>
+      parseVillainSchemeResponse(
+        JSON.stringify({ lore: outOfOrderLore }),
+        resolved,
+      ),
+    ).toThrow("four to six numbered stages");
   });
 });
