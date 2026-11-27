@@ -40,6 +40,55 @@ describe("GeneratorGuideSection", () => {
     );
   });
 
+  it("renders a custom linksTitle and link descriptions when provided", () => {
+    render(GeneratorGuideSection, {
+      props: {
+        introTitle: "Nation Generator",
+        guide: {
+          summary: "Generate a named state.",
+          tips: [
+            { title: "Set scale", detail: "Pick city-state or dominion." },
+          ],
+          linksTitle: "Bring your nation to life",
+          links: [
+            {
+              href: "/answers/how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
+              label: "Give civilisations distinct strengths and weaknesses",
+              description:
+                "Develop believable institutional advantages, dependencies and weaknesses for the generated nation.",
+            },
+            {
+              href: "/answers/how-do-i-run-political-intrigue-and-faction-play",
+              label: "Run political intrigue and faction play",
+              description:
+                "Turn its competing power blocs into active rivalries and consequential player choices.",
+            },
+            {
+              href: "/answers/how-do-i-build-a-believable-constitutional-crisis-or-coup",
+              label: "Build a believable constitutional crisis or coup",
+              description:
+                "Develop its hidden problem into a political crisis with stakes and multiple outcomes.",
+            },
+          ],
+        },
+      },
+    });
+
+    expect(
+      screen.getByRole("heading", { name: "Bring your nation to life" }),
+    ).toBeTruthy();
+    const links = screen.getAllByRole("link");
+    expect(links).toHaveLength(3);
+    expect(links[0].getAttribute("href")).toContain(
+      "/answers/how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
+    );
+    expect(
+      screen.getByText(
+        "Turn its competing power blocs into active rivalries and consequential player choices.",
+      ),
+    ).toBeTruthy();
+  });
+
   it("renders nothing when guide is omitted", () => {
     const { container } = render(GeneratorGuideSection, {
       props: { introTitle: "Star System Generator" },

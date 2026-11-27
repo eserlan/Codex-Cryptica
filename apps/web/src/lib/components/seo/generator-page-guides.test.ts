@@ -341,6 +341,17 @@ describe("generator guide distinctness", () => {
     for (const label of ["Conflict level", "Scale", "Power Blocs"]) {
       expect(tipText).toContain(label);
     }
+    expect(guide.linksTitle).toBe("Bring your nation to life");
+    expect(guide.links).toHaveLength(3);
+    expect(guide.links?.map((link) => link.href)).toEqual([
+      "/answers/how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
+      "/answers/how-do-i-run-political-intrigue-and-faction-play",
+      "/answers/how-do-i-build-a-believable-constitutional-crisis-or-coup",
+    ]);
+    for (const link of guide.links ?? []) {
+      expect(link.description).toBeTruthy();
+      expect([link.label, link.description].join(" ")).not.toMatch(/[–—]/);
+    }
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 

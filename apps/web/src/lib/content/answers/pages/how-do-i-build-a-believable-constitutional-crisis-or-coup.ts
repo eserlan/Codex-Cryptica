@@ -248,6 +248,12 @@ export const howDoIBuildABelievableConstitutionalCrisisOrCoup: AnswerConfigInput
           "Hidden organisations with motives and methods working inside the crisis.",
         href: "/generators/secret-society",
       },
+      {
+        title: "Nation Generator",
+        description:
+          "Named states with a leader, competing power blocs and a hidden problem.",
+        href: "/generators/nation",
+      },
     ],
     relatedForPages: [
       {

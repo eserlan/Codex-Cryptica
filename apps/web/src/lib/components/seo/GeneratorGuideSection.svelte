@@ -1,8 +1,6 @@
 <script lang="ts">
-  import { basePath } from "#lib/utils/base-path.js";
+  import GeneratorGuideLinks from "./GeneratorGuideLinks.svelte";
   import type { GeneratorGuide } from "./generator-page-guides";
-
-  const cleanBase = basePath();
 
   let {
     introTitle,
@@ -44,25 +42,10 @@
         {/each}
       </div>
       {#if guide.links && guide.links.length > 0}
-        <div class="mt-5 flex flex-wrap items-center gap-3">
-          <span
-            class="text-xs font-bold uppercase tracking-wider text-theme-text"
-          >
-            Further reading:
-          </span>
-          {#each guide.links as link (link.href)}
-            <a
-              href="{cleanBase}{link.href}"
-              class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-semibold text-theme-text underline decoration-theme-primary underline-offset-4 hover:bg-theme-primary/15 transition-colors"
-            >
-              <span>{link.label}</span>
-              <span
-                class="icon-[lucide--arrow-right] w-3.5 h-3.5"
-                aria-hidden="true"
-              ></span>
-            </a>
-          {/each}
-        </div>
+        <GeneratorGuideLinks
+          linksTitle={guide.linksTitle}
+          links={guide.links}
+        />
       {/if}
     </div>
   </section>
