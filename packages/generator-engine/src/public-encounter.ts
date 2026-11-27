@@ -321,6 +321,17 @@ const REQUIRED_OUTCOME_LABELS = [
   "Escalation",
 ] as const;
 
+function extractEncounterSectionLines(
+  lines: string[],
+  headingPattern: RegExp,
+): string[] {
+  const start = lines.findIndex((line) => headingPattern.test(line));
+  if (start === -1) return [];
+  const rest = lines.slice(start + 1);
+  const end = rest.findIndex((line) => /^###\s/.test(line));
+  return end === -1 ? rest : rest.slice(0, end);
+}
+
 function validateEncounterLore(rawLore: string): void {
   const lines = rawLore.split(/\r?\n/);
   for (const heading of REQUIRED_ENCOUNTER_SECTIONS) {
@@ -331,12 +342,22 @@ function validateEncounterLore(rawLore: string): void {
       throw new Error(`Encounter lore is missing required section: ${heading}`);
     }
   }
-  const outcomesStart = lines.findIndex((line) =>
-    /^###\s+Outcomes & Consequences\b/i.test(line),
+  const approachLines = extractEncounterSectionLines(
+    lines,
+    /^###\s+Possible Approaches\b/i,
   );
-  const rest = lines.slice(outcomesStart + 1);
-  const outcomesEnd = rest.findIndex((line) => /^###\s/.test(line));
-  const outcomeLines = outcomesEnd === -1 ? rest : rest.slice(0, outcomesEnd);
+  const approachCount = approachLines.filter((line) =>
+    /^\s*[-*+]\s+\S/.test(line),
+  ).length;
+  if (approachCount < 3 || approachCount > 5) {
+    throw new Error(
+      "Encounter Possible Approaches must contain 3 to 5 non-empty approaches",
+    );
+  }
+  const outcomeLines = extractEncounterSectionLines(
+    lines,
+    /^###\s+Outcomes & Consequences\b/i,
+  );
   for (const label of REQUIRED_OUTCOME_LABELS) {
     const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const labelPattern = new RegExp(`^${escapedLabel}\\s*[:\\-–—]\\s*\\S`, "i");

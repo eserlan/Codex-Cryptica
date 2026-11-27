@@ -157,7 +157,7 @@ describe("parseEncounterResponse", () => {
     "### Environment",
     "Slick timber planks above a flooded sluice.",
     "### Possible Approaches",
-    "- Jam the sluice gate.",
+    "- Jam the sluice gate.\n- Parley with Maren.\n- Sneak across the rafters.",
     "### Complication / Twist",
     "Lanterns ignite spilled lamp oil.",
     "### Outcomes & Consequences",
@@ -232,5 +232,34 @@ describe("parseEncounterResponse", () => {
         resolved,
       ),
     ).toThrow("must include Escalation");
+
+    const tooFewApproaches = validLore.replace(
+      "- Jam the sluice gate.\n- Parley with Maren.\n- Sneak across the rafters.",
+      "- Jam the sluice gate.\n- Parley with Maren.",
+    );
+    expect(() =>
+      parseEncounterResponse(
+        JSON.stringify({ content: "x", lore: tooFewApproaches }),
+        resolved,
+      ),
+    ).toThrow("3 to 5 non-empty approaches");
+
+    const tooManyApproaches = validLore.replace(
+      "- Jam the sluice gate.\n- Parley with Maren.\n- Sneak across the rafters.",
+      [
+        "- Jam the sluice gate.",
+        "- Parley with Maren.",
+        "- Sneak across the rafters.",
+        "- Bribe the lookout.",
+        "- Flood the cellar.",
+        "- Draw them into the street.",
+      ].join("\n"),
+    );
+    expect(() =>
+      parseEncounterResponse(
+        JSON.stringify({ content: "x", lore: tooManyApproaches }),
+        resolved,
+      ),
+    ).toThrow("3 to 5 non-empty approaches");
   });
 });
