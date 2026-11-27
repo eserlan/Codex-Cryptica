@@ -924,12 +924,21 @@ describe("readCouncilVoteFoundation & readCouncilVotePaths", () => {
     ).toBeNull();
   });
 
-  it("rejects misplaced private sections and unrecognized lore headings", () => {
+  it("rejects misplaced or non-public content headings and unrecognized lore headings", () => {
     expect(
       readCouncilVoteFoundation(
         JSON.stringify({
           ...validFoundation,
           content: `${validFoundation.content}\n\n### Council Members\nPrivate stances.`,
+        }),
+        resolved,
+      ),
+    ).toBeNull();
+    expect(
+      readCouncilVoteFoundation(
+        JSON.stringify({
+          ...validFoundation,
+          content: `${validFoundation.content}\n\n### Voting Roster\n- **Ossian Thale** — Initial stance: Leaning.`,
         }),
         resolved,
       ),
@@ -945,6 +954,16 @@ describe("readCouncilVoteFoundation & readCouncilVotePaths", () => {
     ).toBeNull();
     expect(
       readCouncilVoteFoundation(JSON.stringify(validFoundation), resolved),
+    ).not.toBeNull();
+    expect(
+      readCouncilVoteFoundation(
+        JSON.stringify({
+          ...validFoundation,
+          content:
+            "### The Proposal\nA player-facing hook.\n\n### Campaign Fit\nTied to the harbour.\n\n### The Deadline\nBefore dusk.",
+        }),
+        resolved,
+      ),
     ).not.toBeNull();
   });
 });

@@ -114,6 +114,23 @@ describe("generator save payloads", () => {
     expect(JSON.stringify(bundle)).not.toContain("secret allegiance");
   });
 
+  it("rejects council-vote payloads with a renamed roster heading before they can reach guest exports", async () => {
+    const { buildCouncilVoteFoundationPrompt, readCouncilVoteFoundation } =
+      await import("generator-engine");
+    const { resolved } = buildCouncilVoteFoundationPrompt({});
+    const leaked = readCouncilVoteFoundation(
+      JSON.stringify({
+        title: "Harbour Levy Vote",
+        content:
+          "### The Proposal\nApprove the harbour levy.\n\n### Voting Roster\n- **Ossian Thale** — Initial stance: Leaning. Secret allegiance.",
+        lore: "### Voting Procedure\nSimple majority.\n\n### Current Vote Estimate\nTwo support.\n\n### Council Members\n- **Ossian Thale** — Leaning.\n\n### Antagonist Influence\nNone.\n\n### Investigation Leads\nCheck the manifest.",
+      }),
+      resolved,
+    );
+
+    expect(leaked).toBeNull();
+  });
+
   it("keeps adventure lore in the vault and omits empty map images", () => {
     const adventure = {
       ...baseOutput,

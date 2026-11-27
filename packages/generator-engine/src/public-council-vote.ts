@@ -351,9 +351,15 @@ export function readCouncilVoteFoundation(
   if (!parsed.content.trim() || !parsed.lore.trim()) return null;
 
   // This output is later split into player-facing content and GM-only lore.
-  // Enforce the prompt's section contract at the model boundary: a misplaced
-  // private section in content, or an unrecognized lore section, must not be
-  // accepted and then routed into the player-facing document by the layout.
+  // Enforce the prompt's section contract at the model boundary: any heading
+  // outside the allowed player-facing set (such as a renamed roster or
+  // private section) or an unrecognized lore section must not be accepted and
+  // routed into the player-facing document by the layout.
+  const publicSections = new Set([
+    "the proposal",
+    "campaign fit",
+    "the deadline",
+  ]);
   const privateSections = [
     "Voting Procedure",
     "Current Vote Estimate",
@@ -367,11 +373,8 @@ export function readCouncilVoteFoundation(
     );
   const contentHeadings = getHeadings(parsed.content);
   if (
-    contentHeadings.some(({ heading }) =>
-      privateSections.some(
-        (privateSection) =>
-          heading.trim().toLowerCase() === privateSection.toLowerCase(),
-      ),
+    contentHeadings.some(
+      ({ heading }) => !publicSections.has(heading.trim().toLowerCase()),
     )
   ) {
     return null;
