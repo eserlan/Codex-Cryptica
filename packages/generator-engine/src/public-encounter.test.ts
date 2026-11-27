@@ -261,5 +261,40 @@ describe("parseEncounterResponse", () => {
         resolved,
       ),
     ).toThrow("3 to 5 non-empty approaches");
+
+    const duplicateApproaches = validLore.replace(
+      "- Jam the sluice gate.\n- Parley with Maren.\n- Sneak across the rafters.",
+      "- Jam the sluice gate.\n- jam the sluice gate.\n- Sneak across the rafters.",
+    );
+    expect(() =>
+      parseEncounterResponse(
+        JSON.stringify({ content: "x", lore: duplicateApproaches }),
+        resolved,
+      ),
+    ).toThrow("cannot contain duplicate items");
+
+    const outOfOrderLore = [
+      "### Participants",
+      "- **Maren**: wants the ledger moved.",
+      "### Situation & Stakes",
+      "Smugglers guard a stolen ledger.",
+      "### Environment",
+      "Slick timber planks above a flooded sluice.",
+      "### Possible Approaches",
+      "- Jam the sluice gate.\n- Parley with Maren.\n- Sneak across the rafters.",
+      "### Complication / Twist",
+      "Lanterns ignite spilled lamp oil.",
+      "### Outcomes & Consequences",
+      "- **Success**: Ledger recovered at a cost.",
+      "- **Failure**: Smugglers escape.",
+      "- **Avoidance**: Cargo moves unopposed.",
+      "- **Escalation**: Reinforcements arrive.",
+    ].join("\n\n");
+    expect(() =>
+      parseEncounterResponse(
+        JSON.stringify({ content: "x", lore: outOfOrderLore }),
+        resolved,
+      ),
+    ).toThrow("missing required section or has sections out of order");
   });
 });

@@ -332,32 +332,33 @@ function extractEncounterSectionLines(
   return end === -1 ? rest : rest.slice(0, end);
 }
 
-function validateEncounterLore(rawLore: string): void {
-  const lines = rawLore.split(/\r?\n/);
-  for (const heading of REQUIRED_ENCOUNTER_SECTIONS) {
-    const escaped = heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    if (
-      !lines.some((line) => new RegExp(`^###\\s+${escaped}\\b`, "i").test(line))
-    ) {
-      throw new Error(`Encounter lore is missing required section: ${heading}`);
+function validateApproachBullets(approachLines: string[]): void {
+  const uniqueBodies = new Set<string>();
+  let count = 0;
+  for (const line of approachLines) {
+    const bulletMatch = /^\s*[-*+]\s*(.*)$/.exec(line);
+    if (!bulletMatch) continue;
+    const body = bulletMatch[1].trim();
+    if (!body) {
+      throw new Error("Encounter Possible Approaches cannot have blank items");
     }
+    const normalized = body.toLowerCase();
+    if (uniqueBodies.has(normalized)) {
+      throw new Error(
+        "Encounter Possible Approaches cannot contain duplicate items",
+      );
+    }
+    uniqueBodies.add(normalized);
+    count += 1;
   }
-  const approachLines = extractEncounterSectionLines(
-    lines,
-    /^###\s+Possible Approaches\b/i,
-  );
-  const approachCount = approachLines.filter((line) =>
-    /^\s*[-*+]\s+\S/.test(line),
-  ).length;
-  if (approachCount < 3 || approachCount > 5) {
+  if (count < 3 || count > 5) {
     throw new Error(
       "Encounter Possible Approaches must contain 3 to 5 non-empty approaches",
     );
   }
-  const outcomeLines = extractEncounterSectionLines(
-    lines,
-    /^###\s+Outcomes & Consequences\b/i,
-  );
+}
+
+function validateOutcomeBullets(outcomeLines: string[]): void {
   for (const label of REQUIRED_OUTCOME_LABELS) {
     const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const labelPattern = new RegExp(`^${escapedLabel}\\s*[:\\-–—]\\s*\\S`, "i");
@@ -373,6 +374,31 @@ function validateEncounterLore(rawLore: string): void {
       );
     }
   }
+}
+
+function validateEncounterLore(rawLore: string): void {
+  const lines = rawLore.split(/\r?\n/);
+  const foundHeadings = lines
+    .map((line) => /^\s{0,3}###\s+(.+?)\s*$/.exec(line)?.[1]?.trim())
+    .filter((heading): heading is string => Boolean(heading));
+  if (
+    foundHeadings.length !== REQUIRED_ENCOUNTER_SECTIONS.length ||
+    foundHeadings.some(
+      (heading, index) =>
+        heading.toLowerCase() !==
+        REQUIRED_ENCOUNTER_SECTIONS[index].toLowerCase(),
+    )
+  ) {
+    throw new Error(
+      "Encounter lore is missing required section or has sections out of order",
+    );
+  }
+  validateApproachBullets(
+    extractEncounterSectionLines(lines, /^###\s+Possible Approaches\b/i),
+  );
+  validateOutcomeBullets(
+    extractEncounterSectionLines(lines, /^###\s+Outcomes & Consequences\b/i),
+  );
 }
 
 export function parseEncounterResponse(
