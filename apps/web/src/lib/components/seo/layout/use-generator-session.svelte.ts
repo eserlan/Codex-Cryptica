@@ -4,7 +4,10 @@ import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 import { onlineStatus } from "#lib/stores/online.svelte.js";
 import { sessionHubStore } from "#lib/stores/session-hub.svelte.js";
 import { trackEvent } from "#lib/services/analytics/zaraz-analytics.js";
-import type { getGeneratorDocumentLayout } from "#lib/components/seo/generator-document-layout.js";
+import {
+  getGeneratorHandoffLayout,
+  type getGeneratorDocumentLayout,
+} from "#lib/components/seo/generator-document-layout.js";
 import type { getContextSelection } from "generator-engine/session-hub-helpers";
 import { recordGeneratedEntity } from "./record-generated-entity";
 
@@ -142,7 +145,11 @@ export function useGeneratorSession(inputs: GeneratorSessionInputs) {
   }
 
   function recordCurrentOutputInHub(output: GeneratorOutput) {
-    const documentLayout = inputs.getDocumentLayout();
+    const documentLayout = getGeneratorHandoffLayout(
+      output,
+      inputs.getDocumentLayout(),
+      inputs.getGeneratorType(),
+    );
     currentEntityId = recordGeneratedEntity(
       sessionHubStore,
       $state.snapshot(inputs.getContextSelection()),

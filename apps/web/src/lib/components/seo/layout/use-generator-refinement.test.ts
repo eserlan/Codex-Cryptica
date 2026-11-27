@@ -46,13 +46,20 @@ const current = {
   status: "draft",
 };
 
-function setup(options: { canRefine?: boolean } = {}) {
+function setup(
+  options: {
+    canRefine?: boolean;
+    generatorType?: string;
+    documentLayout?: { content: string; lore: string };
+  } = {},
+) {
   const applyRefinedOutput = vi.fn();
   const onOpenFromHub = vi.fn();
   const refinement = useGeneratorRefinement({
-    getGeneratorType: () => "npc",
+    getGeneratorType: () => options.generatorType ?? "npc",
     getGeneratedData: () => current as never,
-    getDocumentLayout: () => ({ content: "Body", lore: "old lore" }) as never,
+    getDocumentLayout: () =>
+      options.documentLayout ?? { content: "Body", lore: "old lore" },
     getCurrentEntityId: () => "entity-0",
     getContextSelection: () => ({ entities: [], trimmed: false }) as never,
     canRefineCurrentOutput: () => options.canRefine ?? true,
@@ -89,6 +96,34 @@ describe("useGeneratorRefinement", () => {
       generator_type: "npc",
       source: "current_output",
     });
+  });
+
+  it("passes the original BBEG public fields and private plan to refinement, not the reading layout", async () => {
+    const { refinement, applyRefinedOutput } = setup({
+      generatorType: "bbeg-generator",
+      documentLayout: { content: "Body\nold lore", lore: "" },
+    });
+    refinement.openForCurrentOutput();
+    expect(service.start).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: current.content,
+        lore: current.lore,
+      }),
+    );
+    await refinement.accept(proposal);
+    expect(hub.addEntity).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: "*s2*\n\nNew body",
+        lore: "old lore",
+      }),
+    );
+    expect(applyRefinedOutput).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: "New body",
+        lore: "old lore",
+      }),
+      "derived-1",
+    );
   });
 
   it("closes the hub detail before refining a hub entity", () => {

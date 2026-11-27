@@ -421,6 +421,19 @@ export function deduplicateMarkdownSections(
     : markdown;
 }
 
+/** BBEG's reading layout is not its storage or refinement secrecy boundary.
+ * Use the trusted route, not generated labels, to preserve the original fields.
+ */
+export function getGeneratorHandoffLayout(
+  data: GeneratorOutput,
+  layout: { content: string; lore: string },
+  generatorType?: string,
+): { content: string; lore: string } {
+  return generatorType === "bbeg-generator"
+    ? { content: data.content, lore: data.lore ?? "" }
+    : layout;
+}
+
 export function getGeneratorDocumentLayout(
   generatedData: GeneratorOutput | null,
 ) {

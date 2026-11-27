@@ -6,7 +6,10 @@ import { sessionHubStore } from "#lib/stores/session-hub.svelte.js";
 import { loreMergeStore } from "#lib/stores/ui/lore-merge.svelte.js";
 import { buildLoreMergePlan } from "#lib/utils/lore-sections.js";
 import { trackEvent } from "#lib/services/analytics/zaraz-analytics.js";
-import type { getGeneratorDocumentLayout } from "#lib/components/seo/generator-document-layout.js";
+import {
+  getGeneratorHandoffLayout,
+  type getGeneratorDocumentLayout,
+} from "#lib/components/seo/generator-document-layout.js";
 import { getContextSelection } from "generator-engine/session-hub-helpers";
 import { recordGeneratedEntity } from "./record-generated-entity";
 
@@ -74,7 +77,11 @@ export function useGeneratorRefinement(deps: {
   function openForCurrentOutput() {
     const generatedData = deps.getGeneratedData();
     if (!generatedData || !deps.canRefineCurrentOutput()) return;
-    const documentLayout = deps.getDocumentLayout();
+    const documentLayout = getGeneratorHandoffLayout(
+      generatedData,
+      deps.getDocumentLayout(),
+      deps.getGeneratorType(),
+    );
     start(
       {
         ...generatedData,

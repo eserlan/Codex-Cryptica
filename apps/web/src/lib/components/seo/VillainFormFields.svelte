@@ -156,9 +156,9 @@
 </div>
 
 <div class="flex flex-col gap-1.5">
-  <label for="villain-campaign-context" class={labelClass}
-    >Optional Campaign Context</label
-  >
+  <label for="villain-campaign-context" class={labelClass}>
+    Optional Campaign Context
+  </label>
   <textarea
     id="villain-campaign-context"
     name="campaign_context"
@@ -172,7 +172,7 @@
     id="villain-campaign-context-help"
     class="text-micro text-theme-muted leading-relaxed"
   >
-    Add a world, faction, or ongoing campaign tension to ground this villain in
-    your table.
+    With AI, add a world, faction or ongoing campaign tension to help ground
+    this villain in your campaign.
   </p>
 </div>

@@ -246,6 +246,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    "bbeg-generator": {
+      headline: "Keep the villain's next move ready for play",
+      summary:
+        "Save one new Character in your local Codex vault so you can track what the party has discovered and revise the antagonist's plan after each setback.",
+      capabilities: [
+        "For generated villains, keep the public face and first signs separate from the hidden plan and vulnerabilities in GM notes",
+        "Link the villain to their lieutenants and affected locations as you add them, and record the consequences of each move",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
     "villain-scheme-generator": {
       headline: "Keep this plot moving in your vault",
       summary:
