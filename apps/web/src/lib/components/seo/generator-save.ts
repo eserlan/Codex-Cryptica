@@ -132,6 +132,30 @@ function resolveMechanicsSaveExtension(
   return {};
 }
 
+function resolveSaveBodyAndLore(
+  data: GeneratorOutput,
+  layout: GeneratorSaveLayout,
+): { content: string; lore: string } {
+  const summaryPrefix = data.summary ? `*${data.summary}*` : "";
+  if (data.kind === "adventure" || data.labels.includes("adventure")) {
+    return {
+      content: summaryPrefix,
+      lore: [data.content, data.lore].filter(Boolean).join("\n\n"),
+    };
+  }
+
+  const isEncounter =
+    data.labels.includes("encounter") ||
+    data.labels.includes("encounter-generator");
+  const body = isEncounter ? data.content : layout.content;
+  const content =
+    summaryPrefix && body
+      ? `${summaryPrefix}\n\n${body}`
+      : summaryPrefix || body;
+  const lore = isEncounter ? data.lore || layout.lore : layout.lore;
+  return { content, lore };
+}
+
 export function buildGeneratorSavePayload(
   data: GeneratorOutput,
   layout: GeneratorSaveLayout,
@@ -139,16 +163,8 @@ export function buildGeneratorSavePayload(
 ): GeneratorSavePayload {
   const isAdventure =
     data.kind === "adventure" || data.labels.includes("adventure");
-  const content = isAdventure
-    ? data.summary
-      ? `*${data.summary}*`
-      : ""
-    : data.summary
-      ? `*${data.summary}*\n\n${layout.content}`
-      : layout.content;
-  let lore = isAdventure
-    ? [data.content, data.lore].filter(Boolean).join("\n\n")
-    : layout.lore;
+  const { content, lore: initialLore } = resolveSaveBodyAndLore(data, layout);
+  let lore = initialLore;
 
   const { markdown, metadata } = resolveMechanicsSaveExtension(data.mechanics);
   if (markdown) {

@@ -149,18 +149,66 @@ describe("Superhero theme regression (#3108)", () => {
 
 describe("parseEncounterResponse", () => {
   const { resolved } = buildEncounterPrompt({}, "", seededRng(3));
+  const validLore = [
+    "### Situation & Stakes",
+    "Smugglers guard a stolen ledger.",
+    "### Participants",
+    "- **Maren**: wants the ledger moved.",
+    "### Environment",
+    "Slick timber planks above a flooded sluice.",
+    "### Possible Approaches",
+    "- Jam the sluice gate.",
+    "### Complication / Twist",
+    "Lanterns ignite spilled lamp oil.",
+    "### Outcomes & Consequences",
+    "- **Success**: Ledger recovered at a cost.",
+    "- **Failure**: Smugglers escape.",
+    "- **Avoidance**: Cargo moves unopposed.",
+    "- **Escalation**: Reinforcements arrive.",
+  ].join("\n\n");
 
   it("parses fenced JSON and keeps the rich body", () => {
-    const json =
-      '```json\n{"title":"The Broken Bridge","content":"### What the Players See\\ny","lore":"### At a Glance","labels":["a"]}\n```';
+    const json = `\`\`\`json\n${JSON.stringify({
+      title: "The Broken Bridge",
+      content: "### What the Players See\ny",
+      lore: validLore,
+      labels: ["a"],
+    })}\n\`\`\``;
     const out = parseEncounterResponse(json, resolved);
     expect(out.title).toBe("The Broken Bridge");
     expect(out.content).toContain("What the Players See");
+    expect(out.lore).toContain("### Outcomes & Consequences");
   });
 
   it("falls back to the resolved title and throws on bad JSON", () => {
-    const out = parseEncounterResponse('{"content":"x","lore":"y"}', resolved);
+    const out = parseEncounterResponse(
+      JSON.stringify({ content: "x", lore: validLore }),
+      resolved,
+    );
     expect(out.title).toBe(resolved.encounterName);
     expect(() => parseEncounterResponse("nope", resolved)).toThrow();
+  });
+
+  it("rejects encounter responses missing required sections or any of the four outcomes", () => {
+    expect(() =>
+      parseEncounterResponse(
+        JSON.stringify({
+          content: "x",
+          lore: "### Situation & Stakes\nMissing the rest.",
+        }),
+        resolved,
+      ),
+    ).toThrow("missing required section");
+
+    const incompleteOutcomes = validLore.replace(
+      "- **Escalation**: Reinforcements arrive.",
+      "",
+    );
+    expect(() =>
+      parseEncounterResponse(
+        JSON.stringify({ content: "x", lore: incompleteOutcomes }),
+        resolved,
+      ),
+    ).toThrow("must include Escalation");
   });
 });

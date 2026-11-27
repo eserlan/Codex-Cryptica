@@ -305,11 +305,58 @@ function buildAtAGlance(
   return `### At a Glance\n${lines.join("\n")}`;
 }
 
+const REQUIRED_ENCOUNTER_SECTIONS = [
+  "Situation & Stakes",
+  "Participants",
+  "Environment",
+  "Possible Approaches",
+  "Complication / Twist",
+  "Outcomes & Consequences",
+] as const;
+
+const REQUIRED_OUTCOME_LABELS = [
+  "Success",
+  "Failure",
+  "Avoidance",
+  "Escalation",
+] as const;
+
+function validateEncounterLore(rawLore: string): void {
+  const lines = rawLore.split(/\r?\n/);
+  for (const heading of REQUIRED_ENCOUNTER_SECTIONS) {
+    const escaped = heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (
+      !lines.some((line) => new RegExp(`^###\\s+${escaped}\\b`, "i").test(line))
+    ) {
+      throw new Error(`Encounter lore is missing required section: ${heading}`);
+    }
+  }
+  const outcomesStart = lines.findIndex((line) =>
+    /^###\s+Outcomes & Consequences\b/i.test(line),
+  );
+  const rest = lines.slice(outcomesStart + 1);
+  const outcomesEnd = rest.findIndex((line) => /^###\s/.test(line));
+  const outcomesSection = (
+    outcomesEnd === -1 ? rest : rest.slice(0, outcomesEnd)
+  ).join("\n");
+  for (const label of REQUIRED_OUTCOME_LABELS) {
+    if (!new RegExp(`\\b${label}\\b`, "i").test(outcomesSection)) {
+      throw new Error(
+        `Encounter Outcomes & Consequences must include ${label}`,
+      );
+    }
+  }
+}
+
 export function parseEncounterResponse(
   text: string,
   resolved: ResolvedEncounter,
 ): PublicGeneratorOutput {
   const data = parseFencedJson(text);
+  if (typeof data.lore !== "string" || !data.lore.trim()) {
+    throw new Error("Encounter response must include lore");
+  }
+  validateEncounterLore(data.lore);
   const rawGlance =
     data.glance && typeof data.glance === "object"
       ? (data.glance as Record<string, unknown>)
@@ -325,9 +372,7 @@ export function parseEncounterResponse(
         : undefined,
     stakes: typeof rawGlance.stakes === "string" ? rawGlance.stakes : undefined,
   };
-  const lore = data.lore
-    ? `${buildAtAGlance(resolved, glance)}\n\n${data.lore}`
-    : "";
+  const lore = `${buildAtAGlance(resolved, glance)}\n\n${data.lore}`;
   const mechanics =
     resolved.gameSystem === "tales-of-the-valiant"
       ? (parseTovMechanics(text) ?? undefined)
