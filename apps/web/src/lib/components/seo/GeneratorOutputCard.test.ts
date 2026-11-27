@@ -242,7 +242,7 @@ describe("GeneratorOutputCard", () => {
     ).toBe(true);
   });
 
-  it("renders Generate Roster and per-member Open as Character with interpolated aria-labels (#2808)", () => {
+  it("renders Generate Roster and per-member Open as Character with interpolated aria-labels alongside the roster continuation (#2808)", async () => {
     const rosterData: GeneratorOutput = {
       title: "The Compact's Inner Circle",
       type: "note",
@@ -261,12 +261,16 @@ describe("GeneratorOutputCard", () => {
       },
     ];
 
-    render(GeneratorOutputCard, {
+    const onOpenMemberAsCharacter = vi.fn();
+    const onSaveToCodex = vi.fn();
+    const { container } = render(GeneratorOutputCard, {
       props: {
         generatedData: rosterData,
         aiFallbackDismissed: false,
         isBusy: false,
         isExampleDraft: false,
+        generatorType: "faction-roster",
+        canFollowUp: true,
         generatedSingular: "Faction Roster",
         variant: "default",
         worldTheme: "Classic Fantasy",
@@ -276,23 +280,38 @@ describe("GeneratorOutputCard", () => {
         copiedSectionId: null,
         contextTrimmed: false,
         onDismissAiFallback: vi.fn(),
-        onSaveToCodex: vi.fn(),
+        onSaveToCodex,
         onCopyMarkdown: vi.fn(),
         onCopySection: vi.fn(),
         onContainerClick: vi.fn(),
         onContainerKeydown: vi.fn(),
         onSelectHubEntity: vi.fn(),
         onSaveHubToCodex: vi.fn(),
-        onOpenMemberAsCharacter: vi.fn(),
+        onOpenMemberAsCharacter,
       },
     });
 
     // The aria-label must interpolate the actual member heading, not the
     // literal template text — this is the same interpolation pattern the
     // pre-existing "Copy MD" button already uses successfully.
+    const open = screen.getByLabelText(
+      "Open Vess Marrow — Quartermaster as a Character",
+    );
+    const callout = screen.getByTestId("generator-continuation-callout");
     expect(
-      screen.getByLabelText("Open Vess Marrow — Quartermaster as a Character"),
+      callout.compareDocumentPosition(open) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+    expect(container.querySelectorAll("#save-to-codex-btn")).toHaveLength(1);
+    expect(container.querySelector("#copy-markdown-btn")).toBeTruthy();
+    await fireEvent.click(open);
+    expect(onOpenMemberAsCharacter).toHaveBeenCalledWith(
+      rosterSections[0],
+      rosterData,
+    );
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Add to my Codex" }),
+    );
+    expect(onSaveToCodex).toHaveBeenCalledTimes(1);
   });
 
   it("shows Generate Roster for a faction-family draft when onGenerateRoster is provided", () => {
@@ -837,6 +856,12 @@ describe("GeneratorOutputCard", () => {
 
     it("hides the callout and keeps Save to Codex on seed/example drafts, unconfirmed runs, busy states, and Wave 2 generators", () => {
       for (const overrides of [
+        {
+          generatorType: "faction-roster",
+          canFollowUp: false,
+          isExampleDraft: true,
+        },
+        { generatorType: "faction-roster", canFollowUp: true, isBusy: true },
         { generatorType: "quest", canFollowUp: false, isExampleDraft: true },
         { generatorType: "quest", canFollowUp: false, isExampleDraft: false },
         { generatorType: "quest", canFollowUp: true, isBusy: true },

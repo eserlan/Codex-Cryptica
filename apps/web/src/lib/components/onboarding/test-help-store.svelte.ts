@@ -2,3 +2,9 @@
 export const reactiveHelp = $state<{ activeTour: unknown }>({
   activeTour: null,
 });
+
+/** Reactive route and selection inputs for public import handoff tests. */
+export const reactiveImport = $state({
+  route: { id: "/(app)" },
+  selectedEntityId: null as string | null,
+});

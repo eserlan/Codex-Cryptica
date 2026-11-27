@@ -282,11 +282,11 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     pageTitle:
       "Faction Roster Generator | Notable Members for Any RPG Faction | Codex Cryptica",
     metaDescription:
-      "Turn a generated faction into 3-6 named members with their own motives, loyalties, and leverage over each other. Paste in a faction, or generate one first, then build the roster.",
+      "Build a faction roster of 3 to 6 named members with individual duties, motives, loyalties and connections. Prepare negotiations and rivalries for your RPG.",
     introTitle: "Faction Roster Generator",
     eyebrow: "Faction Roster Generator",
     introText:
-      "Turn a faction from an organization on paper into the people the party can actually meet, recruit, threaten, or betray — each with a personal motive, a stance toward the faction, and a connection to another member on the roster.",
+      "A faction's banner tells you who belongs. Its members tell you whom the party can approach when orders conflict. Paste a faction's details and build a cast with personal wants, duties, loyalties and connections to other members.",
     canonicalPath: "/generators/faction-roster",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-faction-roster.jpg",
@@ -303,22 +303,28 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Do I need a generated faction first?",
         answer:
-          "No, though it works best that way. Generate a faction and select Generate Roster on the result to carry its details straight over, or paste your own faction's details into the context box on this page.",
+          "No. Use Generate Roster on a generated faction to carry its details over, or paste your own faction into The faction on this page. A faction name and a short description are enough to start.",
       },
       {
-        question: "What does the faction roster generator create?",
+        question: "Can I keep members I have already named?",
         answer:
-          "An offline draft contains 3 to 6 notable faction members, each with a role, personal motive, stance, distinctive trait, immediate want, leverage point and connection to another member. The AI draft is prompted for this shape and selected count, though its returned structure can vary.",
+          "Paste the generated faction's Notable NPCs list intact and choose a Roster size large enough for the named people. Offline generation uses those members and their existing descriptions first, then fills the remaining slots. The AI prompt asks it to retain them; check the draft before using it.",
       },
       {
         question: "Will the roster always be a leader and underlings?",
         answer:
-          "No. Choosing a structure (hierarchy, cell network, council, warband, corporate ladder, or congregation) changes synthesized duties for new offline members and the roster summary. Existing named people's copied descriptions stay as written. The AI draft is prompted to reshape duties to match the structure.",
+          "No. How the faction is organised offers several arrangements, including Council, Cell network and Warband. The structure shapes new members' duties and gives you a starting point for deciding who can make decisions; existing named members retain their copied descriptions in an offline draft.",
       },
       {
-        question: "How does saving a generated roster work?",
+        question:
+          "Does saving the roster create separate characters or connections?",
         answer:
-          "Clicking 'Save to Codex' stores the roster draft in your browser's local storage. Open Codex Cryptica and it imports automatically as a Note entity. Each member section also has its own Open as Character action to continue developing that member individually.",
+          "Add to my Codex imports one Note with the roster and GM reference into your local vault. The member names and connections are text, not separate Character entries or graph links. Use Open as Character on an individual section to continue that member in the NPC generator, then save the character separately if you want to link them.",
+      },
+      {
+        question: "Can I give the roster to my players?",
+        answer:
+          "Review it first. Members' descriptions include private motives, loyalties and leverage, not just their public duties. Copy a member section and remove anything the players should not yet know, rather than sharing the whole roster unchanged.",
       },
     ],
     relatedLinks: [

@@ -28,9 +28,9 @@ export class OnboardingStore {
   /** The goal the user last picked. Never inferred from vault content. */
   chosenGoal = $state<Goal | null>(null);
   /**
-   * Not persisted. True while the goal invitation is open or a guided-setup
-   * journey runs, so other first-run prompts (theme prompt, phone coach
-   * marks) wait.
+   * Not persisted. True while the goal invitation is open, a guided-setup
+   * journey runs, or a public import handoff is active, so other first-run
+   * prompts (theme prompt, phone coach marks) wait.
    */
   firstRunGuidanceActive = $state(false);
   /** Transient public generator handoff; never records an onboarding choice. */
