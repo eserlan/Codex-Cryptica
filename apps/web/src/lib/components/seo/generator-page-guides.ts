@@ -59,6 +59,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  tome: {
+    summary:
+      "Generate an in-world book with its physical format, provenance, a deception, a reading hazard, and the ground truth the GM keeps, so a forbidden text can drive a scene rather than sit on a shelf.",
+    tips: [
+      {
+        title: "Choose the Primary Reading Hazard first",
+        detail:
+          "Primary Reading Hazard sets the main risk in Risks & Costs of Study, and the same hazard appears in the Failure Condition and Safe Handling notes. Pick it before the other fields, since it decides what reading the book costs the party.",
+      },
+      {
+        title: "Use Current Custodian to decide who wants the book",
+        detail:
+          "Current Custodian is the place or group that holds the book. It appears in the summary, the provenance, the Connected Entities list, and, in the offline draft, the first adventure hook, where either an agent of the custodian hires the party or a source hires them before the custodian purges access logs. Pick one that gives the party a reason to visit.",
+      },
+      {
+        title: "Use Campaign Context with the AI draft",
+        detail:
+          "Optional Campaign Context is not used by the offline draft. It reaches the AI prompt, so use the AI draft when the book has to connect to your campaign's people or places.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-i-give-players-immersive-handouts-in-an-online-rpg",
+        label: "Giving players immersive handouts and props",
+      },
+      {
+        href: "/answers/how-to-write-an-in-world-newspaper-for-an-rpg",
+        label: "Writing an in-world newspaper for an RPG",
+      },
+    ],
+  },
   "alien-race": {
     summary:
       "Generate a non-human species whose biology, homeworld, senses and culture follow from one another, with a weakness, a relationship to outsiders and a split inside the species the party can use at the table.",
