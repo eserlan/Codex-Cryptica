@@ -364,9 +364,16 @@ function extractMarkdownHeadings(
 ): Array<{ depth: number; heading: string }> {
   const headings: Array<{ depth: number; heading: string }> = [];
   const lines = markdown.split(/\r?\n/);
+  const stripBlockquotePrefixes = (line: string): string => {
+    let unquoted = line;
+    while (/^\s{0,3}>[ \t]?/.test(unquoted)) {
+      unquoted = unquoted.replace(/^\s{0,3}>[ \t]?/, "");
+    }
+    return unquoted;
+  };
   let inFence: string | null = null;
   for (let i = 0; i < lines.length; i += 1) {
-    const line = lines[i];
+    const line = stripBlockquotePrefixes(lines[i]);
     const fenceMatch = /^\s{0,3}(`{3,}|~{3,})/.exec(line);
     if (fenceMatch) {
       const marker = fenceMatch[1][0];
@@ -384,7 +391,10 @@ function extractMarkdownHeadings(
       continue;
     }
 
-    const setext = parseSetextHeading(line, lines[i + 1]);
+    const setext = parseSetextHeading(
+      line,
+      stripBlockquotePrefixes(lines[i + 1] ?? ""),
+    );
     if (setext) {
       headings.push(setext);
       i += 1;
