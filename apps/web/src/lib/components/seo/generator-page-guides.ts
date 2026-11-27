@@ -1347,6 +1347,41 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  "villain-scheme-generator": {
+    summary:
+      "Build an escalating superhero plot with public rumours, four to six discoverable scheme stages, minions and consequences if ignored, ready to attach to any existing or newly minted villain.",
+    tips: [
+      {
+        title: "Dial reach, method and mastermind",
+        detail:
+          "Choose Power Scale, Tone, Scheme Type and Villain Profile to size the plot from a Street turf grab up to a Multiversal crisis, then swap the named archetype for your own antagonist.",
+      },
+      {
+        title: "Tether the front to your city",
+        detail:
+          "When generating with AI, use Optional Campaign Context to name a syndicate, hero team or district so Public Activity, Rumours & Signs and Adventure Hook point straight at places your table watches.",
+      },
+      {
+        title: "Advance stages only when heroes delay",
+        detail:
+          "Let players disrupt Scheme Stages out of order via Resources & Minions, tick Escalation If Ignored when they chase other leads, or click Generate Plot Twist to reframe the endgame.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
+        label: "Advancing scheme stages when heroes look away",
+      },
+      {
+        href: "/answers/how-do-you-run-a-conspiracy-campaign",
+        label: "Leaking discoverable clues at each stage",
+      },
+      {
+        href: "/answers/how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
+        label: "Tracking the plot between sessions",
+      },
+    ],
+  },
 };
 
 export function defaultGuideForSlug(

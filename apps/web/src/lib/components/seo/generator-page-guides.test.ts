@@ -262,9 +262,9 @@ describe("generator guide distinctness", () => {
       getGeneratorGuide("star-system", "Star System Generator").summary,
     ).toContain("playable region map");
     expect(
-      getGeneratorGuide("villain-scheme-generator", "Villain Scheme Generator")
+      getGeneratorGuide("nonexistent-slug" as never, "Fallback Generator")
         .summary,
-    ).toContain("Villain Scheme Generator");
+    ).toContain("Fallback Generator");
   });
 
   it("serves the kingdom guide with tips that name its form labels", () => {
@@ -632,6 +632,34 @@ describe("generator guide distinctness", () => {
       "Fairness / Foreshadowing",
       "Avoid / constraints (optional)",
       "World context (optional)",
+    ]) {
+      expect(tipText).toContain(label);
+    }
+    expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
+  });
+
+  it("serves the villain-scheme-generator guide with tips naming its form labels and without dashes", () => {
+    const guide = getGeneratorGuide(
+      "villain-scheme-generator",
+      "Superhero Villain Scheme Generator",
+    );
+    expect(guide).toBe(SLUG_GUIDES["villain-scheme-generator"]);
+    expect(guide).not.toEqual(
+      defaultGuideForSlug(
+        "villain-scheme-generator",
+        "Superhero Villain Scheme Generator",
+      ),
+    );
+    expect(guide.summary).toContain("four to six discoverable scheme stages");
+    expect(guide.tips).toHaveLength(3);
+    expect(guide.links?.length).toBeGreaterThan(0);
+    const tipText = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const label of [
+      "Power Scale",
+      "Tone",
+      "Scheme Type",
+      "Villain Profile",
+      "Optional Campaign Context",
     ]) {
       expect(tipText).toContain(label);
     }
