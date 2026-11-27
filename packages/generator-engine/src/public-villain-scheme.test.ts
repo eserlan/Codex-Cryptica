@@ -260,6 +260,21 @@ describe("parseVillainSchemeResponse", () => {
     ).toThrow("four to six numbered stages");
   });
 
+  it("accepts list-prefixed numbered Scheme Stages", () => {
+    const listPrefixedLore = [
+      "### Scheme Stages",
+      "- **Stage 1: Quiet Recon**",
+      "* **Stage 2: Supply Squeeze**",
+      "3. **Stage 3: Public Distraction**",
+      "4. **Stage 4: Vault Breach**",
+    ].join("\n");
+    const out = parseVillainSchemeResponse(
+      JSON.stringify({ lore: listPrefixedLore }),
+      resolved,
+    );
+    expect(out.lore).toBe(listPrefixedLore);
+  });
+
   it("rejects duplicate or out-of-order stage numbers", () => {
     const duplicateLore = [
       "### Scheme Stages",

@@ -205,7 +205,7 @@ export function parseVillainSchemeResponse(
   const lore = asString(data.lore);
   const stagesSection = extractSchemeStagesSection(lore);
   const stageNumbers = Array.from(
-    stagesSection.matchAll(/^\s*\*\*Stage\s+(\d+)\s*:/gm),
+    stagesSection.matchAll(/^\s*(?:[-*+]|\d+\.)?\s*\*\*Stage\s+(\d+)\s*:/gm),
     (match) => Number(match[1]),
   );
   const hasSequentialStages =
