@@ -320,6 +320,35 @@ describe("generator-continuation", () => {
     ).toBe(false);
   });
 
+  it("configures Personality as one new Character near successful results", () => {
+    const config = getGeneratorContinuationConfig("personality");
+    expect(config).toMatchObject({
+      headline: "Keep this character recognisable between sessions",
+      placement: "near-result",
+      ctaLabel: "Add to my Codex",
+      localFirstNotice: "No account needed; stored locally in this browser.",
+    });
+    expect(config?.summary).toContain("one new Character");
+    expect(config?.capabilities.join(" ")).toContain("GM reference notes");
+    for (const overrides of [
+      {},
+      { userGenerationSucceeded: false },
+      { isExampleDraft: true },
+      { isBusy: true },
+    ]) {
+      expect(
+        shouldShowGeneratorContinuation({
+          generatorType: "personality",
+          userGenerationSucceeded: true,
+          isExampleDraft: false,
+          isBusy: false,
+          variant: "default",
+          ...overrides,
+        }),
+      ).toBe(Object.keys(overrides).length === 0);
+    }
+  });
+
   it("configures the quest Event handoff near the result", () => {
     const config = getGeneratorContinuationConfig("quest");
     expect(config).toMatchObject({
@@ -382,7 +411,6 @@ describe("generator-continuation", () => {
   it("returns null for Wave 2, names, and unknown generator types", () => {
     for (const type of [
       "point-crawl",
-      "personality",
       "names",
       "fantasy-names",
       "unknown-generator",

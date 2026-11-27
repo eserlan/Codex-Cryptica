@@ -52,6 +52,12 @@
     values.map((v) => ({ value: v, label: v }));
 </script>
 
+<p class="text-sm text-theme-text leading-relaxed">
+  AI generation uses these settings to tailor the profile. Non-AI mode picks a
+  prewritten personality at random, independent of the selected traits and
+  optional context.
+</p>
+
 <SelectWithCustomOption
   id="personality-genre-select"
   label="Choose a vibe"
@@ -187,9 +193,9 @@
 </div>
 
 <div class="flex flex-col gap-1.5">
-  <label for="personality-age" class={labelClass}
-    >Optional Age / Life Stage</label
-  >
+  <label for="personality-age" class={labelClass}>
+    Optional Age / Life Stage
+  </label>
   <input
     id="personality-age"
     name="age_or_life_stage"
@@ -202,9 +208,9 @@
 </div>
 
 <div class="flex flex-col gap-1.5">
-  <label for="personality-relationship-context" class={labelClass}
-    >Optional Relationship Context</label
-  >
+  <label for="personality-relationship-context" class={labelClass}>
+    Optional Relationship Context
+  </label>
   <input
     id="personality-relationship-context"
     name="relationship_context"
@@ -217,9 +223,9 @@
 </div>
 
 <div class="flex flex-col gap-1.5">
-  <label for="personality-concept" class={labelClass}
-    >Optional Free-text Concept</label
-  >
+  <label for="personality-concept" class={labelClass}>
+    Optional Free-text Concept
+  </label>
   <textarea
     id="personality-concept"
     name="concept"
@@ -232,9 +238,9 @@
 </div>
 
 <div class="flex flex-col gap-1.5">
-  <label for="personality-campaign-context" class={labelClass}
-    >Optional Campaign Context</label
-  >
+  <label for="personality-campaign-context" class={labelClass}>
+    Optional Campaign Context
+  </label>
   <textarea
     id="personality-campaign-context"
     name="campaign_context"
@@ -248,7 +254,7 @@
     id="personality-campaign-context-help"
     class="text-micro text-theme-muted leading-relaxed"
   >
-    Add a faction, location, or ongoing tension to tie the personality into your
-    table.
+    With AI, add a faction, location or ongoing tension to help ground the
+    personality in your campaign.
   </p>
 </div>

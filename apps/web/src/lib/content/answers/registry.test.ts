@@ -243,6 +243,16 @@ describe("answer registry", () => {
     );
   });
 
+  it("offers a personality profile as a focused portrayal tool in the NPC roleplay Answer", () => {
+    const answer = answers["how-do-i-roleplay-npcs-if-im-not-good-at-acting"];
+    expect(answer.relatedTools).toContainEqual(
+      expect.objectContaining({
+        href: "/generators/personality",
+        description: expect.stringContaining("reactions under pressure"),
+      }),
+    );
+  });
+
   it("keeps the captive recruitment answer's practical prep checklist", () => {
     const answer =
       answers[

@@ -253,6 +253,54 @@ describe("Quest editorial example", () => {
   });
 });
 
+describe("Personality editorial example and FAQ", () => {
+  it("keeps Iona Pell's portrayable cues distinct from the private pressures", () => {
+    const draft = slugDrafts.personality!;
+    expect(draft).toMatchObject({
+      type: "character",
+      kind: "personality",
+      title: "Iona Pell",
+      labels: ["personality", "personality-generator", "imported-draft"],
+    });
+    for (const heading of [
+      "Core Personality",
+      "Speech & Conversational Style",
+      "Mannerism / Tell",
+      "Roleplaying Cues",
+    ]) {
+      expect(draft.content).toContain(`### ${heading}`);
+    }
+    for (const heading of [
+      "Outward Demeanour vs Inner Nature",
+      "Drives",
+      "Virtue and Flaw",
+      "Contradiction",
+      "Under Pressure",
+      "Social Behaviour",
+      "Boundary / Trigger",
+      "Example Reactions",
+    ]) {
+      expect(draft.lore).toContain(`### ${heading}`);
+    }
+    expect(draft.content).not.toContain("altered court transcript");
+    expect(draft.lore).toContain("altered court transcript");
+  });
+
+  it("does not claim that random non-AI profiles use the controls or update existing characters", () => {
+    const answers = slugMeta.personality.faqs
+      ?.map(({ answer }) => answer)
+      .join(" ");
+    expect(answers).toContain(
+      "picks a prewritten personality at random, independent of those choices",
+    );
+    expect(answers).toContain("it does not incorporate the context");
+    expect(answers).toContain("one new Character");
+    expect(answers).toContain("does not automatically add relationships");
+    expect(answers).toContain("rather than importing a second one");
+    expect(answers).toContain("already configured for Guest Character Chat");
+  });
+});
+
 describe("Faction Roster editorial example", () => {
   it("has a named faction, four distinct complete members and connections to other members only", () => {
     const draft = slugDrafts["faction-roster"]!;

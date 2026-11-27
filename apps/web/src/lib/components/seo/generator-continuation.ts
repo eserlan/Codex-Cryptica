@@ -102,6 +102,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    personality: {
+      headline: "Keep this character recognisable between sessions",
+      summary:
+        "Save the profile as one new Character in your local Codex vault so you can refer back to their habits and update what they want after play.",
+      capabilities: [
+        "Keep quick roleplaying cues and speech style alongside deeper GM reference notes",
+        "Link the Character to people and places in your vault and record how a meeting changed their loyalties",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
     "nomad-clan": {
       headline: "Keep this clan on the road",
       summary:
