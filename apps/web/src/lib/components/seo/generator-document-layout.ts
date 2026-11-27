@@ -101,7 +101,7 @@ const LAYOUT_RULES: LayoutRule[] = [
       "Entity Seeds",
     ]),
     documentBullets: {
-      labels: new Set(["Hidden Problem", "Immediate Hook"]),
+      labels: new Set(["Immediate Hook"]),
       heading: "Secrets & Hooks",
     },
   },

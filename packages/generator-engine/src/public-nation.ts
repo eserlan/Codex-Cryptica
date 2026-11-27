@@ -380,7 +380,7 @@ export function generateNationLocal(
 ${stateName} is ${withArticle(polity)} under ${resolved.governmentStyle.toLowerCase()}, at a scale of ${resolved.scale.toLowerCase()}. ${pickFrom(capitalDescriptions, rng)}${resolved.campaignContext ? ` In ${resolved.campaignContext}, it is a key player in the main conflict.` : ""}
 
 ### Power Structure
-${leaderName} holds authority, but that authority is contested. ${trouble}. ${pickFrom(powerStructureClosers, rng)}
+${leaderName} holds authority, but that authority is contested. ${pickFrom(powerStructureClosers, rng)}
 
 ### Society & Tensions
 ${pickFrom(societyDescriptions, rng)}

@@ -417,6 +417,12 @@ describe("generator save payloads", () => {
     expect(payload.lore).toContain("Power Blocs");
     expect(payload.lore).toContain("Rumours & Hooks");
     expect(payload.lore).toContain("Entity Seeds");
+    const hiddenProblem = nation.lore.match(
+      /- \*\*Hidden Problem\*\*: ([^\n]+)/,
+    )?.[1];
+    expect(hiddenProblem).toBeTruthy();
+    expect(payload.content).not.toContain(hiddenProblem!);
+    expect(payload.lore).toContain(hiddenProblem!);
 
     const entity = {
       id: "nation-1",
@@ -443,6 +449,7 @@ describe("generator save payloads", () => {
     expect(serialized).not.toContain("Power Blocs");
     expect(serialized).not.toContain("Rumours & Hooks");
     expect(serialized).not.toContain("Entity Seeds");
+    expect(serialized).not.toContain(hiddenProblem!);
   });
 
   it("keeps adventure lore in the vault and omits empty map images", () => {
