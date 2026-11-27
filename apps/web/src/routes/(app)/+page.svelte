@@ -12,6 +12,7 @@
   import { safeJsonLd } from "#lib/utils/json-ld.js";
   import { onboardingStore } from "#lib/stores/ui/onboarding.svelte.js";
   import { onboardingFunnel } from "#lib/app/onboarding/onboarding-funnel.js";
+  import { handoffAfterPublicImport } from "#lib/app/onboarding/public-import-handoff.js";
   import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
   import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
   import { focusEntity } from "#lib/stores/ui/navigation.js";
@@ -234,6 +235,7 @@
 
   function handleImportResult(result: PendingImportResult) {
     importFailed = result.status === "failed";
+    onboardingStore.publicImportHandoff = handoffAfterPublicImport(result);
     if (result.status === "imported") {
       onboardingStore.dismissLandingPage();
       onboardingStore.dismissWorldPage();
@@ -253,6 +255,7 @@
 
   async function retryImport() {
     isRetryingImport = true;
+    onboardingStore.publicImportHandoff = "pending";
     try {
       handleImportResult(await seoImportService.checkAndHandlePendingImport());
     } finally {
@@ -262,6 +265,7 @@
 
   function discardImport() {
     seoImportService.discardPendingImport();
+    onboardingStore.publicImportHandoff = null;
     importFailed = false;
   }
 
@@ -277,6 +281,7 @@
       typeof localStorage !== "undefined" &&
       localStorage.getItem("__codex_pending_import")
     ) {
+      onboardingStore.publicImportHandoff = "pending";
       onboardingStore.dismissLandingPage();
       onboardingStore.dismissWorldPage();
     }

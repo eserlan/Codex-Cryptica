@@ -21,6 +21,53 @@ const baseOutput: GeneratorOutput = {
 };
 
 describe("generator save payloads", () => {
+  it("keeps a quest's hidden beats out of the saved Event's public content even when the preview moves them into its main column", () => {
+    const output: GeneratorOutput = {
+      ...baseOutput,
+      type: "event",
+      title: "The Millrace Ultimatum",
+      content: "### The Hook\nThe village needs water.",
+      lore: "### Complication\nThe bridge may wash away.\n\n### The Twist\nThe deed is forged.\n\n### Reward\nA purse of silver.",
+      labels: ["rpg-quest", "quest-generator", "imported-draft"],
+    };
+    const layout = getGeneratorDocumentLayout(output);
+    expect(layout.content).toContain("The deed is forged.");
+    const payload = buildGeneratorSavePayload(
+      output,
+      layout,
+      undefined,
+      "quest",
+    );
+    expect(payload.type).toBe("event");
+    expect(payload.content).toContain("The village needs water.");
+    expect(payload.content).not.toContain("The deed is forged.");
+    expect(payload.lore).toBe(output.lore);
+  });
+
+  it("keeps Quest lore private when the model returns a different known generator label", () => {
+    const output: GeneratorOutput = {
+      ...baseOutput,
+      type: "event",
+      title: "The Millrace Ultimatum",
+      content: "### The Hook\nThe village needs water.",
+      lore: "### The Twist\nThe deed is forged.\n\n### Reward\nA purse of silver.",
+      labels: ["rpg-quest", "npc-generator", "imported-draft"],
+    };
+    const layout = getGeneratorDocumentLayout(output);
+    expect(layout.content).toContain("The deed is forged.");
+
+    const payload = buildGeneratorSavePayload(
+      output,
+      layout,
+      undefined,
+      "quest",
+    );
+
+    expect(payload.content).not.toContain("The deed is forged.");
+    expect(payload.lore).toContain("The deed is forged.");
+    expect(payload.lore).toContain("A purse of silver.");
+  });
+
   it("keeps controversial holiday history out of saved content and guest exports", () => {
     const output = {
       ...generateHolidayLocal(

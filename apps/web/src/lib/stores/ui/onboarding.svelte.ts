@@ -33,6 +33,8 @@ export class OnboardingStore {
    * marks) wait.
    */
   firstRunGuidanceActive = $state(false);
+  /** Transient public generator handoff; never records an onboarding choice. */
+  publicImportHandoff = $state<"pending" | { rootId: string } | null>(null);
 
   constructor(
     persistence: UIPersistence = new DefaultPersistence(),

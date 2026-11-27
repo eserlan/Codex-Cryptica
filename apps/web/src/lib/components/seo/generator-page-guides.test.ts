@@ -852,3 +852,28 @@ describe("generator guide distinctness", () => {
     );
   });
 });
+
+describe("Quest editorial guide", () => {
+  it("teaches table decisions using field labels and three progressive Answers", () => {
+    const guide = getGeneratorGuide("quest", "RPG Quest Generator");
+    const text = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const label of [
+      "Choose a vibe",
+      "Scope",
+      "Location Type",
+      "Main Threat",
+      "Twist",
+      "Reward",
+      "Optional Campaign Context",
+    ]) {
+      expect(text).toContain(label);
+    }
+    expect(guide.linksTitle).toBe("Turn a quest hook into playable choices");
+    expect(guide.links?.map(({ href }) => href)).toEqual([
+      "/answers/how-do-you-create-quest-hooks-without-railroading",
+      "/answers/how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
+      "/answers/how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
+    ]);
+    expect(guide.links?.every(({ description }) => description)).toBe(true);
+  });
+});

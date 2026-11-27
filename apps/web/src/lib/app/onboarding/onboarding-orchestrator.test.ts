@@ -16,6 +16,7 @@ const base: FirstRunState = {
   hasSeenTour: false,
   goalInvitationResolved: false,
   journeyActive: false,
+  publicImportActive: false,
   activeTour: false,
   anyModalOpen: false,
   hasUnseenRelease: false,
@@ -68,6 +69,23 @@ describe("decideFirstRunAction", () => {
     expect(decideFirstRunAction({ ...base, isDemoMode: false })).toEqual({
       kind: "goal-invitation",
     });
+  });
+
+  it("defers the invitation and changelog during a public draft handoff, then offers guidance normally", () => {
+    expect(decideFirstRunAction({ ...base, publicImportActive: true })).toEqual(
+      { kind: "none" },
+    );
+    expect(
+      decideFirstRunAction({
+        ...base,
+        ...onboarded,
+        publicImportActive: true,
+        hasUnseenRelease: true,
+      }),
+    ).toEqual({ kind: "none" });
+    expect(
+      decideFirstRunAction({ ...base, publicImportActive: false }),
+    ).toEqual({ kind: "goal-invitation" });
   });
 
   it("never offers the invitation to a user who finished the old tour", () => {

@@ -810,8 +810,36 @@ describe("GeneratorOutputCard", () => {
       expect(onSaveToCodex).toHaveBeenCalledTimes(1);
     });
 
+    it("puts the quest continuation between draft actions and the document without duplicating Save", async () => {
+      const { container, onSaveToCodex } = renderCard({
+        generatorType: "quest",
+      });
+      const callout = screen.getByTestId("generator-continuation-callout");
+      const copy = container.querySelector("#copy-markdown-btn")!;
+      const section = screen.getByText(
+        "Brotherhood of Hollow Crown is a fallen order with real authority.",
+      );
+      expect(
+        copy.compareDocumentPosition(callout) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(
+        callout.compareDocumentPosition(section) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(container.querySelectorAll("#save-to-codex-btn")).toHaveLength(1);
+      expect(callout.textContent).toContain("GM-only lore");
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Add to my Codex" }),
+      );
+      expect(onSaveToCodex).toHaveBeenCalledTimes(1);
+    });
+
     it("hides the callout and keeps Save to Codex on seed/example drafts, unconfirmed runs, busy states, and Wave 2 generators", () => {
       for (const overrides of [
+        { generatorType: "quest", canFollowUp: false, isExampleDraft: true },
+        { generatorType: "quest", canFollowUp: false, isExampleDraft: false },
+        { generatorType: "quest", canFollowUp: true, isBusy: true },
         { generatorType: "npc", canFollowUp: false, isExampleDraft: true },
         { generatorType: "npc", canFollowUp: false, isExampleDraft: false },
         { generatorType: "npc", canFollowUp: true, isBusy: true },
