@@ -181,17 +181,33 @@ export function parseHolidayResponse(
   const rawObservances = Array.isArray(data.observances)
     ? data.observances
     : [];
+  const content = typeof data.content === "string" ? data.content : "";
+  const requiredObservanceFields = [
+    "name",
+    "type",
+    "when",
+    "observers",
+    "origin",
+    "traditions",
+    "foodOrDress",
+    "taboos",
+    "variations",
+    "outsiderMisunderstanding",
+    "publicBelief",
+    "tension",
+  ] as const;
   const structuredObservancesAreValid =
     rawObservances.length === resolved.count &&
     rawObservances.every(
       (entry) =>
         entry !== null &&
         typeof entry === "object" &&
-        ["name", "type", "when", "observers", "traditions", "tension"].every(
-          (key) => {
-            const value = (entry as Record<string, unknown>)[key];
-            return typeof value === "string" && value.trim().length > 0;
-          },
+        requiredObservanceFields.every((key) => {
+          const value = (entry as Record<string, unknown>)[key];
+          return typeof value === "string" && value.trim().length > 0;
+        }) &&
+        requiredObservanceFields.every((key) =>
+          content.includes((entry as Record<string, string>)[key]),
         ),
     ) &&
     typeof data.title === "string" &&
@@ -206,7 +222,7 @@ export function parseHolidayResponse(
       typeof data.summary === "string" && data.summary.trim()
         ? data.summary
         : fallback.summary,
-    content: data.content as string,
+    content,
     lore: typeof data.lore === "string" ? data.lore : fallback.lore,
     labels:
       Array.isArray(data.labels) &&

@@ -103,7 +103,8 @@ describe("generator-continuation", () => {
     const config = getGeneratorContinuationConfig("holiday");
     expect(config).not.toBeNull();
     expect(config?.capabilities.join(" ")).toContain("Note entry");
-    expect(config?.capabilities.join(" ")).toContain("GM-only history");
+    expect(config?.capabilities.join(" ")).toContain("GM-only lore");
+    expect(config?.capabilities.join(" ")).toContain("remove table hooks");
   });
 
   it("configures the secret society as a Faction import with GM-only lore and gates it on completed generation", () => {

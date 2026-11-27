@@ -91,21 +91,27 @@ describe("public holiday generator", () => {
 
   it("parses valid JSON and safely falls back for malformed JSON", () => {
     const resolved = resolveHoliday({ setSize: "One observance" });
+    const completeObservance = {
+      name: "Clearwater Vigil",
+      type: "Memorial",
+      when: "The first thaw",
+      observers: "The river families",
+      origin: "It recalls a flood survived together.",
+      traditions: "Carry lights to the water.",
+      foodOrDress: "Wear river-blue sashes.",
+      taboos: "Do not cast offerings into the channel.",
+      variations: "Upstream families sing a different verse.",
+      outsiderMisunderstanding: "Visitors mistake the silence for mourning.",
+      publicBelief: "The vigil honours shared rescue.",
+      tension: "The old flood record has gone missing.",
+    };
+    const completeContent = Object.values(completeObservance).join("\n");
     expect(
       parseHolidayResponse(
         JSON.stringify({
           title: "Clearwater Vigil",
-          content: "A vigil",
-          observances: [
-            {
-              name: "Clearwater Vigil",
-              type: "Memorial",
-              when: "The first thaw",
-              observers: "The river families",
-              traditions: "Carry lights",
-              tension: "The record is missing.",
-            },
-          ],
+          content: completeContent,
+          observances: [completeObservance],
         }),
         resolved,
       ).title,
@@ -120,6 +126,48 @@ describe("public holiday generator", () => {
         resolved,
       ).observances,
     ).toHaveLength(1);
+  });
+
+  it("falls back when an AI observance omits origin or expanded details", () => {
+    const resolved = resolveHoliday({ setSize: "One observance" });
+    const completeObservance = {
+      name: "Clearwater Vigil",
+      type: "Memorial",
+      when: "The first thaw",
+      observers: "The river families",
+      origin: "It recalls a flood survived together.",
+      traditions: "Carry lights to the water.",
+      foodOrDress: "Wear river-blue sashes.",
+      taboos: "Do not cast offerings into the channel.",
+      variations: "Upstream families sing a different verse.",
+      outsiderMisunderstanding: "Visitors mistake the silence for mourning.",
+      publicBelief: "The vigil honours shared rescue.",
+      tension: "The old flood record has gone missing.",
+    };
+    const missingOrigin = { ...completeObservance };
+    delete (missingOrigin as Partial<typeof completeObservance>).origin;
+    const base = {
+      title: "Clearwater Vigil",
+      content: Object.values(completeObservance).join("\n"),
+    };
+
+    expect(
+      parseHolidayResponse(
+        JSON.stringify({ ...base, observances: [missingOrigin] }),
+        resolved,
+      ).title,
+    ).not.toBe("Clearwater Vigil");
+
+    expect(
+      parseHolidayResponse(
+        JSON.stringify({
+          ...base,
+          content: "Clearwater Vigil\nThe first thaw",
+          observances: [completeObservance],
+        }),
+        resolved,
+      ).title,
+    ).not.toBe("Clearwater Vigil");
   });
 
   it("writes a single observance summary as a capitalised sentence that names it", () => {

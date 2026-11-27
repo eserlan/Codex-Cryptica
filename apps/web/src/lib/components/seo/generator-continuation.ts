@@ -178,7 +178,7 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
         "Save this observance or calendar to your local Codex vault so its origin, traditions, and tensions stay connected to the people and places that keep it.",
       capabilities: [
         "Store the observance, its origin, and its traditions in one Note entry",
-        "Keep the GM-only history and table hooks in lore, away from the public account",
+        "Keep hidden history in GM-only lore; remove table hooks from the Note content before sharing it",
         "Link the observance to the factions, places, and people who keep it inside your vault",
       ],
       localFirstNotice: LOCAL_FIRST_NOTICE,
