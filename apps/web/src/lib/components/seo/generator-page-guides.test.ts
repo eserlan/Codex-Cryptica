@@ -638,6 +638,27 @@ describe("generator guide distinctness", () => {
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
+  it("serves the holiday guide with tips naming its form labels and without dashes", () => {
+    const guide = getGeneratorGuide("holiday", "Holiday & Festival Generator");
+    expect(guide).toBe(SLUG_GUIDES.holiday);
+    expect(guide).not.toEqual(
+      defaultGuideForSlug("holiday", "Holiday & Festival Generator"),
+    );
+    expect(guide.tips).toHaveLength(3);
+    expect(guide.links?.length).toBeGreaterThan(0);
+    const tipText = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const label of [
+      "Observance scope",
+      "Culture",
+      "Climate",
+      "Religion",
+      "Tone",
+    ]) {
+      expect(tipText).toContain(label);
+    }
+    expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
+  });
+
   it("serves the villain-scheme-generator guide with tips naming its form labels and without dashes", () => {
     const guide = getGeneratorGuide(
       "villain-scheme-generator",
