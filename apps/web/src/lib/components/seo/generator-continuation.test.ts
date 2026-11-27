@@ -108,6 +108,49 @@ describe("generator-continuation", () => {
     });
   });
 
+  it("configures the constellation as a Note import with GM-only lore and gates it on completed generation", () => {
+    const config = getGeneratorContinuationConfig("constellation");
+    expect(config).not.toBeNull();
+    expect(config?.capabilities.join(" ")).toContain("Note entry");
+    expect(config?.capabilities.join(" ")).toContain("GM-only lore");
+    expect([config?.headline, config?.summary].join(" ")).toContain(
+      "constellation or full sky",
+    );
+    expect(config?.capabilities.join(" ")).toContain(
+      "Night Sky season index stays in public Note content",
+    );
+    expect(config?.capabilities.join(" ")).toContain(
+      "Keep omens and adventure hooks as GM-only lore",
+    );
+    expect(config?.capabilities.join(" ")).not.toContain(
+      "detailed visibility notes",
+    );
+    expect(
+      [config?.headline, config?.summary, ...(config?.capabilities ?? [])]
+        .join(" ")
+        .match(/[–—]/),
+    ).toBeNull();
+
+    expect(
+      shouldShowGeneratorContinuation({
+        generatorType: "constellation",
+        userGenerationSucceeded: true,
+        isExampleDraft: false,
+        isBusy: false,
+        variant: "default",
+      }),
+    ).toBe(true);
+    expect(
+      shouldShowGeneratorContinuation({
+        generatorType: "constellation",
+        userGenerationSucceeded: true,
+        isExampleDraft: false,
+        isBusy: true,
+        variant: "default",
+      }),
+    ).toBe(false);
+  });
+
   it("configures the alien race as a Creature import with GM-only lore and gates it on completed generation", () => {
     const config = getGeneratorContinuationConfig("alien-race");
     expect(config).not.toBeNull();
