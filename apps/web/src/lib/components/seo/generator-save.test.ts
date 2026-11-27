@@ -65,6 +65,69 @@ describe("generator save payloads", () => {
     expect(JSON.stringify(bundle)).not.toContain(hiddenTruth);
   });
 
+  it("keeps AI holiday hiddenTruth out of saved content and guest exports", async () => {
+    const { parseHolidayResponse, resolveHoliday } =
+      await import("generator-engine");
+    const resolved = resolveHoliday({
+      setSize: "One observance",
+      includeControversial: true,
+    });
+    const aiHiddenTruth = "The harbour guild sank the first relief ship.";
+    const publicFields = {
+      name: "Lantern Tide",
+      type: "Memorial",
+      when: "First autumn gale",
+      observers: "Dockward families",
+      origin: "Honours sailors lost in the great storm.",
+      traditions: "Float paper lanterns at dusk.",
+      foodOrDress: "Salt cakes and oiled cloaks.",
+      taboos: "Never extinguish a drifting lantern.",
+      variations: "Outer-quay crews sing in low unison.",
+      outsiderMisunderstanding: "Strangers mistake it for a harvest festival.",
+      publicBelief: "The lanterns guide lost souls home.",
+      tension: "No shipwright admits who built the doomed hull.",
+    };
+    const aiOutput = parseHolidayResponse(
+      JSON.stringify({
+        title: "Lantern Tide",
+        summary: "A coastal memorial with a buried secret.",
+        content: Object.values(publicFields).join("\n"),
+        lore: `### Hidden Truth\n${aiHiddenTruth}`,
+        observances: [{ ...publicFields, hiddenTruth: aiHiddenTruth }],
+      }),
+      resolved,
+    ) as GeneratorOutput;
+
+    const payload = buildGeneratorSavePayload(
+      aiOutput,
+      getGeneratorDocumentLayout(aiOutput),
+    );
+    expect(payload.content).not.toContain(aiHiddenTruth);
+    expect(payload.lore).toContain(aiHiddenTruth);
+
+    const bundle = GuestExporter.export({
+      entities: [
+        {
+          id: "holiday-ai",
+          type: payload.type,
+          title: payload.title,
+          content: payload.content,
+          lore: payload.lore,
+          labels: payload.labels,
+          status: payload.status,
+          aliases: [],
+          connections: [],
+        } satisfies Entity,
+      ],
+      defaultVisibility: "visible",
+      activeTheme: { primaryColor: "#000000" },
+      publishId: "holiday-ai-export-test",
+      vaultTitle: "Test Vault",
+      publisherVersion: "test",
+    });
+    expect(JSON.stringify(bundle)).not.toContain(aiHiddenTruth);
+  });
+
   it("builds a normal vault payload from the rendered document layout", () => {
     expect(
       buildGeneratorSavePayload(baseOutput, {

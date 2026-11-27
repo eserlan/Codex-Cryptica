@@ -171,6 +171,35 @@ describe("public holiday generator", () => {
         resolved,
       ).title,
     ).not.toBe("Clearwater Vigil");
+
+    const controversialResolved = resolveHoliday({
+      setSize: "One observance",
+      includeControversial: true,
+    });
+    const fallbackWithControversial = parseHolidayResponse(
+      JSON.stringify({ ...base, observances: [missingOrigin] }),
+      controversialResolved,
+    );
+    expect(fallbackWithControversial.title).not.toBe("Clearwater Vigil");
+    expect(
+      fallbackWithControversial.observances?.[0]?.hiddenTruth,
+    ).toBeTruthy();
+    expect(fallbackWithControversial.lore).toContain(
+      fallbackWithControversial.observances?.[0]?.hiddenTruth ?? "",
+    );
+
+    const leakedHiddenTruth = "The council burned the original treaty.";
+    const leakedResult = parseHolidayResponse(
+      JSON.stringify({
+        ...base,
+        content: `${base.content}\n${leakedHiddenTruth}`,
+        observances: [
+          { ...completeObservance, hiddenTruth: leakedHiddenTruth },
+        ],
+      }),
+      controversialResolved,
+    );
+    expect(leakedResult.content).not.toContain(leakedHiddenTruth);
   });
 
   it("writes a single observance summary as a capitalised sentence that names it", () => {

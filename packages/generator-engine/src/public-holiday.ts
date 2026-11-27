@@ -173,6 +173,7 @@ export function parseHolidayResponse(
     religion: resolved.religion,
     avoidNames: resolved.avoidNames,
     tone: resolved.tone,
+    includeControversial: resolved.includeControversial,
     setSize:
       resolved.count > 1
         ? `A calendar of ${resolved.count} observances`
@@ -214,7 +215,16 @@ export function parseHolidayResponse(
     data.title.trim().length > 0 &&
     typeof data.content === "string" &&
     data.content.trim().length > 0;
-  if (!structuredObservancesAreValid) return fallback;
+  const hasLeakedHiddenTruth = rawObservances.some((entry) => {
+    if (entry === null || typeof entry !== "object") return false;
+    const hiddenTruth = (entry as Record<string, unknown>).hiddenTruth;
+    return (
+      typeof hiddenTruth === "string" &&
+      hiddenTruth.trim().length > 0 &&
+      content.includes(hiddenTruth.trim())
+    );
+  });
+  if (!structuredObservancesAreValid || hasLeakedHiddenTruth) return fallback;
   return {
     type: "note",
     title: data.title as string,
