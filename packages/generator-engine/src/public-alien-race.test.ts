@@ -731,5 +731,12 @@ describe("public-alien-race", () => {
     );
     expect(client.content).toContain("They are currently a client species.");
     expect(client.content).not.toMatch(/currently client species/);
+
+    const custom = generateAlienRaceLocal(
+      { relationToOutsiders: "__proto__" },
+      () => 0,
+    );
+    expect(custom.content).toContain("they are currently __proto__.");
+    expect(custom.content).not.toContain("[object Object]");
   });
 });

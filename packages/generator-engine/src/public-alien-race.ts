@@ -124,7 +124,9 @@ const RELATION_PHRASES: Record<string, string> = {
   "Active belligerents": "active belligerents",
 };
 const relationPhrase = (name: string): string =>
-  RELATION_PHRASES[name] ?? name.toLowerCase();
+  Object.prototype.hasOwnProperty.call(RELATION_PHRASES, name)
+    ? RELATION_PHRASES[name]
+    : name.toLowerCase();
 
 /**
  * Resolves a trait against its pool, honouring the generation mode: an exotic

@@ -40,7 +40,7 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       {
         title: "Use Relationship to Other Species as the first friction",
         detail:
-          "Relationship to Other Species sets the Relations with Outsiders section and its friction line, such as a fight that stopped without either side giving up its point. That friction is the easiest way for the party to meet the species, so write the first encounter around it.",
+          "A built-in Relationship to Other Species choice sets the Relations with Outsiders section and its friction line, such as a fight that stopped without either side giving up its point. A custom relationship appears in the section, but uses the first built-in friction line. Use that friction to write the party's first encounter with the species.",
       },
       {
         title: "Turn the internal split into a choice",

@@ -654,6 +654,9 @@ describe("generator guide distinctness", () => {
     ]) {
       expect(tipText).toContain(label);
     }
+    expect(tipText).toContain(
+      "A custom relationship appears in the section, but uses the first built-in friction line.",
+    );
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
