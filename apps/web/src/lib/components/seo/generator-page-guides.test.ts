@@ -643,6 +643,8 @@ describe("generator guide distinctness", () => {
     expect(guide).not.toEqual(
       defaultGuideForSlug("council-vote", "Council Vote Generator"),
     );
+    expect(guide.summary).toContain("voting procedure");
+    expect(guide.summary).not.toContain("voting threshold");
     expect(guide.tips).toHaveLength(3);
     expect(guide.links?.length).toBeGreaterThan(0);
     const tipText = guide.tips.map((tip) => tip.detail).join(" ");

@@ -348,7 +348,47 @@ export function readCouncilVoteFoundation(
   const data = readJsonObject(reply);
   if (!data) return null;
   const parsed = councilVoteFoundationFromRecord(data, resolved);
-  return parsed.content.trim() && parsed.lore.trim() ? parsed : null;
+  if (!parsed.content.trim() || !parsed.lore.trim()) return null;
+
+  // This output is later split into player-facing content and GM-only lore.
+  // Enforce the prompt's section contract at the model boundary: a misplaced
+  // private section in content, or an unrecognized lore section, must not be
+  // accepted and then routed into the player-facing document by the layout.
+  const privateSections = [
+    "Voting Procedure",
+    "Current Vote Estimate",
+    "Council Members",
+    "Antagonist Influence",
+    "Investigation Leads",
+  ];
+  const getHeadings = (markdown: string) =>
+    [...markdown.matchAll(/^(#{1,6})\s+(.+?)\s*#*\s*$/gm)].map(
+      ([, hashes, heading]) => ({ hashes, heading }),
+    );
+  const contentHeadings = getHeadings(parsed.content);
+  if (
+    contentHeadings.some(({ heading }) =>
+      privateSections.some(
+        (privateSection) =>
+          heading.trim().toLowerCase() === privateSection.toLowerCase(),
+      ),
+    )
+  ) {
+    return null;
+  }
+
+  const loreHeadings = getHeadings(parsed.lore);
+  if (
+    loreHeadings.length !== privateSections.length ||
+    loreHeadings.some(
+      ({ hashes, heading }, index) =>
+        hashes !== "###" || heading.trim() !== privateSections[index],
+    )
+  ) {
+    return null;
+  }
+
+  return parsed;
 }
 
 // ---------------------------------------------------------------------------

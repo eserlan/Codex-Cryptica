@@ -30,7 +30,7 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "council-vote": {
     summary:
-      "Generate a political vote with a named council, a deadline and a voting threshold, where each voter has a stance and a route the party can use to win them over before the decision is called.",
+      "Generate a political vote with a named council, a deadline and a voting procedure, where each voter has a stance and a route the party can use to win them over before the decision is called.",
     tips: [
       {
         title: "Count the seats before the speeches",
