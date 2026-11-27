@@ -127,6 +127,15 @@ describe("generator-continuation", () => {
         shouldShowGeneratorContinuation({
           generatorType,
           userGenerationSucceeded: false,
+          isExampleDraft: false,
+          isBusy: false,
+          variant: "default",
+        }),
+      ).toBe(false);
+      expect(
+        shouldShowGeneratorContinuation({
+          generatorType,
+          userGenerationSucceeded: true,
           isExampleDraft: true,
           isBusy: false,
           variant: "default",
