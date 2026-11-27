@@ -188,8 +188,23 @@ Return only the JSON object. Do not include markdown code block formatting like 
   };
 }
 
+function stripFencedCodeLines(lore: string): string[] {
+  const lines: string[] = [];
+  let inFence: string | null = null;
+  for (const line of lore.split(/\r?\n/)) {
+    const fenceMatch = /^\s{0,3}(`{3,}|~{3,})/.exec(line);
+    if (fenceMatch) {
+      const marker = fenceMatch[1][0];
+      inFence = inFence === marker ? null : (inFence ?? marker);
+      continue;
+    }
+    if (!inFence) lines.push(line);
+  }
+  return lines;
+}
+
 function extractSchemeStagesSection(lore: string): string {
-  const lines = lore.split(/\r?\n/);
+  const lines = stripFencedCodeLines(lore);
   const stageHeadingPattern = /^ {0,3}###\s+Scheme Stages\b/;
   const stageHeadings = lines.filter((line) => stageHeadingPattern.test(line));
   if (stageHeadings.length !== 1) return "";

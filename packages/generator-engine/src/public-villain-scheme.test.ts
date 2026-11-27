@@ -316,6 +316,24 @@ describe("parseVillainSchemeResponse", () => {
     expect(out.lore).toBe(indentedLore);
   });
 
+  it("ignores stage markers inside fenced code blocks", () => {
+    const fencedLore = [
+      "### Scheme Stages",
+      "```markdown",
+      "**Stage 1: Quiet Recon**",
+      "**Stage 2: Supply Squeeze**",
+      "**Stage 3: Public Distraction**",
+      "**Stage 4: Vault Breach**",
+      "```",
+    ].join("\n");
+    expect(() =>
+      parseVillainSchemeResponse(
+        JSON.stringify({ lore: fencedLore }),
+        resolved,
+      ),
+    ).toThrow("four to six numbered stages");
+  });
+
   it("rejects duplicate or out-of-order stage numbers", () => {
     const duplicateLore = [
       "### Scheme Stages",
