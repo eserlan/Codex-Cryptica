@@ -704,6 +704,8 @@ describe("generator guide distinctness", () => {
       "Visual Impression",
       "Practical Use",
       "Cultural Meaning",
+      "Single Constellation",
+      "Full Night Sky",
     ]) {
       expect(tipText).toContain(label);
     }

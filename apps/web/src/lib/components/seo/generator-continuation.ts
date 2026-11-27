@@ -201,7 +201,7 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       summary:
         "Save this constellation or full sky as a Note entry in your local Codex vault so its stories and uses stay connected to the cultures that read them.",
       capabilities: [
-        "Store the sky pattern, origin myths, and practical uses in one Note entry",
+        "Store origin myths, practical uses, and a single constellation's star pattern in one Note entry",
         "Keep omens and adventure hooks as GM-only lore; the Night Sky season index stays in public Note content",
         "Link the sky lore to the cultures and places that read it inside your vault",
       ],
