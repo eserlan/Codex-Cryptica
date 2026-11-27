@@ -248,6 +248,9 @@ export function parseHolidayResponse(
     typeof data.title === "string" ? data.title : "",
     typeof data.summary === "string" ? data.summary : "",
     content,
+    ...(Array.isArray(data.labels)
+      ? data.labels.filter((l): l is string => typeof l === "string")
+      : []),
   ]);
   if (!structuredObservancesAreValid || hasLeakedHiddenTruth) return fallback;
   return {

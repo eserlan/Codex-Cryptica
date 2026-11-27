@@ -212,6 +212,18 @@ describe("public holiday generator", () => {
       controversialResolved,
     );
     expect(summaryLeakedResult.summary).not.toContain(leakedHiddenTruth);
+
+    const labelLeakedResult = parseHolidayResponse(
+      JSON.stringify({
+        ...base,
+        labels: ["holiday", leakedHiddenTruth],
+        observances: [
+          { ...completeObservance, hiddenTruth: leakedHiddenTruth },
+        ],
+      }),
+      controversialResolved,
+    );
+    expect(labelLeakedResult.labels).not.toContain(leakedHiddenTruth);
   });
 
   it("writes a single observance summary as a capitalised sentence that names it", () => {
