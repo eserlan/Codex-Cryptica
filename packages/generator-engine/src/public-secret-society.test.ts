@@ -154,4 +154,39 @@ describe("Secret Society generator", () => {
     );
     expect(prompt.userMessage).toContain("title-and-summary-only");
   });
+
+  it("uses the correct article before a vowel-initial public face in the summary and public face section", () => {
+    const output = generateSecretSocietyLocal(
+      { publicFace: "Academic society", tone: "Sinister", scale: "Local cell" },
+      fixedRng,
+    );
+
+    expect(output.summary).toContain("hidden behind an academic society.");
+    expect(output.content).toContain(
+      "They present themselves as an academic society,",
+    );
+    expect(`${output.summary}\n${output.content}`).not.toMatch(/\ba academic/);
+  });
+
+  it("uses the indefinite article 'a' before a consonant-initial public face", () => {
+    const output = generateSecretSocietyLocal(
+      { publicFace: "Charity", tone: "Silly", scale: "Local cell" },
+      fixedRng,
+    );
+
+    expect(output.summary).toContain("hidden behind a charity.");
+    expect(output.content).toContain("They present themselves as a charity,");
+  });
+
+  it("uses the indefinite article 'a' before a university group in both output fields", () => {
+    const output = generateSecretSocietyLocal(
+      { publicFace: "university group", tone: "Sinister", scale: "Local cell" },
+      fixedRng,
+    );
+
+    expect(output.summary).toContain("hidden behind a university group.");
+    expect(output.content).toContain(
+      "They present themselves as a university group,",
+    );
+  });
 });

@@ -99,9 +99,10 @@ describe("generator-continuation", () => {
     });
   });
 
-  it("configures the tome and world imports with GM-only lore and generation gates", () => {
+  it("configures the tome, secret society, and world imports with GM-only lore and generation gates", () => {
     for (const [generatorType, entryType] of [
       ["tome", "Item entry"],
+      ["secret-society", "Faction entry"],
       ["world", "Location entry"],
     ]) {
       const config = getGeneratorContinuationConfig(generatorType);

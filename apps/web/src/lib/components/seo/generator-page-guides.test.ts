@@ -638,7 +638,7 @@ describe("generator guide distinctness", () => {
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
-  it("serves the tome and world guides with form labels and without dashes", () => {
+  it("serves the tome, secret society, and world guides with form labels and without dashes", () => {
     const cases = [
       {
         slug: "tome",
@@ -649,6 +649,11 @@ describe("generator guide distinctness", () => {
           "Concept",
           "Campaign Context",
         ],
+      },
+      {
+        slug: "secret-society",
+        title: "Secret Society Generator",
+        labels: ["Public face", "Relationship to truth", "Danger level"],
       },
       {
         slug: "world",
