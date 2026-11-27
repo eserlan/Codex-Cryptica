@@ -637,6 +637,28 @@ describe("generator guide distinctness", () => {
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
+  it("serves the secret society guide with tips naming its form labels and without dashes", () => {
+    const guide = getGeneratorGuide(
+      "secret-society",
+      "Secret Society Generator",
+    );
+    expect(guide).toBe(SLUG_GUIDES["secret-society"]);
+    expect(guide).not.toEqual(
+      defaultGuideForSlug("secret-society", "Secret Society Generator"),
+    );
+    expect(guide.tips).toHaveLength(3);
+    expect(guide.links?.length).toBeGreaterThan(0);
+    const tipText = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const label of [
+      "Public face",
+      "Relationship to truth",
+      "Danger level",
+    ]) {
+      expect(tipText).toContain(label);
+    }
+    expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
+  });
+
   it("serves the constellation guide with tips naming its form labels and without dashes", () => {
     const guide = getGeneratorGuide("constellation", "Constellation Generator");
     expect(guide).toBe(SLUG_GUIDES.constellation);

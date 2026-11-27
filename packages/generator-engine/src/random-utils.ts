@@ -51,6 +51,7 @@ export function indefiniteArticle(noun: string): string {
   // or a spoken initialism whose first letter is a vowel sound.
   if (/^union\b/i.test(trimmed)) return "a";
   if (/^euro/i.test(trimmed)) return "a";
+  if (/^university\b/i.test(trimmed)) return "a";
   if (
     /^(?:uni(?:corn|form|vers|que|son|cycle|t)|use|usual|user|utility|ubiquit)/i.test(
       trimmed,

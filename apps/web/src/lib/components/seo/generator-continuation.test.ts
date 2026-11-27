@@ -107,6 +107,12 @@ describe("generator-continuation", () => {
     expect(config?.capabilities.join(" ")).toContain(
       "Night Sky season index stays in public Note content",
     );
+    expect(config?.capabilities.join(" ")).toContain(
+      "Keep omens and adventure hooks as GM-only lore",
+    );
+    expect(config?.capabilities.join(" ")).not.toContain(
+      "detailed visibility notes",
+    );
     expect(
       [config?.headline, config?.summary, ...(config?.capabilities ?? [])]
         .join(" ")
@@ -128,6 +134,37 @@ describe("generator-continuation", () => {
         userGenerationSucceeded: true,
         isExampleDraft: false,
         isBusy: true,
+        variant: "default",
+      }),
+    ).toBe(false);
+  });
+
+  it("configures the secret society as a Faction import with GM-only lore and gates it on completed generation", () => {
+    const config = getGeneratorContinuationConfig("secret-society");
+    expect(config).not.toBeNull();
+    expect(config?.capabilities.join(" ")).toContain("Faction entry");
+    expect(config?.capabilities.join(" ")).toContain("GM-only lore");
+    expect(
+      [config?.headline, config?.summary, ...(config?.capabilities ?? [])]
+        .join(" ")
+        .match(/[–—]/),
+    ).toBeNull();
+
+    expect(
+      shouldShowGeneratorContinuation({
+        generatorType: "secret-society",
+        userGenerationSucceeded: true,
+        isExampleDraft: false,
+        isBusy: false,
+        variant: "default",
+      }),
+    ).toBe(true);
+    expect(
+      shouldShowGeneratorContinuation({
+        generatorType: "secret-society",
+        userGenerationSucceeded: false,
+        isExampleDraft: false,
+        isBusy: false,
         variant: "default",
       }),
     ).toBe(false);
