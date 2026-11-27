@@ -196,6 +196,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    constellation: {
+      headline: "Keep this sky lore in your world",
+      summary:
+        "Save this constellation or full sky as a Note entry in your local Codex vault so its stories and uses stay connected to the cultures that read them.",
+      capabilities: [
+        "Store origin myths, practical uses, and a single constellation's star pattern in one Note entry",
+        "Keep omens and adventure hooks as GM-only lore; the Night Sky season index stays in public Note content",
+        "Link the sky lore to the cultures and places that read it inside your vault",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+    },
     world: {
       headline: "Keep this world connected",
       summary:

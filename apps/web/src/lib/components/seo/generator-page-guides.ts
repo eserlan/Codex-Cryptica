@@ -90,6 +90,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  constellation: {
+    summary:
+      "Generate a constellation with a star pattern, an origin myth, a practical use and an omen, so the night sky becomes something a culture in your world reads, relies on and fears.",
+    tips: [
+      {
+        title: "Let Visual Impression carry the myth",
+        detail:
+          "In Single Constellation mode, Visual Impression sets the shape the culture sees in the stars, such as a Weapon, a Beast or a Crown or Regalia. The Origin Myth then explains why that shape is in the sky, so choose it first and the myth has something to explain (Full Night Sky mode chooses these automatically).",
+      },
+      {
+        title: "Pair Practical Use with an omen",
+        detail:
+          "In Single Constellation mode, Practical Use names what people rely on the constellation for, such as Navigation or Planting and harvest timing. Read it with the Omens line in the GM-only lore, since a sign that appears while people depend on the stars turns a practical fact into a problem for the party.",
+      },
+      {
+        title: "Open with the Adventure Hook",
+        detail:
+          "In Single Constellation mode, Cultural Meaning sets how the culture treats the constellation, as a deity, a warning or an ancestor. The Adventure Hook in the GM-only lore gives a ready scene that tests that meaning, such as someone insisting the constellation rose out of season.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-you-start-worldbuilding-from-scratch",
+        label: "Starting a setting from a single idea",
+      },
+      {
+        href: "/answers/where-do-worldbuilding-ideas-come-from",
+        label: "Finding worldbuilding ideas at the table",
+      },
+    ],
+  },
   world: {
     summary:
       "Generate a sci-fi planet, moon or artificial world built around one dominant feature, then use its two world tags and campaign pressure to find the settlements and disputes your party meets on arrival.",
