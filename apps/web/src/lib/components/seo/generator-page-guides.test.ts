@@ -657,7 +657,6 @@ describe("generator guide distinctness", () => {
     }
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
-  });
 
   it("serves the world guide with tips naming its form labels and without dashes", () => {
     const guide = getGeneratorGuide("world", "Sci-Fi World Generator");
