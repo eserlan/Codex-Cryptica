@@ -175,11 +175,11 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
     tome: {
       headline: "Shelve this book in your campaign",
       summary:
-        "Save this tome to your local Codex vault so its physical details, provenance, and reading hazard stay connected to the people and places that want it.",
+        "Save this tome to your local Codex vault so its physical details, provenance, reading hazard, and the people and places that want it stay in one reference.",
       capabilities: [
         "Store the physical description, provenance, and contents in one Item entry",
         "Keep the ground truth, the deception, and the actionable clue as GM-only lore",
-        "Link the book to its custodian, location, and interested factions inside your vault",
+        "Record the book's author, custodian, associated location, and interested factions inside the Item entry",
       ],
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,

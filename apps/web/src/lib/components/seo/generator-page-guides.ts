@@ -40,7 +40,7 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       {
         title: "Use Current Custodian to decide who wants the book",
         detail:
-          "Current Custodian is the place or group that holds the book. It appears in the summary, the provenance, the Connected Entities list, and, in the offline draft, the first adventure hook, where an agent of the custodian hires the party to recover missing material. Pick one that gives the party a reason to visit.",
+          "Current Custodian is the place or group that holds the book. It appears in the summary, the provenance, the Connected Entities list, and, in the offline draft, the first adventure hook, where either an agent of the custodian hires the party or a source hires them before the custodian purges access logs. Pick one that gives the party a reason to visit.",
       },
       {
         title: "Use Campaign Context with the AI draft",
