@@ -11,34 +11,59 @@ import { ADVENTURE_GENRE_TABLES, byGenre } from "./adventure/genres";
 export { ADVENTURE_GENRE_TABLES };
 export type { AdventureGenreTables } from "./adventure/genre-types";
 
+const ADVENTURE_GENRE_ALIASES: Record<string, string> = {
+  "sci-fi": "Sci-Fi / Space Opera",
+  scifi: "Sci-Fi / Space Opera",
+  "space opera": "Sci-Fi / Space Opera",
+  cyberpunk: "Cyberpunk / Corporate",
+  horror: "Cosmic Horror",
+  western: "Western / Frontier",
+  vampire: "Vampire / Gothic Noir",
+  "gothic noir": "Vampire / Gothic Noir",
+  "post-apocalyptic": "Post-Apocalyptic",
+  "post apocalyptic": "Post-Apocalyptic",
+  superhero: "Superhero / Comic Book",
+  "comic book": "Superhero / Comic Book",
+};
+
+function resolveAdventureGenreKey(
+  genre: string,
+  hasKey: (key: string) => boolean,
+): string {
+  const trimmed = genre.trim();
+  if (hasKey(trimmed)) return trimmed;
+  const withoutClassic = trimmed.replace(/^Classic /i, "");
+  if (hasKey(withoutClassic)) return withoutClassic;
+  const aliased = ADVENTURE_GENRE_ALIASES[trimmed.toLowerCase()];
+  if (aliased && hasKey(aliased)) return aliased;
+  const beforeSlash = trimmed.replace(/ \/ .*/, "");
+  if (hasKey(beforeSlash)) return beforeSlash;
+  return hasKey("Fantasy") ? "Fantasy" : "Classic Fantasy";
+}
+
 /**
  * Resolve a genre-keyed table for a theme label.
  *
  * Theme labels from the UI carry qualifiers the tables don't ("Classic Fantasy"
- * -> "Fantasy"), so try the label, then its unqualified forms, then the Fantasy
- * default. Mirrors the same logic as the dungeon generator's forGenre().
+ * -> "Fantasy"), and callers may pass short labels like "Sci-Fi", "Cyberpunk",
+ * or "Horror". Try exact, stripped, and aliased forms before falling back to
+ * Fantasy.
  */
 export function forAdventureGenre<T>(
   record: Record<string, T[]>,
   genre: string,
 ): T[] {
-  return (
-    record[genre] ??
-    record[genre.replace(/^Classic /, "")] ??
-    record[genre.replace(/ \/ .*/, "")] ??
-    record["Fantasy"] ??
-    record["Classic Fantasy"]
-  );
+  const key = resolveAdventureGenreKey(genre, (k) => k in record);
+  return record[key] ?? record["Fantasy"] ?? record["Classic Fantasy"];
 }
 
 /** Resolve the whole table set for a theme label, using the same aliasing. */
 export function forAdventureGenreTables(genre: string) {
-  return (
-    ADVENTURE_GENRE_TABLES[genre] ??
-    ADVENTURE_GENRE_TABLES[genre.replace(/^Classic /, "")] ??
-    ADVENTURE_GENRE_TABLES[genre.replace(/ \/ .*/, "")] ??
-    ADVENTURE_GENRE_TABLES["Fantasy"]
+  const key = resolveAdventureGenreKey(
+    genre,
+    (k) => k in ADVENTURE_GENRE_TABLES,
   );
+  return ADVENTURE_GENRE_TABLES[key] ?? ADVENTURE_GENRE_TABLES["Fantasy"];
 }
 
 /** Sorted union of a field across every genre, so the unions can't drift. */

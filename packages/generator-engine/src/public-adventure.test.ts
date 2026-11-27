@@ -88,6 +88,32 @@ describe("generateAdventureLocal", () => {
     expect(out.content).toContain("## Key Locations");
   });
 
+  it("does not fall back to fantasy tropes for non-fantasy genres or short aliases in offline mode", () => {
+    const nonFantasyGenres = [
+      "Sci-Fi",
+      "Sci-Fi / Space Opera",
+      "Cyberpunk",
+      "Cyberpunk / Corporate",
+      "Horror",
+      "Cosmic Horror",
+      "Gothic Horror",
+      "Post-Apocalyptic",
+      "Space Opera",
+      "Steampunk",
+      "Western",
+      "Western / Frontier",
+    ];
+    for (const genre of nonFantasyGenres) {
+      for (let seed = 1; seed <= 5; seed += 1) {
+        const out = generateAdventureLocal({ genre }, seededRng(seed));
+        const combined = `${out.title}\n${out.summary}\n${out.content}\n${out.lore}`;
+        expect(combined).not.toMatch(
+          /elven grove|druidic circle|runes of unmaking/i,
+        );
+      }
+    }
+  });
+
   it("generates a one-shot with fewer locations and NPCs than a campaign arc", () => {
     const oneShot = generateAdventureLocal(
       { scale: "One-Shot (Single Session)" },
