@@ -172,6 +172,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    encounter: {
+      headline: "Run this encounter from your vault",
+      summary:
+        "Save this encounter as an Event entry in your local Codex vault so the scene, its participants, and its outcomes stay connected to your campaign.",
+      capabilities: [
+        "Store what the players see in one Event entry",
+        "Keep participants, the complication, and the outcomes as GM-only lore",
+        "Link the encounter to the places and factions it involves inside your vault",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+    },
     tome: {
       headline: "Shelve this book in your campaign",
       summary:

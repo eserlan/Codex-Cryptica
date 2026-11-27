@@ -305,11 +305,111 @@ function buildAtAGlance(
   return `### At a Glance\n${lines.join("\n")}`;
 }
 
+const REQUIRED_ENCOUNTER_SECTIONS = [
+  "Situation & Stakes",
+  "Participants",
+  "Environment",
+  "Possible Approaches",
+  "Complication / Twist",
+  "Outcomes & Consequences",
+] as const;
+
+const REQUIRED_OUTCOME_LABELS = [
+  "Success",
+  "Failure",
+  "Avoidance",
+  "Escalation",
+] as const;
+
+function extractEncounterSectionLines(
+  lines: string[],
+  headingPattern: RegExp,
+): string[] {
+  const start = lines.findIndex((line) => headingPattern.test(line));
+  if (start === -1) return [];
+  const rest = lines.slice(start + 1);
+  const end = rest.findIndex((line) => /^###\s/.test(line));
+  return end === -1 ? rest : rest.slice(0, end);
+}
+
+function validateApproachBullets(approachLines: string[]): void {
+  const uniqueBodies = new Set<string>();
+  let count = 0;
+  for (const line of approachLines) {
+    const bulletMatch = /^\s*[-*+]\s*(.*)$/.exec(line);
+    if (!bulletMatch) continue;
+    const body = bulletMatch[1].trim();
+    if (!body) {
+      throw new Error("Encounter Possible Approaches cannot have blank items");
+    }
+    const normalized = body.toLowerCase();
+    if (uniqueBodies.has(normalized)) {
+      throw new Error(
+        "Encounter Possible Approaches cannot contain duplicate items",
+      );
+    }
+    uniqueBodies.add(normalized);
+    count += 1;
+  }
+  if (count < 3 || count > 5) {
+    throw new Error(
+      "Encounter Possible Approaches must contain 3 to 5 non-empty approaches",
+    );
+  }
+}
+
+function validateOutcomeBullets(outcomeLines: string[]): void {
+  for (const label of REQUIRED_OUTCOME_LABELS) {
+    const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const labelPattern = new RegExp(`^${escapedLabel}\\s*[:\\-–—]\\s*\\S`, "i");
+    const hasOutcomeRow = outcomeLines.some((line) => {
+      const bulletMatch = /^\s*[-*+]\s+(.+)$/.exec(line);
+      if (!bulletMatch) return false;
+      const body = bulletMatch[1].replace(/[*_]/g, "").trim();
+      return labelPattern.test(body);
+    });
+    if (!hasOutcomeRow) {
+      throw new Error(
+        `Encounter Outcomes & Consequences must include ${label}`,
+      );
+    }
+  }
+}
+
+function validateEncounterLore(rawLore: string): void {
+  const lines = rawLore.split(/\r?\n/);
+  const foundHeadings = lines
+    .map((line) => /^\s{0,3}###\s+(.+?)\s*$/.exec(line)?.[1]?.trim())
+    .filter((heading): heading is string => Boolean(heading));
+  if (
+    foundHeadings.length !== REQUIRED_ENCOUNTER_SECTIONS.length ||
+    foundHeadings.some(
+      (heading, index) =>
+        heading.toLowerCase() !==
+        REQUIRED_ENCOUNTER_SECTIONS[index].toLowerCase(),
+    )
+  ) {
+    throw new Error(
+      "Encounter lore is missing required section or has sections out of order",
+    );
+  }
+  validateApproachBullets(
+    extractEncounterSectionLines(lines, /^###\s+Possible Approaches\b/i),
+  );
+  validateOutcomeBullets(
+    extractEncounterSectionLines(lines, /^###\s+Outcomes & Consequences\b/i),
+  );
+}
+
 export function parseEncounterResponse(
   text: string,
   resolved: ResolvedEncounter,
 ): PublicGeneratorOutput {
   const data = parseFencedJson(text);
+  if (typeof data.lore !== "string" || !data.lore.trim()) {
+    throw new Error("Encounter response must include lore");
+  }
+  validateEncounterLore(data.lore);
   const rawGlance =
     data.glance && typeof data.glance === "object"
       ? (data.glance as Record<string, unknown>)
@@ -325,9 +425,7 @@ export function parseEncounterResponse(
         : undefined,
     stakes: typeof rawGlance.stakes === "string" ? rawGlance.stakes : undefined,
   };
-  const lore = data.lore
-    ? `${buildAtAGlance(resolved, glance)}\n\n${data.lore}`
-    : "";
+  const lore = `${buildAtAGlance(resolved, glance)}\n\n${data.lore}`;
   const mechanics =
     resolved.gameSystem === "tales-of-the-valiant"
       ? (parseTovMechanics(text) ?? undefined)
