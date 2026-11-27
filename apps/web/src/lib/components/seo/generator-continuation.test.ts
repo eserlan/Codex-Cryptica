@@ -99,6 +99,37 @@ describe("generator-continuation", () => {
     });
   });
 
+  it("configures the alien race as a Creature import with GM-only lore and gates it on completed generation", () => {
+    const config = getGeneratorContinuationConfig("alien-race");
+    expect(config).not.toBeNull();
+    expect(config?.capabilities.join(" ")).toContain("Creature entry");
+    expect(config?.capabilities.join(" ")).toContain("GM-only lore");
+    expect(
+      [config?.headline, config?.summary, ...(config?.capabilities ?? [])]
+        .join(" ")
+        .match(/[–—]/),
+    ).toBeNull();
+
+    expect(
+      shouldShowGeneratorContinuation({
+        generatorType: "alien-race",
+        userGenerationSucceeded: true,
+        isExampleDraft: false,
+        isBusy: false,
+        variant: "default",
+      }),
+    ).toBe(true);
+    expect(
+      shouldShowGeneratorContinuation({
+        generatorType: "alien-race",
+        userGenerationSucceeded: false,
+        isExampleDraft: false,
+        isBusy: false,
+        variant: "default",
+      }),
+    ).toBe(false);
+  });
+
   it("configures the tome, secret society, and world imports with GM-only lore and generation gates", () => {
     for (const [generatorType, entryType] of [
       ["tome", "Item entry"],
@@ -114,7 +145,6 @@ describe("generator-continuation", () => {
           .join(" ")
           .match(/[–—]/),
       ).toBeNull();
-
       expect(
         shouldShowGeneratorContinuation({
           generatorType,
@@ -149,7 +179,6 @@ describe("generator-continuation", () => {
     for (const type of [
       "point-crawl",
       "personality",
-      "alien-race",
       "names",
       "fantasy-names",
       "unknown-generator",
