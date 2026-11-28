@@ -70,6 +70,32 @@ describe("loadGeneratorRemixDraft", () => {
     });
   });
 
+  it("restores a text-only business share as a private Note, not a fabricated batch", async () => {
+    const targetPath = "/generators/business";
+    const share = makeShare({
+      content:
+        "# Shared business\n*The depot*\nLabels: business-generator\n\n## Secret\nThe owner forged the licence.",
+      metadata: { generatorPath: targetPath, labels: ["business-generator"] },
+    });
+    const result = await loadGeneratorRemixDraft(
+      options(vi.fn().mockResolvedValue(share), { targetPath }),
+    );
+    const draft = result!.draft;
+    expect(
+      buildGeneratorSavePayload(
+        draft,
+        getGeneratorDocumentLayout(draft),
+        undefined,
+        "business",
+      ),
+    ).toMatchObject({
+      type: "note",
+      content: "",
+      lore: "*The depot*\n\n## Secret\nThe owner forged the licence.",
+    });
+    expect(draft.business).toBeUndefined();
+  });
+
   it.each(["/generators/npc", "/tools/rpg-npc-generator"])(
     "restores %s as a private Character rather than exposing an unrecoverable share split",
     async (targetPath) => {

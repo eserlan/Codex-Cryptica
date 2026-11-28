@@ -961,6 +961,25 @@ describe("Personality editorial guide", () => {
   });
 });
 
+describe("Business editorial guide", () => {
+  it("teaches dependencies, rival bargains and ownership using actual controls", () => {
+    const guide = SLUG_GUIDES.business!;
+    const text = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const phrase of [
+      "Business type",
+      "Location (optional)",
+      "Legitimacy",
+      "Players own this business",
+      "Recurring obligations",
+    ])
+      expect(text).toContain(phrase);
+    expect(guide.links?.map((link) => link.href)).toEqual([
+      "/answers/how-do-i-turn-economic-pressures-into-rpg-adventure-hooks",
+      "/answers/how-do-i-run-a-campaign-where-the-players-own-a-business",
+    ]);
+  });
+});
+
 describe("Faction Roster editorial guide", () => {
   it("uses roster controls and progresses from roleplay to negotiation and faction turns", () => {
     const guide = getGeneratorGuide(

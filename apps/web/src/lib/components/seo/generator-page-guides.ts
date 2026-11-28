@@ -1093,23 +1093,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   business: {
     summary:
-      "Player-run or NPC businesses shine when they generate leads, debts, and rival pressures—not just bookkeeping spreadsheets.",
+      "Build an enterprise that matters because people depend on what it supplies, not because it has a long inventory. Turn its staff, dependencies and competitors into immediate costs and opportunities for the party, whether they are customers or owners.",
     tips: [
       {
-        title: "Tie suppliers to adventure hooks",
+        title: "Choose something the settlement cannot do without",
         detail:
-          "A delayed shipment or rival guild tariff gives the party a personal reason to investigate.",
+          "Use Business type and Location (optional) to choose a service with local stakes: a blacksmith beside a ferry crossing could repair the last working winch. Read Suppliers and Dependencies and decide what stops working first if a delivery fails.",
       },
       {
-        title: "Name two staff members",
+        title: "Put the competitor's offer on the table",
         detail:
-          "A loyal clerk and an ambitious apprentice keep the business alive while the party is out of town.",
+          "Use Legitimacy to decide whether resolving the Current Pressure means asking an inspector for a licence, bargaining with a criminal protector or exposing a rival. Give the party two ways to help the business survive, each benefiting a different named relationship.",
+      },
+      {
+        title: "Make ownership a recurring decision",
+        detail:
+          "Select Players own this business if the party wants to build an enterprise. Use its manager's goal, Recurring obligations and Upgrade paths to offer a choice before their next expedition: hire another worker to protect a contract, or fund an expansion that creates a new obligation.",
       },
     ],
+    linksTitle: "Turn trade into recurring adventure",
     links: [
       {
+        href: "/answers/how-do-i-turn-economic-pressures-into-rpg-adventure-hooks",
+        label: "Build an adventure from a broken dependency",
+        description:
+          "Trace the shortage to people, choices and consequences rather than a price list.",
+      },
+      {
         href: "/answers/how-do-i-run-a-campaign-where-the-players-own-a-business",
-        label: "Running player-owned businesses",
+        label: "Run an owned business between adventures",
+        description:
+          "Use lightweight business turns, investment choices and recurring obligations.",
       },
     ],
   },

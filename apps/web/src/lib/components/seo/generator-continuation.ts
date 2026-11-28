@@ -308,6 +308,19 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       ctaLabel: CTA_LABEL,
       placement: "near-result",
     },
+    business: {
+      headline: "Keep the enterprise and its people together",
+      summary:
+        "Bring your generated business into the local Codex vault to revisit the contracts, staff and dependencies when trade is interrupted.",
+      capabilities: [
+        "Create a Faction with its owner or manager and staff as linked Characters; keep the labelled Secret in GM notes",
+        "Develop outside suppliers and rivals from the named references in the business record",
+        "A text-only shared remix keeps its combined draft in GM notes of one Note",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
     encounter: {
       headline: "Run this encounter from your vault",
       summary:
