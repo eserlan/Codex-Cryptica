@@ -1035,6 +1035,7 @@ it("keeps nested and unrecognized faction headings in GM notes", async () => {
     "### What they control\nPublic holdings.\n### What they want\nPublic plans.\n#### Secret\nNESTED_SECRET_MARKER",
     "### What they control\nPublic holdings.\n### What they want\nPublic plans.\n### Secret\nTOP_LEVEL_SECRET_MARKER",
     "### What they control\nPublic holdings.\n### What they want\nPublic plans.\n# Secret\nLEVEL_ONE_SECRET_MARKER",
+    "### What they control\nPublic holdings.\n### What they want\nPublic plans.\nSecret\n======\nSETEXT_SECRET_MARKER",
   ];
 
   for (const content of malformedContents) {
@@ -1048,9 +1049,13 @@ it("keeps nested and unrecognized faction headings in GM notes", async () => {
 
     expect(payload.content).toContain("Public holdings.");
     expect(payload.content).not.toMatch(
-      /(?:NESTED|TOP_LEVEL|LEVEL_ONE)_SECRET_MARKER/,
+      /(?:NESTED|TOP_LEVEL|LEVEL_ONE|SETEXT)_SECRET_MARKER/,
     );
-    if (content.includes("NESTED") || content.includes("LEVEL_ONE")) {
+    if (
+      content.includes("NESTED") ||
+      content.includes("LEVEL_ONE") ||
+      content.includes("SETEXT")
+    ) {
       expect(payload.content).not.toContain("Public plans.");
       expect(payload.lore).toContain("Public plans.");
     } else {
@@ -1061,7 +1066,9 @@ it("keeps nested and unrecognized faction headings in GM notes", async () => {
         ? "NESTED_SECRET_MARKER"
         : content.includes("LEVEL_ONE")
           ? "LEVEL_ONE_SECRET_MARKER"
-          : "TOP_LEVEL_SECRET_MARKER",
+          : content.includes("SETEXT")
+            ? "SETEXT_SECRET_MARKER"
+            : "TOP_LEVEL_SECRET_MARKER",
     );
   }
 });

@@ -468,10 +468,14 @@ function getFactionHandoffLayout(data: GeneratorOutput) {
   const gmSections: string[] = [];
   for (const section of splitMarkdownSections(data.content)) {
     const heading = section.heading.toLowerCase();
-    const hasAdditionalHeading = section.body
-      .split(/\r?\n/)
-      .slice(1)
-      .some((line) => /^ {0,3}#{1,6}(?:[ \t]+|$)/.test(line));
+    const sectionLines = section.body.split(/\r?\n/).slice(1);
+    const hasAdditionalHeading = sectionLines.some((line, index) => {
+      if (/^ {0,3}#{1,6}(?:[ \t]+|$)/.test(line)) return true;
+      const previousLine = sectionLines[index - 1];
+      return Boolean(
+        previousLine?.trim() && /^ {0,3}(?:=+|-+)[ \t]*$/.test(line),
+      );
+    });
     const isPublic = publicHeadings.has(heading) && !hasAdditionalHeading;
     (isPublic ? publicSections : gmSections).push(section.body);
   }
