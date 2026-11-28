@@ -5,6 +5,13 @@ import {
 } from "./generator-continuation";
 
 describe("generator-continuation", () => {
+  it("describes the Urban Faction summary as GM notes", () => {
+    const config = getGeneratorContinuationConfig("urban-fantasy-faction");
+    expect(config?.summary).toContain("summary");
+    expect(config?.summary).toContain("GM notes");
+    expect(config?.summary).not.toContain("main text");
+  });
+
   it("offers the heist continuation next to completed results", () => {
     const config = getGeneratorContinuationConfig("heist");
     expect(config).toMatchObject({
@@ -60,6 +67,15 @@ describe("generator-continuation", () => {
       ctaLabel: "Add to my Codex",
       localFirstNotice: "No account needed; stored locally in this browser.",
     });
+
+    const magicItem = getGeneratorContinuationConfig("magic-item");
+    expect(magicItem).toMatchObject({
+      placement: "near-result",
+      ctaLabel: "Add to my Codex",
+    });
+    expect(magicItem?.summary).toContain(
+      "Only sections headed GM Reference Information or Magical Properties stay in GM reference; AI headings can vary",
+    );
 
     const newsSheet = getGeneratorContinuationConfig("news-sheet-generator");
     expect(newsSheet).toMatchObject({

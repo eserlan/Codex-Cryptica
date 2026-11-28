@@ -80,11 +80,11 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
   "magic-item": {
     type: "item",
     title: "Frostbite Blade",
-    summary: "A longsword etched with cold runes.",
+    summary: "A pale steel sword marked with the smiths' winter runes.",
     content:
-      "### Properties\nDeals additional cold damage on a critical strike and glows with a faint blue light in the presence of undead.\n\n### Lore\nForged in the northern wastes by the frost smiths of old.",
-    lore: "",
-    labels: ["rpg-item", "Sword", "Runes"],
+      "### Description\nA longsword with a leather-bound grip and a crescent of pale runes near its guard. The steel feels cold even beside a fire. The final rune is chipped where an old owner's crest was struck away.",
+    lore: "### GM Reference Information\n- **Type**: Weapon\n- **Rarity**: Uncommon\n- **Theme**: Classic Fantasy\n\n### Magical Properties\n- **Passive Effect**: The runes emit a faint blue light when an undead creature comes within thirty feet. The glow reveals neither direction nor number and fades when the creature leaves. Ordinary cold does not trigger it.\n\n### Lore & History\nForged for the winter watch of a northern mountain pass whose smiths delivered identical blades to three guard captains. The chipped crest matches a memorial at the abandoned watchtower.",
+    labels: ["rpg-item", "imported-draft"],
     status: "draft",
   },
   faction: {
@@ -124,10 +124,10 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
     type: "location",
     title: "Reyes' Noodle Hole",
     summary:
-      "A cramped cyberpunk noodle bar where fixers and off-duty security share bad ramen and worse secrets.",
+      "A cramped noodle bar below an elevated transit station, with cheap broth and a counter shared by couriers and security workers.",
     content:
-      "### The Place\nA steam-filled counter joint wedged under a transit overpass. Neon flickers, the broth is good, the owner asks nothing.\n\n### The Trouble\nThe owner is sitting on surveillance footage that would get someone very powerful arrested.",
-    lore: "",
+      "### The Place\nA steam-filled counter beneath the elevated rail. Reyes serves broth in chipped bowls and charges extra for a closed booth.\n\n### The People\nA courier named Lin keeps a bicycle helmet on the next stool. Vale, an off-duty station guard, comes for the evening shift change. Reyes knows both by their orders.\n\n### The Trouble\nThe station manager demands footage from Reyes' security camera before the morning inspection.\n\n### How to use it at the table\nStart with a meal or message delivery. Lin wants a copy of the recording; Vale wants it suppressed. Either can tell the party when the manager will arrive.",
+    lore: "### At a Glance\n- **Theme / Genre**: Cyberpunk\n- **Type**: Noodle bar\n- **Atmosphere**: Busy and unpretentious\n- **Wealth Level**: Modest\n- **Owner / Operator**: Reyes, who remembers orders but avoids names\n- **Signature Drink or Service**: Broth and a quiet booth\n- **Hidden Problem**: The footage shows an inspector being led through a closed platform by the station manager.\n- **Immediate Hook**: Lin asks the party to retrieve a copy before the manager arrives at dawn.\n\n### Notable Regulars\n- **Lin**: Courier, wants evidence to protect a friend.\n- **Vale**: Guard, fears losing access to the station.\n\n### Rumours\n- Unmarked maintenance crews arrive before the first train.\n- Reyes sometimes keeps the last booth closed without explanation.\n\n### Entity Seeds\n- **Reyes**: Operator.\n- **Lin**: Courier.\n- **Vale**: Station guard.\n- **Closed platform**: Site shown in the recording.",
     labels: ["rpg-location", "social-hub-generator", "imported-draft"],
     status: "draft",
   },

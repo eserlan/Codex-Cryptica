@@ -38,7 +38,25 @@ async function smallControls(page: import("@playwright/test").Page) {
       .filter((el) => el.offsetParent !== null)
       .filter((el) => {
         const r = el.getBoundingClientRect();
-        return r.width > 0 && (r.width < 44 || r.height < 44);
+        if (r.width === 0 || (r.width >= 44 && r.height >= 44)) return false;
+
+        const after = getComputedStyle(el, "::after");
+        if (
+          after.position !== "absolute" ||
+          after.content === "none" ||
+          after.content === "normal"
+        )
+          return true;
+
+        const top = parseFloat(after.top);
+        const right = parseFloat(after.right);
+        const bottom = parseFloat(after.bottom);
+        const left = parseFloat(after.left);
+        if (![top, right, bottom, left].every(Number.isFinite)) return true;
+
+        const expandedWidth = r.width - left - right;
+        const expandedHeight = r.height - top - bottom;
+        return expandedWidth < 44 || expandedHeight < 44;
       })
       .map(
         (el) =>
@@ -84,9 +102,6 @@ test("entity detail and menu stay within the viewport", async ({ page }) => {
   await expect(page.getByTestId("entity-detail-panel")).toBeVisible({
     timeout: 10000,
   });
-  await page.waitForTimeout(400);
-  const detail = await scan(page);
-  console.log("SCAN detail", JSON.stringify(detail));
   // Poll: the panel animates in, and rects are scaled until it settles.
   // Debug overlay is dev-only chrome, not product UI.
   await expect
@@ -97,9 +112,44 @@ test("entity detail and menu stay within the viewport", async ({ page }) => {
       },
     )
     .toEqual([]);
-  await page.screenshot({ path: "test-results/scan-detail.png" });
+  const detail = await scan(page);
+  console.log("SCAN detail", JSON.stringify(detail));
   expect(detail.overflow).toBeLessThanOrEqual(1);
   expect(detail.tiny).toEqual([]);
+});
+
+test("existing parent actions have 44px mobile targets", async ({ page }) => {
+  await setupVaultPage(page);
+  const parentId = await seedEntity(page, {
+    title: "Parent Entity",
+    content: "Parent entity for the mobile touch target scan.",
+  });
+  const id = await seedEntity(page, {
+    type: "npc",
+    title: "Child Entity",
+    content: "Child entity for the mobile touch target scan.",
+  });
+  await page.evaluate(
+    async ({ childId, parentId }) =>
+      await (window as any).vault.updateEntity(childId, { parent: parentId }),
+    { childId: id, parentId },
+  );
+  await page.evaluate((entityId) => {
+    (window as any).vault.selectedEntityId = entityId;
+  }, id);
+
+  await expect(page.getByTestId("entity-detail-panel")).toBeVisible({
+    timeout: 10000,
+  });
+  await expect(page.getByTestId("sidebar-parent-indicator")).toBeVisible();
+  await expect(page.getByTestId("change-parent-button")).toBeVisible();
+  await expect
+    .poll(
+      async () =>
+        (await smallControls(page)).filter((name) => !/Debug/.test(name)),
+      { timeout: 5000 },
+    )
+    .toEqual([]);
 });
 
 test("oracle panel stays legible", async ({ page }) => {

@@ -5,7 +5,10 @@ import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 import { onlineStatus } from "#lib/stores/online.svelte.js";
 import { sessionHubStore } from "#lib/stores/session-hub.svelte.js";
 import { trackEvent } from "#lib/services/analytics/zaraz-analytics.js";
-import { type getGeneratorDocumentLayout } from "#lib/components/seo/generator-document-layout.js";
+import {
+  usesPrivateSummaryHandoff,
+  type getGeneratorDocumentLayout,
+} from "#lib/components/seo/generator-document-layout.js";
 import type { getContextSelection } from "generator-engine/session-hub-helpers";
 import { recordGeneratedEntity } from "./record-generated-entity";
 
@@ -155,7 +158,9 @@ export function useGeneratorSession(inputs: GeneratorSessionInputs) {
         type: output.type,
         kind: output.kind,
         title: output.title,
-        summary: output.summary,
+        summary: usesPrivateSummaryHandoff(inputs.getGeneratorType())
+          ? undefined
+          : output.summary,
         content: documentLayout.content,
         lore: documentLayout.lore,
         labels: output.labels,

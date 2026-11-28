@@ -164,6 +164,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       ctaLabel: CTA_LABEL,
       placement: "near-result",
     },
+    "magic-item": {
+      headline: "Keep this treasure's history and powers together",
+      summary:
+        "Save one Item in your local Codex vault. The description and offline history are in main text; AI history may stay in GM notes when its labels do not activate the item layout, so check or move it before sharing. Only sections headed GM Reference Information or Magical Properties stay in GM reference; AI headings can vary, so check the rendered Item before sharing it.",
+      capabilities: [
+        "Record what the bearer has learned about the effect and its limits as it is identified",
+        "Link the Item to existing owners, makers and discovery sites, and update its ownership between sessions",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
     "nomad-clan": {
       headline: "Keep this clan on the road",
       summary:
@@ -285,6 +297,30 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       ],
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
+    },
+    "urban-fantasy-faction": {
+      headline: "Keep the hidden network behind the screen",
+      summary:
+        "Save one Faction in your local Codex vault. Its model-produced summary, operation, contacts, agenda and secrets stay in GM notes.",
+      capabilities: [
+        "Track what the party has discovered about the faction and how its rival responds",
+        "Link the Faction to existing city locations, contacts and institutions",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
+    "social-hub": {
+      headline: "Give the party a place to come back to",
+      summary:
+        "Save one Location in your local Codex vault, with the venue and its people in main text and hidden trouble and rumours in GM notes.",
+      capabilities: [
+        "Keep the regulars, entity seeds and table hooks together without creating new Characters automatically",
+        "Link the Location to existing contacts and districts and record what changes on the next visit",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
     },
     "comic-book-event-generator": {
       headline: "Track this crisis across your campaign",

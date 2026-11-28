@@ -396,6 +396,12 @@ export const howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes:
           "Generate inhabitants who embody a culture's ideals, strains, and disagreements rather than a single type.",
         href: "/generators/npc",
       },
+      {
+        title: "Urban Fantasy Faction Generator",
+        description:
+          "Show how competing groups share civic institutions while pursuing different goals.",
+        href: "/generators/urban-fantasy-faction",
+      },
     ],
     relatedForPages: [
       {

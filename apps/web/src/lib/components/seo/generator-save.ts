@@ -13,6 +13,7 @@ import {
   deduplicateMarkdownSections,
   getGeneratorHandoffLayout,
   getInhabitedPlaceHandoffLayout,
+  usesPrivateSummaryHandoff,
   usesSourceHandoff,
 } from "./generator-document-layout";
 
@@ -155,7 +156,10 @@ function resolveSaveBodyAndLore(
   layout: GeneratorSaveLayout,
   generatorType?: string,
 ): { content: string; lore: string } {
-  const summaryPrefix = data.summary ? `*${data.summary}*` : "";
+  const summaryPrefix =
+    data.summary && !usesPrivateSummaryHandoff(generatorType)
+      ? `*${data.summary}*`
+      : "";
   if (generatorType === "tavern" || generatorType === "kingdom") {
     return {
       content: layout.content,

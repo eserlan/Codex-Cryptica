@@ -43,6 +43,14 @@ describe("GeneratorPageFormFields extraction", () => {
     expect(rendererSource).not.toContain("handlePersonalityGenreChange");
   });
 
+  it("dispatches the urban fantasy faction form through the social group", () => {
+    expect(
+      rendererSource.match(
+        /const socialSlugs = new Set\(\[([\s\S]*?)\]\);/,
+      )?.[1],
+    ).toContain('"urban-fantasy-faction"');
+  });
+
   it("is rendered through the original SEO layout snippet", () => {
     expect(pageSource).toContain("{#snippet formFields(trigger, isBusy)}");
     expect(pageSource).toContain("<GeneratorPageFormFields");

@@ -255,6 +255,24 @@ const LAYOUT_RULES: LayoutRule[] = [
   },
 ];
 
+/** A venue's trouble can be repeated in the body as well as the GM rail. */
+function getSocialHubHandoffLayout(data: GeneratorOutput) {
+  const observable = new Set(["the place", "the people"]);
+  const content: string[] = [];
+  const gm: string[] = [];
+  const sections = splitMarkdownSections(data.content);
+  if (sections.length === 0 && data.content.trim()) gm.push(data.content);
+  for (const section of sections) {
+    (observable.has(section.heading.toLowerCase()) ? content : gm).push(
+      section.body,
+    );
+  }
+  return {
+    content: content.join("\n\n"),
+    lore: [...gm, data.lore ?? ""].filter(Boolean).join("\n\n"),
+  };
+}
+
 interface MarkdownSection {
   heading: string;
   body: string;
@@ -510,6 +528,12 @@ export function usesSourceHandoff(generatorType?: string) {
   return generatorType === "bbeg-generator" || isRpgNpcGenerator(generatorType);
 }
 
+export function usesPrivateSummaryHandoff(generatorType?: string) {
+  return (
+    generatorType === "urban-fantasy-faction" || generatorType === "social-hub"
+  );
+}
+
 function getNpcHandoffLayout(data: GeneratorOutput) {
   const lore = data.lore ?? "";
   // Table Card repeats the labelled secret in its body. Keep the original
@@ -533,7 +557,7 @@ function getNpcHandoffLayout(data: GeneratorOutput) {
 /** The reading layout is not the storage or refinement secrecy boundary.
  * Use the trusted route, not generated labels, to preserve the original fields.
  */
-export function getGeneratorHandoffLayout(
+function getBaseGeneratorHandoffLayout(
   data: GeneratorOutput,
   layout: { content: string; lore: string },
   generatorType?: string,
@@ -544,6 +568,29 @@ export function getGeneratorHandoffLayout(
   return generatorType === "bbeg-generator"
     ? { content: data.content, lore: data.lore ?? "" }
     : layout;
+}
+
+export function getGeneratorHandoffLayout(
+  data: GeneratorOutput,
+  layout: { content: string; lore: string },
+  generatorType?: string,
+): { content: string; lore: string } {
+  if (generatorType === "urban-fantasy-faction") {
+    return {
+      content: "",
+      lore: [data.summary, data.content, data.lore ?? ""]
+        .filter(Boolean)
+        .join("\n\n"),
+    };
+  }
+  if (generatorType === "social-hub") {
+    const layout = getSocialHubHandoffLayout(data);
+    return {
+      ...layout,
+      lore: [data.summary, layout.lore].filter(Boolean).join("\n\n"),
+    };
+  }
+  return getBaseGeneratorHandoffLayout(data, layout, generatorType);
 }
 
 export function getGeneratorDocumentLayout(
