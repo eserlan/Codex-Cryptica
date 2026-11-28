@@ -264,6 +264,12 @@ export const howDoIRunPoliticalIntrigueAndFactionPlay: AnswerConfigInput = {
   },
   relatedTools: [
     {
+      title: "Vampire Clan Generator",
+      description:
+        "Build an undead court with competing allegiances, feeding habits and an internal conflict for the party to exploit.",
+      href: "/generators/vampire-clan",
+    },
+    {
       title: "Faction Generator",
       description:
         "Groups with goals, resources and rivalries to serve as the situation's actors.",
@@ -294,10 +300,22 @@ export const howDoIRunPoliticalIntrigueAndFactionPlay: AnswerConfigInput = {
       href: "/generators/dark-fantasy-faction",
     },
     {
+      title: "Urban Fantasy Faction Generator",
+      description:
+        "Build a hidden-world group with competing goals and a city resource to contest.",
+      href: "/generators/urban-fantasy-faction",
+    },
+    {
       title: "Nation Generator",
       description:
         "Named states with a leader, competing power blocs and a hidden problem.",
       href: "/generators/nation",
+    },
+    {
+      title: "Kingdom Generator",
+      description:
+        "Draft a realm with a ruler, rival houses, resources and a hidden crisis that can drive political choices.",
+      href: "/generators/kingdom",
     },
   ],
   relatedForPages: [

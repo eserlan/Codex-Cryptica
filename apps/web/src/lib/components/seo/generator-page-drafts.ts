@@ -3,18 +3,37 @@ import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 import type { ValidSlug } from "./generator-page-meta";
 import { extendedSlugDrafts } from "./generator-page-drafts-extended";
 
+const ADVENTURE_DRAFT: GeneratorOutput = {
+  type: "note",
+  kind: "adventure",
+  title: "The Witness Who Came Back",
+  summary:
+    "A witness to last year's warehouse fire has evidence against a magistrate, and the city gates close in 36 hours.",
+  content:
+    "## Initial Situation\nMira Osal, listed among the dead in last year's warehouse fire, has appeared at the Drowned Clinic with a sealed ledger. She wants safe passage to testify.\n\n## Primary Objective & Pressure\nGet Mira and the ledger beyond the city before the Salt Gate shuts for the harvest festival in 36 hours. The magistrate's agents are buying information about her movements.\n\n## Key Locations\n- **The Drowned Clinic:** A basement surgery beneath the harbour market.\n- **The Salt Gate:** The only land exit; festival guards check all carts.\n- **The Ropewalk:** Dock workers launch a cargo skiff at the evening tide.\n\n## Important NPCs & Factions\n- **Mira Osal:** Wants to testify, but refuses to leave without evidence of who died.\n- **Captain Deren:** Guards the gate and suspects his magistrate is destroying records.\n- **The rope crews:** Want the families of the dead compensated.\n\n## Threats & Antagonists\nThe magistrate's agents search the clinic and buy passage records. They can discredit Mira without killing her.\n\n## Clues, Secrets & Discoveries\n- A clinic receipt proves Mira was alive after the fire.\n- A duplicate cargo manifest at the Ropewalk identifies the magistrate's warehouse. Both records can corroborate her testimony.",
+  lore: "## Complications & Escalating Pressures\n- After 12 hours, agents question the physician. After 24, Deren receives orders to close the Salt Gate early.\n- The rope crews demand that the missing workers be named in any public testimony.\n\n## Rewards & Stakes\nThe families could win restitution; Deren could lose his command.\n\n## Possible Outcomes\n- Mira reaches the capital: the evidence triggers an inquiry, but the families still need representation.\n- The party releases the manifest locally: the magistrate cannot bury it, but his allies might seize control of the inquiry.\n- The ledger is lost: the repeatable records and witnesses still provide a route to proof.\n\n## Adventure Hooks\n- The physician asks the party to escort an injured patient.\n- A bereaved rope worker hires them to recover the duplicate manifest.",
+  labels: [
+    "adventure",
+    "event",
+    "classic-fantasy",
+    "rescue-recovery",
+    "imported-draft",
+  ],
+  status: "draft",
+};
+
 export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
   ...extendedSlugDrafts,
   holiday: {
     type: "note",
     title: "Lanterns for the Returning Tide",
     summary:
-      "A harbour remembrance for neighbours who kept the river gate open and those who did not return.",
+      "A harbour remembrance for the rescuers who kept the river gate open and those who did not return.",
     content:
-      "## Lanterns for the Returning Tide\n\n**Type:** Memorial and seasonal observance\n\n**When:** The first calm night after the autumn equinox\n\nAt dusk, families carry covered lanterns to the quay and leave one place empty at supper. The official account credits the governor; dock families remember the rope crews who disobeyed the closure order.\n\n### At the table\nA newly found gate ledger names the official who ordered the rescue route closed. The governor's heir is due to lead this year's procession.",
-    lore: "## GM Notes\nThe ledger is authentic. The rope crews kept the river gate open against orders, but later records credited the governor.",
+      "## Lanterns for the Returning Tide\n\n**Type:** Memorial and seasonal observance\n**When:** The first calm night after the autumn equinox\n**Observed by:** Harbour families and river pilots\n\n### Origin\nThe lower quay survived the autumn flood when the rope crews kept the river gate open long enough for the last rescue boats to return.\n\n### Traditions\nAt dusk, residents carry covered lanterns to the quay, then leave one place empty at supper for the crews lost that night.\n\n### Food, dress and symbols\nSalt cakes, blue wool cords and lamps with a single covered pane.\n\n### Taboos and variations\nNever extinguish another family's lantern. The governor's procession stops at the gate; river pilots walk the full rescue route and name the missing crews.\n\n### What outsiders misunderstand\nThe empty place is not an invitation for a traveller to join the meal.\n\n### What people believe\nThe official account credits the governor for the rescue. Dock families honour the rope crews who worked through the flood.\n\n### At the table\nA pilot asks the party to protect a newly found gate ledger until the procession reaches the quay. They could escort the pilot or persuade the governor's heir to hear the evidence privately. If they decline, the pilot reads it alone.",
+    lore: "## GM-only history\nThe ledger is authentic: the governor ordered the gate closed, and the crews disobeyed. The heir does not know what her predecessor did.",
     labels: ["holiday-generator", "observance", "memorial"],
-    status: "draft",
+    status: "active",
     observances: [
       {
         name: "Lanterns for the Returning Tide",
@@ -22,8 +41,11 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
         when: "The first calm night after the autumn equinox",
         observers: "Harbour families and river pilots",
         traditions:
-          "Carry covered lanterns to the quay and leave one place empty at supper",
-        tension: "A newly found gate ledger challenges the official account.",
+          "Carry covered lanterns to the quay and leave one place empty at supper.",
+        hiddenTruth:
+          "The governor ordered the gate closed and the crews disobeyed.",
+        tension:
+          "A pilot asks the party to protect a ledger until the procession reaches the quay.",
       },
     ],
   },
@@ -47,53 +69,54 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
   settlement: {
     type: "location",
     title: "Cinderveil",
-    summary: "A fortified mining town built into a dormant volcanic ridge.",
+    summary:
+      "A highland trade town where miners and toll collectors depend on the same pass.",
     content:
-      "### Geography\nPerched above a network of ash-grey tunnels, the town's foundries run day and night.\n\n### Economy\nOre refining, black-market gems, and a militia that charges tolls on three mountain passes.",
-    lore: "",
-    labels: ["rpg-settlement", "Mining", "Fortified"],
-    status: "draft",
+      "## Core Concept\nCinderveil grew around the northern pass where ore carts descend from the mines.\n\n## First Impression\nAsh-grey roofs and the clang of a toll bell. A queue of ore carts fills the gate.\n\n## Inhabitants\nMiners, muleteers, smelters and traders live around the furnace yards.\n\n## Life Here\nA weekly market trades worked iron for grain. The innkeepers lend storage space when storms close the pass.\n\n## History\nThe miners built their own road before the merchant guild purchased the tollhouse.",
+    lore: "### Current Tension\nThe guild has doubled the toll after a rockslide. The miners threaten to close the road if the fee stands.\n\n### Points of Interest\n- **Tollhouse**: Where permits and objections are recorded.\n- **Old Smelter**: Closed furnace where miners meet.\n- **Copper Boar Inn**: A meeting place for mule drivers.\n- **South Granary**: Holds the grain reserve.\n- **High Pass Shrine**: Offers shelter to travellers.\n\n### Notable Inhabitants\n- **Mara (guild clerk):** Will show the party the disputed toll books if protected.\n- **Oren (miner):** Wants a winter maintenance fund, not a higher fee.\n- **Tess (innkeeper):** Knows which caravans bypassed the toll.\n\n### Controlling / Important Factions\n- **Pass Guild**: Runs the tollhouse.\n- **Mine Wardens**: Maintain the road.\n\n### Adventure Hooks\nA mule driver brings a bogus permit with the new toll seal; Mara asks the party to find its source before tomorrow's market.\n\n### GM Reference Information\n- **Scale**: Town\n- **Genre / Setting**: Fantasy\n- **Environment**: Mountain pass\n- **Primary Function**: Trade hub\n- **Official Authority**: Merchant guild\n- **Tone**: Grim and weathered",
+    labels: ["rpg-location", "imported-draft"],
+    status: "active",
   },
   "magic-item": {
     type: "item",
     title: "Frostbite Blade",
-    summary: "A longsword etched with cold runes.",
+    summary: "A pale steel sword marked with the smiths' winter runes.",
     content:
-      "### Properties\nDeals additional cold damage on a critical strike and glows with a faint blue light in the presence of undead.\n\n### Lore\nForged in the northern wastes by the frost smiths of old.",
-    lore: "",
-    labels: ["rpg-item", "Sword", "Runes"],
+      "### Description\nA longsword with a leather-bound grip and a crescent of pale runes near its guard. The steel feels cold even beside a fire. The final rune is chipped where an old owner's crest was struck away.",
+    lore: "### GM Reference Information\n- **Type**: Weapon\n- **Rarity**: Uncommon\n- **Theme**: Classic Fantasy\n\n### Magical Properties\n- **Passive Effect**: The runes emit a faint blue light when an undead creature comes within thirty feet. The glow reveals neither direction nor number and fades when the creature leaves. Ordinary cold does not trigger it.\n\n### Lore & History\nForged for the winter watch of a northern mountain pass whose smiths delivered identical blades to three guard captains. The chipped crest matches a memorial at the abandoned watchtower.",
+    labels: ["rpg-item", "imported-draft"],
     status: "draft",
   },
   faction: {
     type: "faction",
     title: "The Iron Syndicate",
     summary:
-      "A powerful merchants' guild that controls the city's trade routes.",
+      "A merchant guild whose seals determine which cargo may pass the city gates.",
     content:
-      "### Operations\nThey maintain a private army to secure their investments and lobby local lords.\n\n### Secret agenda\nThey seek to overthrow the local duke to install a puppet senate.",
-    lore: "",
-    labels: ["rpg-faction", "Guild", "Mercantile"],
+      "### What they control\nThe Syndicate licenses river barges and maintains a guarded bonded warehouse.\n\n### What they want\nSecure exclusive rights to the northern grain route before winter.\n\n### Why they are dangerous\nThe treasurer has forged toll receipts to discredit the independent ferrymen.\n\n### How to use them at the table\nOffer the party passage through a closed checkpoint if they deliver a sealed contract to the ferrymen's council.",
+    lore: "### At a Glance\n- **Theme / Genre**: Classic Fantasy\n- **📍 Base**: The Weighhouse on Grey Quay\n- **Resource**: Licences and bonded storage\n- **Symbol**: An iron key stamped into wax\n- **Secret**: The treasurer has forged toll receipts to discredit the independent ferrymen.\n- **Immediate Hook**: The treasurer offers a licence in exchange for a delivery before the council vote.\n\n### Notable NPCs\n- **👤 Treasurer Nessa Voss**: Needs the council vote to pass.\n- **👤 Quaymaster Iven Reed**: Wants safe passage for smaller crews.\n\n### Internal Conflict\nThe quaymaster suspects the receipts are forged but cannot expose the guild without losing his own licence.\n\n### Rival Faction\n- **👥 The Free Ferrymen**: Will offer the party an alternative route if they disclose the contract.",
+    labels: ["rpg-faction", "faction-generator", "imported-draft"],
     status: "draft",
   },
   kingdom: {
     type: "faction",
     title: "The Kingdom of Vaelthorn",
     summary:
-      "A mid-sized kingdom held together by old oaths and a ruler who is running out of allies.",
+      "A highland kingdom held together by old oaths and a disputed winter road.",
     content:
-      "### The Realm\nVaelthorn spans three river valleys and two mountain passes. Its capital has stood for four centuries, though the walls have not been tested in a generation.\n\n### Government & Power\nKing Aldren rules through a council of six noble houses - three of which are quietly negotiating a change of leadership.",
-    lore: "",
+      "### The Realm\nVaelthorn spans three river valleys and two mountain passes. The capital, Thornkeep, guards the only road open through winter.\n\n### Government & Power\nKing Aldren rules by hereditary right through a council of noble houses. Licensed mages keep the pass markers lit. One house has been diverting maintenance funds to finance a rival claim.\n\n### Society & Culture\nVillages share winter shelters and pay grain duties into the royal storehouses. Travellers leave a lantern at the pass shrines.\n\n### How to use it at the table\nThe party is hired to escort a grain convoy and must choose between the crown's toll road and an unlicensed route protected by the rival house.",
+    lore: "### At a Glance\n- **Polity Type**: Kingdom\n- **Ruler**: King Aldren\n- **Capital**: Thornkeep\n- **Scale**: Mid-sized nation\n- **Magic Level**: Common but regulated\n- **Conflict Level**: Simmering tensions\n- **Hidden Problem**: One house has been diverting maintenance funds to finance a rival claim.\n- **Immediate Hook**: Pass markers have gone dark before a grain convoy arrives.\n\n### Major Factions\n- **Lantern Council**: Wants the crown to restore the road and its licence.\n- **House Wren**: Seeks support for a rival heir and controls a second route.\n\n### Rumours & Hooks\n- The lamp oil was sold before the storm warning.\n- Wren riders have offered free passage to merchants who swear loyalty.\n- The keeper of the royal accounts has gone missing.\n\n### Entity Seeds\n- **King Aldren (ruler)**: The threatened heir.\n- **House Wren**: The rival house.\n- **Thornkeep (capital)**: The fortified seat.\n- **Winter pass**: The disputed route.",
     labels: ["rpg-kingdom", "kingdom-generator", "imported-draft"],
-    status: "draft",
+    status: "active",
   },
   nation: {
     type: "faction",
     title: "Axiom Industrial Authority",
     summary:
-      "A cyberpunk megacorp-state that controls three districts and is aggressively expanding into a fourth.",
+      "A cyberpunk megacorp-state in three river districts where the corporate board faces simmering tensions.",
     content:
-      "### The State\nAxiom controls food, water, and network access across its territory. Citizens are employees. Dissent is a performance review issue.\n\n### Power Structure\nCEO-Governor Reyes holds executive authority but the board is restless.",
-    lore: "",
+      "### The State\nAxiom owns the pumping stations and the only freight bridge into the river districts. The board meets at Tide Exchange, but the eastern pumping station answers to a regional director.\n\n### Power Structure\nCEO-Governor Reyes signs executive orders; the board controls the maintenance budget, and the Transit Directorate controls bridge permits.\n\n### Society & Tensions\nWorkers face a freeze on water credits while the board continues to grant industrial allocations.\n\n### How to use it at the table\nA convoy carrying replacement valves arrives just as the bridge permits are suspended. The party must decide whose authority to recognise.",
+    lore: "### At a Glance\n- **Theme / Genre**: Cyberpunk\n- **Type**: Megacorp-State\n- **Leader / Authority**: CEO-Governor Reyes\n- **Centre of Power**: Tide Exchange\n- **Scale**: Small region (handful of towns)\n- **Conflict Level**: Simmering tensions\n- **Hidden Problem**: The eastern station's reserve pumps have failed and the board is concealing the shortage.\n- **Immediate Hook**: The convoy's bridge permits are suspended.\n\n### Power Blocs\n- **Transit Directorate**: Controls freight access and wants the right to set its own tolls.\n- **Water Workers' Assembly**: Can halt the pumping stations; demands the release of the maintenance budget.\n\n### Rumours & Hooks\n- A director is selling priority water credits to a neighbouring state.\n- A maintenance ledger shows that the reserve pumps failed weeks ago.\n\n### Entity Seeds\n- **👤 CEO-Governor Reyes (leader)**: Signs orders but needs the board to fund them.\n- **👥 Transit Directorate**: Controls access to the river districts.\n- **👥 Water Workers' Assembly**: Can strike before the next allocation.\n- **📍 Tide Exchange (centre of power)**: Headquarters and venue for the allocation vote.\n- **📅 Crisis: Concealed pump failure**: The eastern station's reserve pumps have failed.",
     labels: ["rpg-nation", "nation-generator", "imported-draft"],
     status: "draft",
   },
@@ -101,10 +124,10 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
     type: "location",
     title: "Reyes' Noodle Hole",
     summary:
-      "A cramped cyberpunk noodle bar where fixers and off-duty security share bad ramen and worse secrets.",
+      "A cramped noodle bar below an elevated transit station, with cheap broth and a counter shared by couriers and security workers.",
     content:
-      "### The Place\nA steam-filled counter joint wedged under a transit overpass. Neon flickers, the broth is good, the owner asks nothing.\n\n### The Trouble\nThe owner is sitting on surveillance footage that would get someone very powerful arrested.",
-    lore: "",
+      "### The Place\nA steam-filled counter beneath the elevated rail. Reyes serves broth in chipped bowls and charges extra for a closed booth.\n\n### The People\nA courier named Lin keeps a bicycle helmet on the next stool. Vale, an off-duty station guard, comes for the evening shift change. Reyes knows both by their orders.\n\n### The Trouble\nThe station manager demands footage from Reyes' security camera before the morning inspection.\n\n### How to use it at the table\nStart with a meal or message delivery. Lin wants a copy of the recording; Vale wants it suppressed. Either can tell the party when the manager will arrive.",
+    lore: "### At a Glance\n- **Theme / Genre**: Cyberpunk\n- **Type**: Noodle bar\n- **Atmosphere**: Busy and unpretentious\n- **Wealth Level**: Modest\n- **Owner / Operator**: Reyes, who remembers orders but avoids names\n- **Signature Drink or Service**: Broth and a quiet booth\n- **Hidden Problem**: The footage shows an inspector being led through a closed platform by the station manager.\n- **Immediate Hook**: Lin asks the party to retrieve a copy before the manager arrives at dawn.\n\n### Notable Regulars\n- **Lin**: Courier, wants evidence to protect a friend.\n- **Vale**: Guard, fears losing access to the station.\n\n### Rumours\n- Unmarked maintenance crews arrive before the first train.\n- Reyes sometimes keeps the last booth closed without explanation.\n\n### Entity Seeds\n- **Reyes**: Operator.\n- **Lin**: Courier.\n- **Vale**: Station guard.\n- **Closed platform**: Site shown in the recording.",
     labels: ["rpg-location", "social-hub-generator", "imported-draft"],
     status: "draft",
   },
@@ -123,23 +146,23 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
     type: "location",
     title: "The Copper Boar",
     summary:
-      "A rowdy crossroads tavern where travellers and locals share rumours and old grudges.",
+      "A modest market-town inn where caravan crews warm themselves beside a furnace.",
     content:
-      "### The Place\nA low-ceilinged roadside inn with smoke-stained rafters and a fire that runs all year. The house ale is cheap and reliable.\n\n### The Trouble\nThe owner owes a debt to someone who has just arrived in town.",
-    lore: "",
+      "### The Place\nThe Copper Boar is a low-ceilinged inn beside the market road. Its benches fill at sunset and its smoke-stained rafters bear the name of every caravan that survived the winter.\n\n### The People\nThe owner, Tess, knows which drivers are looking for work. Regulars Oren the muleteer and Ivara the toll clerk have stopped sitting at the same table.\n\n### The Trouble\nA creditor has been hiding forged toll permits beneath the inn's cellar floor and threatens to seize Tess's inn if she talks.\n\n### How to use it at the table\nLet the party enjoy a meal and hear a driver mention a changed toll. Give Tess a reason to trust them before she asks for help.",
+    lore: "### At a Glance\n- **Type**: Tavern / Inn\n- **Atmosphere**: Rowdy and welcoming\n- **Owner**: Tess, a former caravan cook\n- **Signature Drink or Dish**: Barley stew and dark cellar ale\n- **Hidden Problem**: A creditor hides forged toll permits in the cellar.\n- **Immediate Hook**: Oren is turned away at the gate with a permit purchased from the creditor.\n\n### Notable Patrons\n- **Oren**: A muleteer who has lost a week's wages.\n- **Ivara**: A toll clerk who recognises the forged seal but fears her employer.\n\n### Rumours\n- The creditor only visits when the market closes.\n- A driver saw a sack carried into the cellar.\n- Traders complain that the south road is flooded.\n\n### Entity Seeds\n- **The Copper Boar**: The inn.\n- **Tess**: Owner.\n- **Oren**: Regular.\n- **The tollhouse**: The source of the disputed permits.",
     labels: ["rpg-location", "tavern-generator", "imported-draft"],
-    status: "draft",
+    status: "active",
   },
   "vampire-clan": {
     type: "faction",
-    title: "House of Thorn",
+    title: "House of the Glass Lantern",
     summary:
-      "An aristocratic bloodline that controls the city's banking houses from behind a veil of old money and older secrets.",
+      "A vampire court that uses charitable salons to build influence across the city.",
     content:
-      "### Heritage\nAristocratic lineage feeding on the upper-class elite. The clan operates through mortal proxies in finance, law, and the clergy.\n\n### Clan Weakness\nSilver and consecrated ground erode their power - they avoid both with practised care.",
-    lore: "",
+      "### Overview\nHouse of the Glass Lantern is an aristocratic vampire court whose daytime assets are managed by a patron of the city's hospitals.\n\n### Public Facade\nTheir candlelit salons host artists, physicians and creditors. Invitations admit the wealthy after sundown and earn guests introductions to powerful patrons.\n\n### Table Use\nThe party needs a physician to examine a poisoned witness. The clan offers access in return for the return of a stolen salon guest list.",
+    lore: "### GM Reference Information\n- **Faction Type**: Vampire Clan (Aristocratic Court)\n- **Bloodline**: Sanguine Nobles (Charismatic Mind-Benders)\n- **Scope**: Old city's hospital quarter\n- **Moral Posture**: Pragmatic and power-driven\n- **Feeding Habit**: High-Society Salons (Elite & Consent-based)\n- **Clan Weakness**: Mirror & Reflection Absence (Exposes their nature)\n- **Entity Type**: Faction\n\n### Dark Agenda\nSecure control of the hospital trust by placing the sire's mortal steward on its board.\n\n### Internal Conflict\nThe younger vampires want the salons to remain voluntary; the sire demands access to vulnerable patients.\n\n### Notable NPCs\n- **Sire Morcant**: Insists the trust is the clan's only protection from discovery.\n- **Steward Ivara**: Can open hospital doors but secretly keeps a record of consent.\n\n### Rival Faction\n- **The Lantern Watch**: An investigator's guild that suspects the hospital's finances conceal something worse.\n\n### Adventure Hook\nA guest whose reflection vanished from a polished silver tray asks the party to retrieve the guest list before Morcant identifies those who witnessed it.",
     labels: ["rpg-faction", "vampire-clan", "imported-draft"],
-    status: "draft",
+    status: "active",
   },
   "nomad-clan": {
     type: "faction",
@@ -155,10 +178,9 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
   names: {
     type: "character",
     title: "Generic Fantasy Names — Person",
-    summary: "Curated names with linguistic roots and naming conventions.",
     content:
-      "A curated set of classic secondary-world fantasy names. Use them as full character names, or mix and match the given names and compound surnames to suit your setting.\n\n- **Iridian Vespera**: Ornate rolling-vowel given name paired with an archaic nightfall-root surname.\n- **Bramwell Hallowfist**: Grounded, historic compound surname; common in border valleys and craft guilds.\n- **Sylvara Quint**: Melodic sylvan given name with a sharp, numbered lineage surname.\n- **Mordantus Krell**: Austere scholar's name; heavy consonants favoured in coastal academies.\n- **Fennelora Brightspire**: Melodic diminutive given name paired with a noble beacon-house surname.\n- **Theron Greybourne**: Classical heroic given name with a river-marker geographical surname.\n- **Kaelen Stonehart**: Resilient northern given name with an ancient martial lineage surname.\n- **Mirelle Ashworth**: Soft courtly given name paired with an old hearth-estate surname.",
-    lore: "### Culture & Naming Conventions\nDerived from secondary-world fantasy settings where old trade-guild roots, border lineages, and ancient court tongues merge.\n\n### Structure & Components\n- **Given Names**: Multi-syllabic, rolling vowel combinations (`Iridi-`, `Sylv-`, `Fenn-`) with soft or liquid consonants.\n- **Surnames**: Two-part compound names joining landscape or craft markers (`Hallow-`, `Grey-`, `Stone-`) with settlement or nature roots (`-fist`, `-bourne`, `-hart`).\n- **Titles & Epithets**: Frequently appended with geographical or occupational suffixes for distinguishing common names.\n\n### Usage Suggestions\n- Mix and match stems freely: drop a syllable, combine a prefix from one name with a suffix from another.\n- Use ornate given names for scholars, ambassadors, and court figures; reserve heavy compound surnames for frontier travellers and guild artisans.",
+      "Here are 10 Generic Fantasy style character names.\n\n- **Mara Ashford**\n- **Tovin Reedmere**\n- **Elira Stonewake**\n- **Bren Flint**\n- **Nessa Vale**\n- **Jorin Brookward**\n- **Sela Thorn**\n- **Daven Greymoss**\n- **Iria Hallow**\n- **Oren Brightwater**",
+    lore: "### Generator Settings\n- **Culture**: Generic Fantasy\n- **Gender / Presentation**: Any\n- **Name Type**: Person\n\n### Usage Suggestions\nUse Ashford for a family or district; Reedmere and Brookward can tie separate households to the river. Pick two or three names with different first syllables for the next scene and keep the remainder for unplanned contacts.",
     labels: ["fantasy-name", "name-generator", "imported-draft"],
     status: "draft",
   },
@@ -203,12 +225,13 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
   "god-generator": {
     type: "character",
     title: "Oros, the Light of Dawn",
-    summary: "A deity of the rising sun and new beginnings.",
+    summary:
+      "A god of first light and second chances, whose worshippers dispute who deserves sanctuary.",
     content:
-      "### Deity Description\nOros is depicted as a radiant figure carrying a shield of polished bronze. Their altars face the east.",
-    lore: "### At a Glance\n- **Deity Type**: God\n- **Primary Domain**: Light\n- **Worshippers**: State Religion",
+      "### Deity Description\nOros is depicted as a traveller holding a bronze lamp. Shrines stand beside city gates and at east-facing windows.\n\n### Divine Portfolio\nOros governs the first light and the chance to begin again. Pilgrims seek courage to return home, acknowledge a wrong or start a new trade.\n\n### Worship & Cults\nHouseholds light a lamp before dawn and offer a place at the breakfast table to strangers. The gate priests keep lists of people who need shelter, but a wealthy order claims only initiated citizens may receive the blessing.",
+    lore: "### At a Glance\n- **Deity Type**: God\n- **Primary Domain**: Light\n- **Worshippers**: Folk Devotion\n- **Sacred Symbol**: A bronze lamp with a split flame.\n- **Secret**: The oldest shrine's founding oath granted sanctuary to everyone, but the gate order has removed that passage from its copy.\n- **Immediate Hook**: Lamps have begun lighting themselves at the windows of people refused sanctuary.\n\n### Rituals & Taboos\n- **Ritual**: Share the dawn flame with a neighbour or traveller.\n- **Taboo**: Never extinguish the lamp of someone seeking refuge.\n\n### Myths & Legends\nOros lit the first lamp from a traveller's hearth and carried it through the longest night. Every new fire thereafter was borrowed, never owned.\n\n### Adventure Hooks\n- The gate priests hire the party to investigate the unexplained lamps before the next public rite.\n- A household keeper has found the original oath and needs protection while the clergy debate whether to read it aloud.",
     labels: ["rpg-deity", "deity-generator", "imported-draft"],
-    status: "draft",
+    status: "active",
   },
   "ship-generator": {
     type: "location",
@@ -234,46 +257,27 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
   },
   "dungeon-generator": {
     type: "location",
+    kind: "dungeon",
     title: "The Submerged Vault of Sunken Runes",
     summary:
-      "An ancient flooded temple complex whose inner sanctum preserves an active celestial beacon.",
+      "An ancient flooded dwarven temple whose inner sanctum preserves an active celestial beacon.",
     content:
-      "## Overview\nOriginally built 800 years ago as a sacred dwarven sanctuary, the delve was abandoned during the Dragon War and subsequently flooded by subterranean rivers.\n\n## Signature Feature\nThe Levitating Sunstone: A massive radiant orb suspended over an inverted fountain pool, illuminating the entire central hall.",
-    lore: "### Delve Overview\n- **Scale**: Medium Complex (3-4 Sectors)\n- **Genre**: Classic Fantasy\n- **Original Purpose**: Temple & Shrine\n- **Current State**: Active Monster Lair\n\n### Key Sectors\n- **📍 Sector 1: The Guarded Gateway**: Fortified entry halls with collapse traps.\n- **📍 Sector 2: The Deep Arcana Vault**: Sealed inner chamber housing warding circles.\n\n### Inhabitants & Factions\nA desperate clan of Goblins utilizing ancient defense traps against an intruding Kobold mining party.\n\n### Hazards & Traps\nPressure-plate needle traps laced with paralyzing wyvern venom.\n\n### Secret\nThe dungeon was not built as a tomb, but as a vault to lock away an elemental planar core.",
+      "## History & Original Purpose\nEight centuries ago dwarven pilgrims built a sanctuary around a celestial beacon. Refugees sealed the lower vault during the Dragon War, then subterranean rivers flooded the chambers.\n\n## Current State & Function\nTwo clans now need the remaining dry ground. Goblins hold the gate; kobold miners have reached the old maintenance channel. The next surge will flood that channel unless someone opens the inner sluice.\n\n## Signature Feature\nThe Levitating Sunstone hangs above an inverted fountain, illuminating the central hall. Its reflection shows a second door invisible from the stairs.\n\n## Key Sectors & Layout\n\n### Sector 1: The Guarded Gateway\nFortified entrance halls contain a sagging lintel and a safe raised walkway. Fresh scuffs along the wall show how the goblins avoid the pressure plates.\n\n### Sector 2: The Inverted Fountain\nA half-flooded hall with the Sunstone overhead. A stair descends to the inner shrine, while a maintenance hatch opens into the drain gallery.\n\n### Sector 3: The Drain Gallery\nThe kobolds hold the narrow gallery and have wedged its sluice shut. The old inspection ledge provides a route around the flooded passage if travellers move slowly.\n\n### Sector 4: The Deep Arcana Vault\nWarding circles surround a sealed pedestal; the reflected door in the fountain is a shortcut into the chamber. The cracked lower ward pulses whenever water touches it.\n\n## Faction Situation\nThe goblins want to shelter their families above the next flood. The kobolds want to recover an ancient survey tool before their tunnel floods.\n\n### The Reedbone Clan\n**Identity:** Goblin refugees. They welcome travellers who bring food but distrust anyone wearing mining gear.\n**Goal:** Keep a dry refuge.\n**Drive:** Protect their dependants.\n**Obstacle:** The kobolds control the sluice.\n**Origin:** Fled fighting in the upper tunnels.\n**Belief:** The Sunstone protects those who shelter beneath it.\n**Territory:** Gate and fountain.\n**Strength:** Knowledge of the old traps.\n**Leader:** Rill Moss, who will trade safe passage for repairing the sluice.\n**Notable:** Ketta, a scout who knows the reflected door.\n**Relationship:** Resents the kobolds but needs their engineering.\n\n### The Copperclaw Crew\n**Identity:** Kobold surveyors. Skilled engineers, but impatient with negotiation.\n**Goal:** Retrieve the survey tool and leave.\n**Drive:** Earn enough to return home.\n**Obstacle:** No access to the inner shrine.\n**Origin:** Followed a dwarven maintenance map.\n**Belief:** The shrine's light is a warning, not a blessing.\n**Territory:** Drain Gallery.\n**Strength:** Pumps and climbing gear.\n**Leader:** Vek Coil, prepared to reopen the sluice in exchange for a guided visit.\n**Notable:** Til, who can read the warding marks.\n**Relationship:** Assumes the goblins are deliberately blocking rescue.",
+    lore: "### Dungeon Layout\nGateway to Fountain to Deep Arcana Vault; Fountain to Drain Gallery to Vault through the inspection ledge. Reveal the shortcut through the reflected door when someone examines the fountain.\n\n### Central Secret / Boss Mystery\nThe Sunstone is part of the seal around an elemental planar core. The core is harmless if the lower ward stays dry. Removing the Sunstone before draining the vault releases it.\n\n### Hazards & Traps\n- Pressure-plate needles deliver paralysing wyvern venom. Bent needles near the gate and the goblin walkway warn of the trap.\n- The next surge arrives after two exploration turns; open the sluice or rig a pump to keep the lower ward dry.\n\n### Treasures & Artifacts\n- A bronze survey tool in the vault reveals the reflected door; the kobolds need it.\n- Offering coins rest on a dry shelf and can be removed without disturbing the seal.\n\n### Adventure Hooks & Rumours\n- A riverside village seeks the source of warm, glowing floodwater.\n- Both clans offer access if the party helps reopen the sluice. If ignored, the kobolds force it open and flood the goblin route.",
     labels: ["dungeon", "location", "dungeon-generator", "imported-draft"],
     status: "draft",
   },
-  "adventure-generator": {
-    type: "event",
-    title: "The Witness Who Came Back",
-    summary:
-      "A dying informant has surfaced with evidence that implicates the city's most powerful magistrate - and she has three days to live.",
-    content:
-      "## Initial Situation\nA street physician treated a woman who should be dead - she was listed as a victim of last year's warehouse fire. She is carrying a sealed ledger and will only hand it to someone who can guarantee safe passage out of the city.\n\n## Primary Objective & Pressure\nGet the witness and the ledger to the provincial capital before the magistrate's agents locate her - the city gates close in 36 hours for the harvest festival.",
-    lore: "### Key Locations\n- **The Drowned Clinic**: A basement surgery below the harbour market.\n- **The Salt Gate**: The only land route out.\n\n### Important NPCs & Factions\n- **Mira Osal, the witness**: Survived by accident; wants to testify.\n- **Guard-Captain Deren**: Loyal to the magistrate.\n\n### Possible Outcomes\n- The witness reaches the capital and testifies; the magistrate is arrested.",
-    labels: ["adventure", "event", "adventure-generator", "imported-draft"],
-    status: "draft",
-  },
-  "adventure-idea-generator": {
-    type: "event",
-    title: "The Witness Who Came Back",
-    summary:
-      "A dying informant has surfaced with evidence that implicates the city's most powerful magistrate - and she has three days to live.",
-    content:
-      "## Initial Situation\nA street physician treated a woman who should be dead - she was listed as a victim of last year's warehouse fire. She is carrying a sealed ledger and will only hand it to someone who can guarantee safe passage out of the city.\n\n## Primary Objective & Pressure\nGet the witness and the ledger to the provincial capital before the magistrate's agents locate her - the city gates close in 36 hours for the harvest festival.",
-    lore: "### Key Locations\n- **The Drowned Clinic**: A basement surgery below the harbour market.\n- **The Salt Gate**: The only land route out.\n\n### Important NPCs & Factions\n- **Mira Osal, the witness**: Survived by accident; wants to testify.\n- **Guard-Captain Deren**: Loyal to the magistrate.\n\n### Possible Outcomes\n- The witness reaches the capital and testifies; the magistrate is arrested.",
-    labels: ["adventure", "event", "adventure-generator", "imported-draft"],
-    status: "draft",
-  },
+  "adventure-generator": ADVENTURE_DRAFT,
+  "adventure-idea-generator": ADVENTURE_DRAFT,
   tome: {
     type: "item",
-    title: "The Drowned Liturgy of Saint Jude-in-the-Fens",
+    title: "The Drowned Liturgy of the Fen Gate",
     summary:
-      "A water-damaged 17th-century devotional octavo whose marginal glosses describe rites addressed to entities beneath the salt marsh.",
+      "An annotated liturgy kept at Reed Priory describes a bell rite for a submerged shrine.",
     content:
-      "### Description & Physical Form\nBound in damp-stained calfskin with rusted iron clasps. Several quires have been restitched with heavy sailmaker's twine. The Latin text of a standard Anglican prayer book has been systematically overwritten between the lines with an angular, unrecognised vernacular script in dark sepia gall ink.\n\n### Significant Excerpt\n> *'Let no lantern be trimmed when the ditch-water turns brackish; that which enters the lock-gate does so by ancient covenant, needing neither name nor welcome.'*\n\n### Powers & Revelations\nScholars who decipher the interlinear glosses gain insight into hydrological anomalies, pre-flood architecture, and the rites required to placate deep-marsh entities.\n\n### Hazards & Investigation Risks\nProlonged study induces severe sensory disturbance — reader reports auditory hallucinations of distant, rhythmic sluice-gates and compulsive thirst.\n\n### Custodian & Provenance\nRecovered from the flooded undercroft of Saint Jude's vicarage during the fenland drainage of 1842; currently held in the restricted reserve of the provincial antiquarian society.",
-    lore: "## Keeper / GM Notes\nThe marginal annotator was the curate himself, Father Thomas Ewell, who vanished three weeks before the fen inundated the parish church. The final pages contain a rough hydrographic map indicating a submerged masonry vault beneath the salt marsh.",
-    labels: ["tome-generator", "forbidden-book", "occult", "item"],
+      "### Physical Description & Format\nAn illuminated vellum folio bound in damp-stained calfskin and rusted iron clasps. The lower edges of three leaves are trimmed; a blue wash marks each tide table.\n\n### Provenance & Transmission\nSister Velin compiled the liturgy during the Second Age of Strife to record a shrine's flood rites. One annotated copy survives in the Reed Priory archive. A later copyist removed the names of the gate keepers.\n\n### Contents & Revelations\nThe text purports to describe how a bronze bell opens the shrine's gate at high tide.\n\n> *\"Ring at the full water, and the gate shall yield to the faithful. Let the keeper stand where the bird faces east.\"*\n\nThe east-facing bird is a painted heron in the margins. The bell instruction sits above an erased line, and the tide diagrams mark low water in blue. A separate gate log could confirm which operation the diagrams describe.\n\n### Risks & Costs of Study\n- **Primary hazard (Supernatural / Entity Attraction):** Speaking the corrupted instruction beside the gate raises the water inside the shrine.\n- **Social / Legal:** The priory limits access to supervised reading sessions, and a rival collector wants the annotated copy.\n- **Mental:** The repeated formula tempts readers to accept the later text without checking the damaged pages.\n\n### Adventure Hooks\n1. The archivist offers access if the investigators recover the missing gate log from a river pilot's estate.\n2. A collector offers to pay for a copy, but intends to ring the bell before the flood recedes.\n3. The party can reach the submerged shrine by following the painted heron marks on the old floodwall.",
+    lore: "### At the Table Reference\nGive the visible excerpt and trimmed edges before explaining the erased line. The tide table and independent gate log both point to low water.\n\n### Ground Truth for the GM\n- **What the Book Claims:** The bell opens the gate at high tide.\n- **The Deception / Flaw:** A copyist reversed the timing to prevent rival pilgrims entering safely.\n- **The Objective Truth:** The bell releases a drainage sluice at low water; using it at high tide admits water instead.\n- **Actionable Clue:** The blue low-water marks align with the painted heron; the gate log records low-water bell tests.\n\n### Connected Entities\n- **Sister Velin** (Author / Compiler): Recorded the original rite.\n- **Reed Priory** (Current Custodian / Archive): Restricts access to the surviving annotated copy.\n- **Silver Lamp Society** (Interested Faction): Wants exclusive control of the shrine.\n- **Fen Gate** (Associated Location): Holds the bell and sluice.\n\n### Quick Checks & Mechanics\n- **Deciphering:** Read the High Gothic script or employ a translator. A second source confirms the tide notation.\n- **The Failure Condition:** Ringing at high tide opens the intake, flooding the lower shrine over two exploration turns.\n- **Safe Handling:** Translate at the archive; inspect the tide and gate log before trying the instruction.",
+    labels: ["tome-generator", "forbidden-book", "liturgy", "item"],
     status: "draft",
   },
   "point-crawl": generatePointCrawlLocal({

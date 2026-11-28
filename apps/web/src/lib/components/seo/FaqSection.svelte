@@ -19,13 +19,16 @@
   } = $props();
 
   let lightboxImage = $state<{ src: string; alt: string } | null>(null);
+  let lightboxBackdrop = $state<HTMLButtonElement>();
   let closeLightboxBtn = $state<HTMLButtonElement>();
 
   function openLightbox(src: string, alt: string) {
+    lightboxBackdrop?.removeAttribute("inert");
     lightboxImage = { src, alt };
   }
 
   function closeLightbox() {
+    lightboxBackdrop?.setAttribute("inert", "");
     lightboxImage = null;
   }
 
@@ -145,26 +148,31 @@
 {/if}
 
 {#if lightboxImage}
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <button
+    type="button"
+    aria-label="Dismiss image view"
+    bind:this={lightboxBackdrop}
+    class="fixed inset-0 z-[200] cursor-default bg-black/90 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-inset focus-visible:outline-none"
+    onclick={closeLightbox}
+    onkeydown={handleKeydown}
+    onpointerdown={(e) => e.preventDefault()}
+    transition:fade={{ duration: 200 }}
+  ></button>
   <div
     role="dialog"
     aria-modal="true"
-    aria-label="Image view"
+    aria-labelledby="image-view-title"
     tabindex="-1"
-    class="fixed inset-0 bg-black/90 z-[200] flex items-center justify-center p-4 cursor-zoom-out outline-none"
-    onclick={closeLightbox}
+    class="pointer-events-none fixed inset-0 z-[201] flex items-center justify-center p-4 outline-none"
     onkeydown={handleKeydown}
     transition:fade={{ duration: 200 }}
   >
+    <h2 id="image-view-title" class="sr-only">Image view</h2>
     <button
       bind:this={closeLightboxBtn}
       type="button"
-      class="absolute top-4 right-4 text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition focus-visible:ring-2 focus-visible:ring-white outline-none"
-      onclick={(e) => {
-        e.stopPropagation();
-        closeLightbox();
-      }}
+      class="pointer-events-auto absolute top-4 right-4 text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition focus-visible:ring-2 focus-visible:ring-white outline-none"
+      onclick={closeLightbox}
       aria-label="Close image view"
     >
       <span aria-hidden="true" class="icon-[lucide--x] w-8 h-8"></span>

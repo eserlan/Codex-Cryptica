@@ -30,6 +30,18 @@ export interface CanvasAddResult {
   errors: Array<{ entityId: string; error: string }>;
 }
 
+interface CanvasLoadRequest {
+  vaultId: string;
+  promise: Promise<void>;
+}
+
+export class CanvasImportInterruptedError extends Error {
+  constructor() {
+    super("Canvas import was interrupted by a vault switch");
+    this.name = "CanvasImportInterruptedError";
+  }
+}
+
 export class CanvasRegistryStore {
   _canvases = $state<Record<string, Canvas>>({});
   get canvases() {
@@ -51,6 +63,8 @@ export class CanvasRegistryStore {
     { id: string; position?: { x: number; y: number } }[]
   >([]);
   private saveQueue: KeyedTaskQueue | null = null;
+  private loadRequest: CanvasLoadRequest | undefined;
+  private registryGeneration = 0;
   private readonly clock: Clock;
   private idGenerator: IdGenerator;
 
@@ -75,6 +89,8 @@ export class CanvasRegistryStore {
   }
 
   clear() {
+    this.registryGeneration += 1;
+    this.loadRequest = undefined;
     this.canvases = {};
     this.isLoaded = false;
   }
@@ -91,17 +107,36 @@ export class CanvasRegistryStore {
     return pending;
   }
 
-  async loadFromVault(vaultId: string) {
-    if (!vaultRegistry.rootHandle) return;
+  loadFromVault(vaultId: string): Promise<void> {
+    if (!vaultRegistry.rootHandle) return Promise.resolve();
+    // First-run Canvas routing and deferred vault initialization can request
+    // the same registry concurrently. A second stale disk read must not
+    // replace the imported canvas after the first reader marks it loaded.
+    if (this.loadRequest?.vaultId === vaultId) return this.loadRequest.promise;
+    const request: CanvasLoadRequest = { vaultId, promise: Promise.resolve() };
+    this.loadRequest = request;
+    request.promise = this.readVaultCanvases(request);
+    return request.promise;
+  }
+
+  private async readVaultCanvases(request: CanvasLoadRequest) {
     this.status = "loading";
     try {
-      const vaultDir = await getVaultDir(vaultRegistry.rootHandle, vaultId);
-      this.canvases = await loadCanvasesFromDisk(vaultDir);
+      const vaultDir = await getVaultDir(
+        vaultRegistry.rootHandle!,
+        request.vaultId,
+      );
+      const canvases = await loadCanvasesFromDisk(vaultDir);
+      if (this.loadRequest !== request) return;
+      this.canvases = canvases;
       this.status = "idle";
       this.isLoaded = true;
     } catch (e) {
+      if (this.loadRequest !== request) return;
       console.error("[CanvasRegistryStore] Failed to load canvases", e);
       this.status = "error";
+    } finally {
+      if (this.loadRequest === request) this.loadRequest = undefined;
     }
   }
 
@@ -385,7 +420,20 @@ export class CanvasRegistryStore {
     return undefined;
   }
 
+  private pendingRegistryRead() {
+    return this.loadRequest?.promise;
+  }
+
   async importCanvas(doc: any): Promise<string> {
+    const registryGeneration = this.registryGeneration;
+    const vaultId = vaultRegistry.activeVaultId;
+    await this.pendingRegistryRead();
+    if (
+      this.registryGeneration !== registryGeneration ||
+      vaultRegistry.activeVaultId !== vaultId
+    ) {
+      throw new CanvasImportInterruptedError();
+    }
     const id = doc.id || this.idGenerator.uuid();
     const name = doc.name || doc.title || "Delve Canvas Map";
     const slug = doc.slug || this.generateSlug(name, id);

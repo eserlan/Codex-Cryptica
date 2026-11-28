@@ -2,7 +2,10 @@ import { z } from "zod";
 import type { Entity } from "schema";
 import { CanvasSchema, type Canvas } from "@codex/canvas-engine";
 import { AdventureFlowLayout } from "generator-engine/adventure/adventure-flow-layout";
-import { canvasRegistry } from "#lib/stores/canvas-registry.svelte.js";
+import {
+  CanvasImportInterruptedError,
+  canvasRegistry,
+} from "#lib/stores/canvas-registry.svelte.js";
 import { vault } from "#lib/stores/vault.svelte.js";
 import { browserStorage, type StorageLike } from "#lib/utils/runtime-deps.js";
 import { ImportDraftSchema, type ImportDraft } from "./import-handler";
@@ -167,7 +170,19 @@ export class PendingDelveTransferService {
 
     const linkedCanvas = prepareTransferredCanvas(preparedCanvas, entityId);
 
-    const slug = await this.canvasImporter.importCanvas(linkedCanvas);
+    let slug: string;
+    try {
+      slug = await this.canvasImporter.importCanvas(linkedCanvas);
+    } catch (error) {
+      if (error instanceof CanvasImportInterruptedError) {
+        delete retryableTransfer.sourceEntityId;
+        this.storage.setItem(
+          PENDING_DELVE_CANVAS_KEY,
+          JSON.stringify(retryableTransfer),
+        );
+      }
+      throw error;
+    }
     this.storage.removeItem(PENDING_DELVE_CANVAS_KEY);
     return slug;
   }

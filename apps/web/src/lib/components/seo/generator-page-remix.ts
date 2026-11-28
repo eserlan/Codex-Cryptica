@@ -1,7 +1,7 @@
 import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 import { parseGeneratorShareMarkdown } from "./generator-copy";
 import { resolveGeneratorShareTheme } from "./generator-page-identity";
-import { usesSourceHandoff } from "./generator-document-layout";
+import { getSourceHandoffEntityType } from "./generator-document-layout";
 
 interface SharedGeneratorSnapshot {
   title: string;
@@ -77,17 +77,17 @@ export async function loadGeneratorRemixDraft(
       };
     }
     // Share markdown combines the original content and lore without a reliable
-    // delimiter. Character restoration must not guess which text is player-safe.
-    const isPrivateCharacter = usesSourceHandoff(
+    // delimiter. Private restoration must not guess which text is player-safe.
+    const privateEntityType = getSourceHandoffEntityType(
       options.targetPath?.split("/").at(-1),
     );
     return {
       draft: {
-        type: isPrivateCharacter ? "character" : "note",
+        type: privateEntityType ?? "note",
         title: shared.title,
-        summary: isPrivateCharacter ? "" : parsed.summary,
-        content: isPrivateCharacter ? "" : parsed.content,
-        lore: isPrivateCharacter
+        summary: privateEntityType ? "" : parsed.summary,
+        content: privateEntityType ? "" : parsed.content,
+        lore: privateEntityType
           ? [parsed.summary ? `*${parsed.summary}*` : "", parsed.content]
               .filter(Boolean)
               .join("\n\n")

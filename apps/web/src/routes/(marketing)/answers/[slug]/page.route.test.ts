@@ -246,6 +246,9 @@ describe("answer page widescreen aside", () => {
     const inlineToolTitle = within(inline).getByText("NPC Generator");
     expect(inlineToolTitle.classList.contains("text-theme-text")).toBe(true);
     expect(
+      inlineToolTitle.closest("a")?.classList.contains("border-theme-primary"),
+    ).toBe(true);
+    expect(
       inlineToolTitle.classList.contains("group-hover:text-theme-primary"),
     ).toBe(false);
   });

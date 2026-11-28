@@ -5,6 +5,13 @@ import {
 } from "./generator-continuation";
 
 describe("generator-continuation", () => {
+  it("describes the Urban Faction summary as GM notes", () => {
+    const config = getGeneratorContinuationConfig("urban-fantasy-faction");
+    expect(config?.summary).toContain("summary");
+    expect(config?.summary).toContain("GM notes");
+    expect(config?.summary).not.toContain("main text");
+  });
+
   it("offers the heist continuation next to completed results", () => {
     const config = getGeneratorContinuationConfig("heist");
     expect(config).toMatchObject({
@@ -15,6 +22,11 @@ describe("generator-continuation", () => {
   });
 
   it("returns Wave 1 configs for star-system, npc, rpg-npc-generator, and origin-generator", () => {
+    expect(getGeneratorContinuationConfig("point-crawl")).toMatchObject({
+      headline: "Keep the chosen route network in your vault",
+      ctaLabel: "Add to my Codex",
+      placement: "near-result",
+    });
     const starSystem = getGeneratorContinuationConfig("star-system");
     expect(starSystem).toMatchObject({
       headline: "Keep the system ready for the next jump",
@@ -56,6 +68,15 @@ describe("generator-continuation", () => {
       localFirstNotice: "No account needed; stored locally in this browser.",
     });
 
+    const magicItem = getGeneratorContinuationConfig("magic-item");
+    expect(magicItem).toMatchObject({
+      placement: "near-result",
+      ctaLabel: "Add to my Codex",
+    });
+    expect(magicItem?.summary).toContain(
+      "Only sections headed GM Reference Information or Magical Properties stay in GM reference; AI headings can vary",
+    );
+
     const newsSheet = getGeneratorContinuationConfig("news-sheet-generator");
     expect(newsSheet).toMatchObject({
       headline: "Keep this issue in your campaign archive",
@@ -71,7 +92,7 @@ describe("generator-continuation", () => {
 
     const dungeon = getGeneratorContinuationConfig("dungeon-generator");
     expect(dungeon).toMatchObject({
-      headline: "Turn this delve into a playable site",
+      headline: "Keep the delve ready for the party's next visit",
       ctaLabel: "Add to my Codex",
       localFirstNotice: "No account needed; stored locally in this browser.",
     });
@@ -82,6 +103,17 @@ describe("generator-continuation", () => {
       headline: "Turn this scenario into an active thread",
       ctaLabel: "Add to my Codex",
       localFirstNotice: "No account needed; stored locally in this browser.",
+    });
+
+    expect(getGeneratorContinuationConfig("adventure-generator")).toBe(
+      adventureIdea,
+    );
+    expect(adventureIdea?.placement).toBe("near-result");
+    expect(adventureIdea?.summary).toContain("GM notes");
+    expect(getGeneratorContinuationConfig("rumour")).toMatchObject({
+      headline: "Keep these rumours in circulation",
+      placement: "near-result",
+      ctaLabel: "Add to my Codex",
     });
 
     const oneShot = getGeneratorContinuationConfig(
@@ -104,7 +136,7 @@ describe("generator-continuation", () => {
 
     const plotTwist = getGeneratorContinuationConfig("plot-twist-generator");
     expect(plotTwist).toMatchObject({
-      headline: "Keep this reversal tied to your plot",
+      headline: "Keep the reversal ready, not revealed",
       ctaLabel: "Add to my Codex",
       localFirstNotice: "No account needed; stored locally in this browser.",
     });
@@ -153,9 +185,9 @@ describe("generator-continuation", () => {
   it("configures the holiday as a Note import with GM-only lore and gates it on completed generation", () => {
     const config = getGeneratorContinuationConfig("holiday");
     expect(config).not.toBeNull();
-    expect(config?.capabilities.join(" ")).toContain("Note entry");
-    expect(config?.capabilities.join(" ")).toContain("GM-only lore");
-    expect(config?.capabilities.join(" ")).toContain("remove table hooks");
+    expect(config?.summary).toContain("one new Note");
+    expect(config?.capabilities.join(" ")).toContain("GM notes");
+    expect(config?.capabilities.join(" ")).toContain("At the table tensions");
   });
 
   it("configures the encounter as an Event import with GM-only lore and gates it on completed generation", () => {
@@ -261,6 +293,13 @@ describe("generator-continuation", () => {
         variant: "default",
       }),
     ).toBe(false);
+  });
+
+  it("places the nation continuation beside the explicitly generated result", () => {
+    expect(getGeneratorContinuationConfig("nation")).toMatchObject({
+      placement: "near-result",
+      ctaLabel: "Add to my Codex",
+    });
   });
 
   it("configures the tome, secret society, and world imports with GM-only lore and generation gates", () => {
@@ -464,7 +503,6 @@ describe("generator-continuation", () => {
 
   it("returns null for Wave 2, names, and unknown generator types", () => {
     for (const type of [
-      "point-crawl",
       "names",
       "fantasy-names",
       "unknown-generator",
@@ -545,6 +583,35 @@ describe("generator-continuation", () => {
         isBusy: false,
         variant: "default",
       }),
-    ).toBe(false);
+    ).toBe(true);
   });
+});
+
+it("places the faction continuation next to successful results, never examples", () => {
+  const config = getGeneratorContinuationConfig("faction");
+  expect(config).toMatchObject({
+    placement: "near-result",
+    ctaLabel: "Add to my Codex",
+  });
+  expect(config?.summary).toContain("one new Faction");
+  const input = {
+    generatorType: "faction",
+    userGenerationSucceeded: true,
+    isExampleDraft: false,
+    isBusy: false,
+    variant: "default" as const,
+  };
+  expect(shouldShowGeneratorContinuation(input)).toBe(true);
+  expect(
+    shouldShowGeneratorContinuation({ ...input, isExampleDraft: true }),
+  ).toBe(false);
+  expect(shouldShowGeneratorContinuation({ ...input, isBusy: true })).toBe(
+    false,
+  );
+  expect(
+    shouldShowGeneratorContinuation({
+      ...input,
+      userGenerationSucceeded: false,
+    }),
+  ).toBe(false);
 });

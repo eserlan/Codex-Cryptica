@@ -91,6 +91,12 @@ export const howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign: AnswerConfigInput 
     },
     relatedTools: [
       {
+        title: "Plot Twist and Complication Generator",
+        description:
+          "Prepare a reversal that preserves established facts, with independent evidence and choices for the party.",
+        href: "/generators/plot-twist-generator",
+      },
+      {
         title: "Quest Hook Generator",
         description:
           "Generate multi-stage adventure leads with conflicting faction stakes and concrete time pressures.",

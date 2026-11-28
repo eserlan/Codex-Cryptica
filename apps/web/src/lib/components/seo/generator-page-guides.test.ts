@@ -100,8 +100,13 @@ describe("RPG NPC guide", () => {
 
 describe("generator guide distinctness", () => {
   it("has no copy shared across specific guides", () => {
+    // The retired adventure slug is an alias of the same canonical generator,
+    // not a second generator that should have independently authored copy.
+    const { "adventure-idea-generator": legacyAdventure, ...canonicalGuides } =
+      SLUG_GUIDES;
+    expect(legacyAdventure).toBe(canonicalGuides["adventure-generator"]);
     expect(
-      findSharedGuideCopy(SLUG_GUIDES as Record<string, GeneratorGuide>),
+      findSharedGuideCopy(canonicalGuides as Record<string, GeneratorGuide>),
     ).toEqual([]);
   });
 
@@ -317,7 +322,8 @@ describe("generator guide distinctness", () => {
     ]) {
       expect(tipText).toContain(label);
     }
-    expect(tipText).toContain("In offline drafts, Add campaign context");
+    expect(tipText).toContain("observable sign");
+    expect(guide.links).toHaveLength(3);
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
@@ -415,14 +421,17 @@ describe("generator guide distinctness", () => {
     expect(guide.summary).not.toContain("Nation Generator");
     expect(guide.tips).toHaveLength(3);
     const tipText = guide.tips.map((tip) => tip.detail).join(" ");
-    expect(guide.summary).toContain("two or three power blocs");
-    expect(tipText).toContain("In offline drafts");
-    expect(tipText).toContain(
-      "AI results may structure those seeds differently",
-    );
-    for (const label of ["Conflict level", "Scale", "Power Blocs"]) {
+    expect(guide.summary).toContain("competing power blocs");
+    for (const label of [
+      "Conflict level",
+      "Scale",
+      "Government style",
+      "Power Blocs",
+      "Hidden Problem",
+    ]) {
       expect(tipText).toContain(label);
     }
+    expect(tipText).not.toContain("In offline drafts");
     expect(guide.linksTitle).toBe("Bring your nation to life");
     expect(guide.links).toHaveLength(3);
     expect(guide.links?.map((link) => link.href)).toEqual([
@@ -620,6 +629,9 @@ describe("generator guide distinctness", () => {
       "Adventure Idea Generator",
     );
     expect(guide).toBe(SLUG_GUIDES["adventure-idea-generator"]);
+    expect(
+      getGeneratorGuide("adventure-generator", "Adventure Idea Generator"),
+    ).toBe(guide);
     expect(guide).not.toEqual(
       defaultGuideForSlug(
         "adventure-idea-generator",
@@ -1086,4 +1098,21 @@ describe("RPG Item editorial guide", () => {
     ]);
     expect(guide.links?.every(({ description }) => description)).toBe(true);
   });
+});
+
+it("teaches faction resource bargaining, territorial limits and an independent move with a design-to-play learning path", () => {
+  const guide = SLUG_GUIDES.faction!;
+  const tips = guide.tips.map((tip) => tip.detail).join(" ");
+  for (const phrase of [
+    "Choose what they are",
+    "Choose their scale",
+    "Add campaign context",
+    "Immediate Hook",
+  ])
+    expect(tips).toContain(phrase);
+  expect(guide.links?.map((link) => link.href)).toEqual([
+    "/answers/how-do-you-create-a-fantasy-faction",
+    "/answers/how-do-i-run-political-intrigue-and-faction-play",
+    "/answers/how-do-you-track-faction-turns-between-rpg-sessions",
+  ]);
 });

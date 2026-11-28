@@ -118,6 +118,12 @@ export const howDoYouTrackFactionTurnsBetweenRpgSessions: AnswerConfigInput = {
   ],
   relatedTools: [
     {
+      title: "Vampire Clan Generator",
+      description:
+        "Give a vampire clan a hidden agenda, conflict and rival that can advance between sessions.",
+      href: "/generators/vampire-clan",
+    },
+    {
       title: "Faction generator",
       description:
         "Generate factions with distinct agendas, resources, and rivalries ready for your campaign.",

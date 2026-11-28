@@ -128,8 +128,10 @@
         href={segment.href}
         target="_blank"
         rel="noopener noreferrer"
-        class={inlineLinkClass}>{segment.text}</a
+        class={inlineLinkClass}
       >
+        {segment.text}
+      </a>
     {:else if segment.kind === "link"}
       <a
         href="{cleanBase}{segment.href}"
@@ -139,8 +141,10 @@
           sourceId: answer.slug,
           placement: "inline_link",
           ...classifyDiscoveryTarget(segment.href),
-        }}>{segment.text}</a
+        }}
       >
+        {segment.text}
+      </a>
     {:else}{segment.text}{/if}
   {/each}
 {/snippet}
@@ -318,12 +322,13 @@
                     {#if item.term}
                       <strong
                         class="block font-header text-base text-theme-text"
-                        >{item.term}</strong
                       >
+                        {item.term}
+                      </strong>
                     {/if}
-                    <span class="leading-relaxed text-theme-text"
-                      >{@render inline(item.text)}</span
-                    >
+                    <span class="leading-relaxed text-theme-text">
+                      {@render inline(item.text)}
+                    </span>
                   </li>
                 {/each}
               </svelte:element>
@@ -572,12 +577,14 @@
                     >
                       <span
                         class="block font-header text-sm font-bold text-theme-text transition-colors group-hover:text-theme-primary"
-                        >{topic.title}</span
                       >
+                        {topic.title}
+                      </span>
                       <span
                         class="mt-1 block text-base leading-relaxed text-theme-text"
-                        >{topic.description}</span
                       >
+                        {topic.description}
+                      </span>
                     </a>
                   </li>
                 {/each}
@@ -595,7 +602,7 @@
                   <li>
                     <a
                       href="{cleanBase}{tool.href}"
-                      class="group block h-full border border-theme-border bg-theme-surface p-4 transition-colors hover:border-theme-primary/50"
+                      class="group block h-full border border-theme-primary bg-theme-surface p-4 transition-colors hover:border-theme-primary"
                       style:background-image="var(--bg-texture-overlay)"
                       use:trackDiscoveryClick={{
                         sourceKind: "answer",
@@ -606,12 +613,14 @@
                     >
                       <span
                         class="block font-header text-sm font-bold text-theme-text"
-                        >{tool.title}</span
                       >
+                        {tool.title}
+                      </span>
                       <span
                         class="mt-1 block text-base leading-relaxed text-theme-text"
-                        >{tool.description}</span
                       >
+                        {tool.description}
+                      </span>
                     </a>
                   </li>
                 {/each}
@@ -640,12 +649,14 @@
                     >
                       <span
                         class="block font-header text-sm font-bold text-theme-text transition-colors group-hover:text-theme-primary"
-                        >{guide.title}</span
                       >
+                        {guide.title}
+                      </span>
                       <span
                         class="mt-1 block text-base leading-relaxed text-theme-text"
-                        >{guide.description}</span
                       >
+                        {guide.description}
+                      </span>
                     </a>
                   </li>
                 {/each}
@@ -676,9 +687,9 @@
                         class="icon-[lucide--corner-down-right] mt-1 h-4 w-4 shrink-0 text-theme-primary"
                         aria-hidden="true"
                       ></span>
-                      <span class="font-header text-sm font-bold"
-                        >{other.question}</span
-                      >
+                      <span class="font-header text-sm font-bold">
+                        {other.question}
+                      </span>
                     </a>
                   </li>
                 {/each}
