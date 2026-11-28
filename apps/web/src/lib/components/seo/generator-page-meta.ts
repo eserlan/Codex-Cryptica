@@ -126,7 +126,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Minor Magic Item & Trinket Generator",
     eyebrow: "Minor Magic Item Generator",
     introText:
-      "Generate small-scale, consumable, and limited-use magic items, charms, alchemical draughts, and curiosities designed for creative problem-solving rather than numerical stat bloat. Works without login.",
+      "Create a limited-use charm, draught or disposable gadget that gives your players another way to solve a problem. Choose the item's form, usage limit, utility, activation and quirk, then decide when the party learns its effect. No account needed.",
     canonicalPath: "/generators/minor-magic-item",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-minor-magic-item.jpg",
@@ -145,12 +145,12 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "What makes these magic items 'minor' or single-use?",
         answer:
-          "Unlike legendary artifacts or weapons with permanent mathematical bonuses, minor magic items focus on situational utility, creative tricks, sensory quirks, and limited charges (single-use consumables, fragile charges, or temporary blessings). They add flavour and tactical problem-solving without breaking campaign balance.",
+          "Minor items focus on situational utility rather than permanent bonuses. Some are consumed on use, some have fragile charges or a short duration, and some have a persistent minor effect until a mishap. Decide how much they can change a scene before introducing them.",
       },
       {
         question: "Are these items system-agnostic?",
         answer:
-          "Yes. All generated items use clear, concrete narrative and physical descriptions instead of system-specific math (like spell slot levels or exact DC numbers), making them immediately usable in D&D, Pathfinder, OSR, Shadowdark, Cairn, cyberpunk, and modern RPGs.",
+          "The draft describes the effect in narrative terms rather than providing a complete stat block for a particular game. Set any required action, difficulty, range or duration for your rules before play.",
       },
       {
         question: "What details are included in each generated item?",
@@ -160,7 +160,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Can I save generated items directly to my campaign vault?",
         answer:
-          "Yes. Clicking 'Save to Codex' stores the item draft in your browser's local storage. Open Codex Cryptica and it imports directly as an Item entity with frontmatter, Markdown notes, and linking ready to connect with your characters and factions.",
+          "Yes. After generating, add one new Item to your local vault. Its description stays in the main text and its effect, activation, usage limit, quirks and provenance stay together in GM notes. Record what the party discovers or spends, and link it to existing owners or places yourself.",
       },
     ],
     relatedLinks: [
@@ -184,7 +184,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "RPG Artifact & Relic Generator",
     eyebrow: "Artifact & Relic Generator",
     introText:
-      "Create legendary artifacts and ancient relics with deep lore, multi-tier powers (dormant, awakened, ascendant), consequential costs, pursuing factions, and adventure hooks. Works without login.",
+      "Create a relic worth building an adventure around. Choose its form, origin, scope, current status and cost; then review its dormant, awakened and ascendant powers alongside the factions that want it. Use the requirements and cost to set choices the bearer must face. No account needed.",
     canonicalPath: "/generators/artifact-generator",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-artifact-generator.jpg",
@@ -203,12 +203,12 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "How do Artifacts differ from standard magic items?",
         answer:
-          "Artifacts and Relics are unique, named worldbuilding anchors that function as campaign engines rather than simple stat-sticks. They feature tiered powers (dormant, awakened, ascendant), attunement rituals, consequential costs or curses, interested factions hunting them, and legendary destruction conditions.",
+          "A small magic item helps with a particular problem; an artifact can change who holds power in your campaign. The draft includes three power stages, awakening conditions, a cost or burden of custody, competing factions and a way to end its influence. Check that the powers and cost agree before introducing it.",
       },
       {
         question: "Does this generator support non-fantasy genres?",
         answer:
-          "Yes. When you choose a genre like Sci-Fi, Cyberpunk, Western, Steampunk, or Cosmic Horror, the generator adapts the underlying causal logic — creating lost precursor super-tech, cursed outlaw iron, or eldritch relics without forcing fantasy spells into modern or technological settings.",
+          "Yes. Choose a vibe such as Sci-Fi, Cyberpunk, Western, Steampunk or Cosmic Horror. Review the draft to make sure its powers and activation suit the setting: for example, a precursor device may need a power source instead of a blessing.",
       },
       {
         question: "What details are included in each generated artifact?",
@@ -219,7 +219,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
         question:
           "Can I save generated relics directly into my Codex Cryptica vault?",
         answer:
-          "Yes. Clicking 'Save to Codex' stores the artifact draft in your browser. Open Codex Cryptica and it imports directly as an Item entity with full Markdown notes, ready to link to your factions, locations, and campaign timeline.",
+          "Yes. After generating, add one new Item to your local vault. The description stays in its main text and the powers, cost, history, pursuers, hooks and sealing conditions remain in GM notes. Link the Item to existing people and factions and update the record as the party uncovers its powers.",
       },
     ],
     relatedLinks: [

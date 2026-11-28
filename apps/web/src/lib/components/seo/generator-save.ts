@@ -183,6 +183,15 @@ function vaultSaveLayout(
   layout: GeneratorSaveLayout,
   generatorType?: string,
 ): GeneratorSaveLayout {
+  // These item generators intentionally put the full effect and campaign
+  // reference in source lore. The preview may promote it for reading, but an
+  // explicit save must not expose hidden costs, rumours or destruction terms.
+  if (
+    generatorType === "minor-magic-item" ||
+    generatorType === "artifact-generator"
+  ) {
+    return { content: data.content, lore: data.lore ?? "" };
+  }
   return generatorType === "quest"
     ? { content: data.content, lore: data.lore ?? "" }
     : getGeneratorHandoffLayout(data, layout, generatorType);
