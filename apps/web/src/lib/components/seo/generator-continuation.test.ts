@@ -84,6 +84,17 @@ describe("generator-continuation", () => {
       localFirstNotice: "No account needed; stored locally in this browser.",
     });
 
+    expect(getGeneratorContinuationConfig("adventure-generator")).toBe(
+      adventureIdea,
+    );
+    expect(adventureIdea?.placement).toBe("near-result");
+    expect(adventureIdea?.summary).toContain("GM notes");
+    expect(getGeneratorContinuationConfig("rumour")).toMatchObject({
+      headline: "Keep these rumours in circulation",
+      placement: "near-result",
+      ctaLabel: "Add to my Codex",
+    });
+
     const oneShot = getGeneratorContinuationConfig(
       "one-shot-adventure-generator",
     );

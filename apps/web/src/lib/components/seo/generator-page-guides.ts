@@ -13,6 +13,43 @@ export interface GeneratorGuide {
   links?: GeneratorGuideLink[];
 }
 
+const ADVENTURE_GUIDE: GeneratorGuide = {
+  summary:
+    "Build an adventure around something the characters can change, not a sequence of required scenes. Decide who is moving against them, what happens if they delay, and how more than one approach can change the outcome.",
+  tips: [
+    {
+      title: "Choose a problem that can be tackled in several ways",
+      detail:
+        "Set Choose a vibe to Classic Fantasy, Adventure Type to Rescue & Recovery, Adventure Scale to Short Arc (2-3 Sessions), and Tone to Heroic & High Stakes. Use Primary Objective & Pressure to decide what must be secured before the city gate closes. Give the party a route through the gate and another via the river, each with a different cost.",
+    },
+    {
+      title: "Give the clock and factions independent motives",
+      detail:
+        "In Starting Seed / Situation (optional), enter the witness, the ledger, and the 36-hour deadline. In World context (optional), name a magistrate who needs the evidence destroyed and dock workers who want their missing colleagues accounted for. Place clues in two different locations. Advance Complications & Escalating Pressures when the party spends time, not because they chose the wrong route.",
+    },
+    {
+      title: "Keep the prep separate from what players know",
+      detail:
+        "Use Possible Outcomes to decide what each faction does if the witness escapes, disappears, or negotiates. Add to my Codex saves one Note with the scenario details in GM notes. Open Adventure Canvas is a separate action for arranging scenes, actors and clues. Tell players only the opening situation and facts they discover.",
+    },
+  ],
+  linksTitle: "Turn an adventure premise into playable pressure",
+  links: [
+    {
+      href: "/answers/how-do-i-turn-an-rpg-idea-into-an-adventure",
+      label: "Build more than one route through a premise",
+      description:
+        "Turn a single situation into locations, opposition and evidence the party can approach in different orders.",
+    },
+    {
+      href: "/answers/how-do-i-plan-story-arcs-for-an-rpg-campaign",
+      label: "Keep the next session responsive to choices",
+      description:
+        "Use consequences and unresolved situations to carry a story arc forward without fixing its ending.",
+    },
+  ],
+};
+
 export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   nation: {
     summary:
@@ -504,37 +541,7 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
-  "adventure-generator": {
-    summary:
-      "Use an adventure outline as a situation with pressure, not a rigid script: set a ticking clock, two competing NPCs, and clues that point forward even when plans go sideways.",
-    tips: [
-      {
-        title: "Start near the inciting pressure",
-        detail:
-          "Open with the witness, contract, or crisis already knocking on the party's door so session one has momentum.",
-      },
-      {
-        title: "Convert to an Adventure Canvas",
-        detail:
-          "Click Open Adventure Canvas on the output to turn locations, factions, and clues into a movable relationship map.",
-      },
-      {
-        title: "Keep outcomes open",
-        detail:
-          "Let player choices determine which faction wins—track only what each side will do if the party ignores them.",
-      },
-    ],
-    links: [
-      {
-        href: "/answers/how-do-i-prepare-an-rpg-session-step-by-step",
-        label: "Preparing a session step by step",
-      },
-      {
-        href: "/answers/how-do-i-plan-story-arcs-for-an-rpg-campaign",
-        label: "Planning campaign story arcs",
-      },
-    ],
-  },
+  "adventure-generator": ADVENTURE_GUIDE,
   "point-crawl": {
     summary:
       "Point crawls replace empty hex-counting with meaningful travel decisions: every node is a landmark or hazard, and every route has a cost, risk, or secret shortcut.",
@@ -568,28 +575,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   rumour: {
     summary:
-      "Great rumours give players actionable leads without spoiling the truth: mix reliable gossip, distorted exaggerations, and dangerous misconceptions.",
+      "Offer gossip as a set of choices, not a disguised mission list. Give each claim a traceable source, somewhere to check it, and a consequence if the party believes the wrong person.",
     tips: [
       {
-        title: "Always name a pursuable lead",
+        title: "Make the leads fit the place",
         detail:
-          "A rumour should mention a specific NPC, dock, ruin, or faction the party can visit right away.",
+          "Set Genre to Classic Fantasy, Tone to Everyday, Danger Level to Low and Subject Focus to Balanced Mix for a busy market town. Replace a generic lead with a name, stall or shift the party can actually find. Read two or three rumours first and keep the others for later visits.",
       },
       {
-        title: "Separate player gossip from GM truth",
+        title: "Let wrong information reveal something useful",
         detail:
-          "Read only the rumour bullets aloud; keep the Reality and If Investigated notes behind the screen.",
+          "Check Reality and If Investigated under GM Reference. If the rumour about a poisoned well is false, let inspection reveal a broken sluice and a merchant profiting from panic instead. Give the party evidence before they make an irreversible accusation.",
       },
       {
-        title: "Drop two rumours per tavern stop",
+        title: "Track what the characters have heard",
         detail:
-          "Giving players a choice between competing leads turns downtime into player-driven exploration.",
+          "Add to my Codex saves all six rumours in one Note. Keep the Rumour, Lead and Source entries in the main text and the truth in GM notes. Mark claims as heard, checked or disproved after each session, and link the Note to the settlement or people already in your vault.",
       },
     ],
+    linksTitle: "Make local gossip worth following",
     links: [
       {
-        href: "/answers/how-do-i-get-a-stalled-rpg-investigation-moving-again",
-        label: "Keeping investigations moving",
+        href: "/answers/how-do-you-generate-useful-rpg-rumours",
+        label: "Write rumours that give players something to do",
+        description:
+          "Give each rumour a concrete lead and make the truth discoverable even when the claim is mistaken.",
+      },
+      {
+        href: "/answers/how-to-create-rumours-for-a-fantasy-town",
+        label: "Tie gossip to local pressures",
+        description:
+          "Use the people, places and disagreements in a settlement to decide what its inhabitants talk about.",
       },
     ],
   },
@@ -1552,41 +1568,7 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
-  "adventure-idea-generator": {
-    summary:
-      "Draft a situation-first scenario with an inciting pressure, competing factions, clues and non-linear outcomes, then hand your party a crisis with real choices rather than a scripted plot.",
-    tips: [
-      {
-        title: "Frame the scope and stakes first",
-        detail:
-          "Pick Choose a vibe, Adventure Type, Adventure Scale and Tone to set whether the table faces a tight one-shot crisis or a multi-session arc, then check Primary Objective & Pressure for what worsens if nobody acts.",
-      },
-      {
-        title: "Build directly from a table seed",
-        detail:
-          "Paste an unresolved thread into Starting Seed / Situation (optional) with any deadline, and use World context (optional) to name active regions or factions so Clues, Secrets & Discoveries anchor to your world.",
-      },
-      {
-        title: "Leave the ending to the party",
-        detail:
-          "Use Possible Outcomes and Complications & Escalating Pressures in GM Reference as moving consequences rather than targets, then click Open Adventure Canvas when you want to link scenes and NPCs on a board.",
-      },
-    ],
-    links: [
-      {
-        href: "/answers/is-my-rpg-campaign-idea-good",
-        label: "Testing whether a premise creates play",
-      },
-      {
-        href: "/answers/how-do-i-turn-an-rpg-idea-into-an-adventure",
-        label: "Turning a premise into a playable situation",
-      },
-      {
-        href: "/answers/how-do-you-create-quest-hooks-without-railroading",
-        label: "Dropping adventure hooks without railroading",
-      },
-    ],
-  },
+  "adventure-idea-generator": ADVENTURE_GUIDE,
   "one-shot-adventure-generator": {
     summary:
       "Build a timed single-session adventure with a GM briefing, three to six essential or optional scenes, multi-route clues, multiple endings and a one-page cheat sheet ready to run tonight.",

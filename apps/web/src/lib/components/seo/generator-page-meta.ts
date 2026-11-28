@@ -4,7 +4,7 @@ export type { ValidSlug, SlugMetaEntry };
 const ADVENTURE_CANVAS_FAQ: NonNullable<SlugMetaEntry["faqs"]>[number] = {
   question: "Can I turn this into an interactive adventure canvas?",
   answer:
-    "Yes — select Open Adventure Canvas on any generated scenario to create an interactive relationship map of its situation, locations, NPCs and factions, threats, clues, and possible outcomes. You can rearrange the nodes, edit their connections, and create linked vault entities as the adventure develops. The Adventure Canvas is exclusive to Codex Cryptica, but it is still free and needs no account — just open your world in the app.",
+    "Yes. Open Adventure Canvas is separate from saving the prep Note. It creates a map of the situation, locations, NPCs and factions, threats, clues and possible outcomes in your local vault. You can rearrange the nodes and edit their connections. If the new canvas first opens as an empty workspace, reload it to restore the saved map.",
   image: "/images/adventure-canvas.png",
   imageAlt:
     "An interactive Adventure Canvas showing a non-linear scenario with situations, locations, factions, threats, clues, and outcomes connected by labeled relationships",
@@ -468,7 +468,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "RPG Rumour Generator",
     eyebrow: "Rumour Generator",
     introText:
-      "Create a d6 table of six local rumours the party can overhear and choose to chase. Four are essentially true, one is exaggerated, and one is a dangerous misconception. Every rumour names a real lead; the truth stays hidden in GM notes until someone investigates.",
+      "Prepare a d6 table of local gossip the party can follow from a tavern, market or settlement. Each draft is designed for four essentially true claims, one exaggeration and one dangerous misconception, with a source, a lead and a separate GM reference. Save all six in a single Note and track what the party learns.",
     canonicalPath: "/generators/rumour",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-rumour.jpg",
@@ -494,12 +494,12 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Are the rumours always true?",
         answer:
-          "No. Each table of six rolls a fixed hidden distribution: four rumours are essentially true, one is an exaggeration of something real, and one is a dangerous misconception that sounds plausible but is materially wrong. Which is which is never shown to players -- it lives in the GM-only notes beneath each entry.",
+          "No. The six-entry table is designed to contain four essentially true rumours, one exaggeration and one dangerous misconception. Check the Reality and If Investigated fields before play, and keep them separate from the gossip you share with players.",
       },
       {
         question: "Will every rumour actually be useful at the table?",
         answer:
-          "Yes. Every rumour names at least one concrete, pursuable lead -- a specific person, place, faction, or item the players can seek out, question, or investigate. Vague ominous statements with nothing to act on are treated as a quality failure, not a feature.",
+          "Each entry is meant to name a person, place, faction or object the party can pursue. Before using the table, replace any vague lead with a named contact, location or time. Even a false rumour should have evidence that reveals the mistake.",
       },
       {
         question: "Does this work for genres other than fantasy?",
@@ -509,7 +509,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Do I have to save all six rumours as separate entities?",
         answer:
-          "No. The whole table copies and saves as a single lightweight note, so you're not forced to create six new entities in your campaign vault every time you roll a table of local gossip.",
+          "No. Add to my Codex opens a single Note with the six rumours, leads and sources in main text and the truth and investigation consequences in GM notes. Link it to the relevant settlement yourself; no separate contacts or locations are created automatically.",
       },
     ],
     relatedLinks: [
@@ -1282,7 +1282,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Adventure Idea Generator",
     eyebrow: "Adventure Generator",
     introText:
-      "Create rich, multi-layered adventure scenarios across any RPG genre or world theme. Generates initial situations, primary pressures, key locations, key actors, threats, discoveries, complications, stakes, and non-linear possible outcomes — a situation, not a plot.",
+      "Prepare an adventure around a problem the party can approach in different ways. Choose the type, length and tone, add a seed or existing campaign context, and draft locations, opposition, clues, time pressure and possible outcomes. Save it as a private prep Note or open a separate Adventure Canvas.",
     canonicalPath: "/generators/adventure-generator",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-adventure-generator.jpg",
@@ -1299,22 +1299,22 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "What does the adventure generator create?",
         answer:
-          "It creates complete, campaign-ready adventure situations including initial situation, primary objective & pressure, key locations, important NPCs & factions, threats, discoveries, complications, rewards, and multiple possible outcomes.",
+          "It drafts an initial situation, objective and pressure, locations, NPCs and factions, threats, clues, complications, stakes, possible outcomes and hooks. Turn those into scene choices before play rather than treating the draft as a finished adventure.",
       },
       {
         question: "Does it force a linear plot?",
         answer:
-          "No. The generator produces a dynamic situation with multiple non-linear resolutions and key actors, giving players full agency rather than railroading them through a fixed sequence of events.",
+          "No fixed sequence is required. Give the party at least two ways to reach the objective and decide which clue or consequence remains available if an approach fails.",
       },
       {
         question: "Is it only for fantasy games?",
         answer:
-          "No. The generator dynamically adapts to all Codex Cryptica world themes — fantasy, sci-fi, cyberpunk, dark fantasy, gothic horror, post-apocalyptic, pirate, western, steampunk, modern conspiracy, and Lancer.",
+          "No. Choose a vibe to set the world theme, from Classic Fantasy to science fiction and horror. The situation, stakes and opposition can then be adapted to your campaign.",
       },
       {
         question: "Does it work without an account?",
         answer:
-          "Yes. Generate and copy adventure ideas on this page without logging in. Save drafts directly into a browser-local Codex Cryptica vault — no sign-up required.",
+          "Yes. Generate and copy adventure ideas without an account. Add to my Codex opens one Note in your browser-local vault, with the summary in main text and the scenario details in GM notes. Open Adventure Canvas is a separate way to prepare a relationship map.",
       },
       ADVENTURE_CANVAS_FAQ,
     ],
@@ -1663,7 +1663,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Adventure Idea Generator",
     eyebrow: "Adventure Generator",
     introText:
-      "Create rich, multi-layered adventure scenarios across any RPG genre or world theme. Generates initial situations, primary pressures, key locations, key actors, threats, discoveries, complications, stakes, and non-linear possible outcomes — a situation, not a plot.",
+      "Prepare an adventure around a problem the party can approach in different ways. Choose the type, length and tone, add a seed or existing campaign context, and draft locations, opposition, clues, time pressure and possible outcomes. Save it as a private prep Note or open a separate Adventure Canvas.",
     canonicalPath: "/generators/adventure-generator",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-adventure-idea-generator.jpg",
@@ -1680,7 +1680,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "What does the adventure generator create?",
         answer:
-          "It creates complete, campaign-ready adventure situations including initial situation, primary objective & pressure, key locations, important NPCs & factions, threats, discoveries, complications, rewards, and multiple possible outcomes.",
+          "It drafts an initial situation, objective and pressure, locations, NPCs and factions, threats, clues, complications, stakes, possible outcomes and hooks. Turn those into scene choices before play rather than treating the draft as a finished adventure.",
       },
       ADVENTURE_CANVAS_FAQ,
     ],

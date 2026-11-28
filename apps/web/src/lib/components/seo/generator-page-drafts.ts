@@ -3,6 +3,25 @@ import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 import type { ValidSlug } from "./generator-page-meta";
 import { extendedSlugDrafts } from "./generator-page-drafts-extended";
 
+const ADVENTURE_DRAFT: GeneratorOutput = {
+  type: "note",
+  kind: "adventure",
+  title: "The Witness Who Came Back",
+  summary:
+    "A witness to last year's warehouse fire has evidence against a magistrate, and the city gates close in 36 hours.",
+  content:
+    "## Initial Situation\nMira Osal, listed among the dead in last year's warehouse fire, has appeared at the Drowned Clinic with a sealed ledger. She wants safe passage to testify.\n\n## Primary Objective & Pressure\nGet Mira and the ledger beyond the city before the Salt Gate shuts for the harvest festival in 36 hours. The magistrate's agents are buying information about her movements.\n\n## Key Locations\n- **The Drowned Clinic:** A basement surgery beneath the harbour market.\n- **The Salt Gate:** The only land exit; festival guards check all carts.\n- **The Ropewalk:** Dock workers launch a cargo skiff at the evening tide.\n\n## Important NPCs & Factions\n- **Mira Osal:** Wants to testify, but refuses to leave without evidence of who died.\n- **Captain Deren:** Guards the gate and suspects his magistrate is destroying records.\n- **The rope crews:** Want the families of the dead compensated.\n\n## Threats & Antagonists\nThe magistrate's agents search the clinic and buy passage records. They can discredit Mira without killing her.\n\n## Clues, Secrets & Discoveries\n- A clinic receipt proves Mira was alive after the fire.\n- A duplicate cargo manifest at the Ropewalk identifies the magistrate's warehouse. Both records can corroborate her testimony.",
+  lore: "## Complications & Escalating Pressures\n- After 12 hours, agents question the physician. After 24, Deren receives orders to close the Salt Gate early.\n- The rope crews demand that the missing workers be named in any public testimony.\n\n## Rewards & Stakes\nThe families could win restitution; Deren could lose his command.\n\n## Possible Outcomes\n- Mira reaches the capital: the evidence triggers an inquiry, but the families still need representation.\n- The party releases the manifest locally: the magistrate cannot bury it, but his allies might seize control of the inquiry.\n- The ledger is lost: the repeatable records and witnesses still provide a route to proof.\n\n## Adventure Hooks\n- The physician asks the party to escort an injured patient.\n- A bereaved rope worker hires them to recover the duplicate manifest.",
+  labels: [
+    "adventure",
+    "event",
+    "classic-fantasy",
+    "rescue-recovery",
+    "imported-draft",
+  ],
+  status: "draft",
+};
+
 export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
   ...extendedSlugDrafts,
   holiday: {
@@ -244,28 +263,8 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
     labels: ["dungeon", "location", "dungeon-generator", "imported-draft"],
     status: "draft",
   },
-  "adventure-generator": {
-    type: "event",
-    title: "The Witness Who Came Back",
-    summary:
-      "A dying informant has surfaced with evidence that implicates the city's most powerful magistrate - and she has three days to live.",
-    content:
-      "## Initial Situation\nA street physician treated a woman who should be dead - she was listed as a victim of last year's warehouse fire. She is carrying a sealed ledger and will only hand it to someone who can guarantee safe passage out of the city.\n\n## Primary Objective & Pressure\nGet the witness and the ledger to the provincial capital before the magistrate's agents locate her - the city gates close in 36 hours for the harvest festival.",
-    lore: "### Key Locations\n- **The Drowned Clinic**: A basement surgery below the harbour market.\n- **The Salt Gate**: The only land route out.\n\n### Important NPCs & Factions\n- **Mira Osal, the witness**: Survived by accident; wants to testify.\n- **Guard-Captain Deren**: Loyal to the magistrate.\n\n### Possible Outcomes\n- The witness reaches the capital and testifies; the magistrate is arrested.",
-    labels: ["adventure", "event", "adventure-generator", "imported-draft"],
-    status: "draft",
-  },
-  "adventure-idea-generator": {
-    type: "event",
-    title: "The Witness Who Came Back",
-    summary:
-      "A dying informant has surfaced with evidence that implicates the city's most powerful magistrate - and she has three days to live.",
-    content:
-      "## Initial Situation\nA street physician treated a woman who should be dead - she was listed as a victim of last year's warehouse fire. She is carrying a sealed ledger and will only hand it to someone who can guarantee safe passage out of the city.\n\n## Primary Objective & Pressure\nGet the witness and the ledger to the provincial capital before the magistrate's agents locate her - the city gates close in 36 hours for the harvest festival.",
-    lore: "### Key Locations\n- **The Drowned Clinic**: A basement surgery below the harbour market.\n- **The Salt Gate**: The only land route out.\n\n### Important NPCs & Factions\n- **Mira Osal, the witness**: Survived by accident; wants to testify.\n- **Guard-Captain Deren**: Loyal to the magistrate.\n\n### Possible Outcomes\n- The witness reaches the capital and testifies; the magistrate is arrested.",
-    labels: ["adventure", "event", "adventure-generator", "imported-draft"],
-    status: "draft",
-  },
+  "adventure-generator": ADVENTURE_DRAFT,
+  "adventure-idea-generator": ADVENTURE_DRAFT,
   tome: {
     type: "item",
     title: "The Drowned Liturgy of Saint Jude-in-the-Fens",
