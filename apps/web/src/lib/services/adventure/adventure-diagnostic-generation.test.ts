@@ -15,7 +15,11 @@ describe("Adventure generation diagnostics", () => {
         reason: "retained-unchanged",
         deliveredChars: 0,
       },
-      actionResolution: { outcome: "resolved", validation: "accepted" },
+      actionResolution: {
+        outcome: "resolved",
+        validation: "accepted",
+        evidenceCategory: "state-patch",
+      },
     };
     session.turns[2].generation = {
       transport: "stateless",
@@ -27,7 +31,11 @@ describe("Adventure generation diagnostics", () => {
       threadMode: "reset",
       resetReason: "revision-mismatch",
       revisionMismatchCause: "state-correction",
-      actionResolution: { outcome: "unresolved", validation: "corrected" },
+      actionResolution: {
+        outcome: "unresolved",
+        validation: "corrected",
+        evidenceCategory: "dropped-patch",
+      },
     };
 
     expect(generationSummary(session)).toMatchObject({

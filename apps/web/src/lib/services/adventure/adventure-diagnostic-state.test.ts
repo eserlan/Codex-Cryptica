@@ -61,9 +61,17 @@ describe("Adventure diagnostic state", () => {
   it("diffs nested ID arrays and scalar fields without replacing unchanged state", () => {
     const before = diagnosticState(exampleSession());
     const after = structuredClone(before);
-    after.visibleState.location = null;
+    after.visibleState.location = {
+      id: "mill-location",
+      text: "The mill",
+      source: "canonical",
+    };
     after.visibleState.knownFacts = [
-      { id: "clue", text: "A clue", source: "provisional" },
+      {
+        id: "clue",
+        text: "A clue",
+        source: "provisional",
+      },
     ];
     after.hiddenState.secrets[0].status = "revealed";
     after.scenarioCollection!.focusedScenarioId = "scenario-1";
@@ -75,7 +83,7 @@ describe("Adventure diagnostic state", () => {
 
     expect(diffDiagnosticState(before, after)).toEqual({
       visibleState: {
-        location: null,
+        location: after.visibleState.location,
         knownFacts: {
           added: after.visibleState.knownFacts,
           updated: [],

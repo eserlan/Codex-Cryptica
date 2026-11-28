@@ -53,7 +53,7 @@ describe("Adventure diagnostic summary", () => {
   it("uses explicit empty values when optional state and history are absent", () => {
     const session = quietSession(0);
     session.scenarioCollection = undefined;
-    session.visibleState.location = null;
+    session.visibleState.location = undefined;
     session.currentPlaceId = "missing-place";
 
     expect(diagnosticSummary(session, 0, undefined)).toMatchObject({

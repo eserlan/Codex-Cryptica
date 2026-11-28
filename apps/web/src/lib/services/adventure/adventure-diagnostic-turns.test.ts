@@ -12,7 +12,13 @@ describe("Adventure diagnostic turns", () => {
     turn.visiblePatch.location = null;
     turn.visiblePatch.knownFacts = {
       add: [{ id: "added", text: "A clue", source: "provisional" }],
-      update: [{ id: "updated", text: "Updated clue" }],
+      update: [
+        {
+          id: "updated",
+          text: "Updated clue",
+          source: "provisional",
+        },
+      ],
       removeIds: ["removed"],
     };
     turn.dropped = ["unknown patch"];
