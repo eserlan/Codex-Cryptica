@@ -52,6 +52,30 @@ const RPG_NPC_CONTINUATION: GeneratorContinuationConfig = {
 
 const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
   {
+    "minor-magic-item": {
+      headline: "Keep track of this small find",
+      summary:
+        "Save this find as one Item in your local Codex vault so you can record when its owner uses the last charge or reveals its effect.",
+      capabilities: [
+        "Keep its description in the Item and its usage limit, activation, effect, quirk and provenance in GM notes",
+        "Link the Item to its owner or discovery site, and update it when spent",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
+    "artifact-generator": {
+      headline: "Keep the relic's history and demands together",
+      summary:
+        "Save this relic as one Item in your local Codex vault so you can record who holds it, which powers have awakened and what each use costs.",
+      capabilities: [
+        "Keep the description separate from the GM reference powers, requirements, cost, pursuers and sealing conditions",
+        "Link the Item to existing owners, factions and locations and record the consequences as the campaign unfolds",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
     "star-system": {
       headline: "Keep this system connected",
       summary:
@@ -283,6 +307,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    "mystery-investigation": {
+      headline: "Keep the truth fixed as the case unfolds",
+      summary:
+        "Save this case as one Note in your local Codex vault and record which clues the party has found and which accounts they have tested.",
+      capabilities: [
+        "Keep the case material separate from the fixed truth, timeline and next NPC moves in GM notes",
+        "Link the Note to people and places already in your vault and record the outcome after play",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
     "dark-fantasy-faction": {
       headline: "Keep this faction in play",
       summary:
@@ -307,6 +343,19 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    business: {
+      headline: "Keep the enterprise and its people together",
+      summary:
+        "Bring your generated business into the local Codex vault to revisit the contracts, staff and dependencies when trade is interrupted.",
+      capabilities: [
+        "Create a Faction with its owner or manager and staff as linked Characters; keep the labelled Secret in GM notes",
+        "Develop outside suppliers and rivals from the named references in the business record",
+        "A text-only shared remix keeps its combined draft in GM notes of one Note",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
     encounter: {
       headline: "Run this encounter from your vault",
       summary:
@@ -319,6 +368,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    heist: {
+      headline: "Keep the score ready for changing plans",
+      summary:
+        "Save this score as one Event in your local Codex vault, so you can revisit the objective, alarm state and consequences after play.",
+      capabilities: [
+        "Keep the hidden factor, security plan, alarm track and escape options in GM notes",
+        "Link the Event to the target, patron and prizes already in your vault",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
     tome: {
       headline: "Shelve this book in your campaign",
       summary:
@@ -330,6 +391,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       ],
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
+    },
+    puzzle: {
+      headline: "Keep the puzzle's setup and solution ready for play",
+      summary:
+        "Save the generated encounter as one Note in your local Codex vault, so you can prepare its place in the adventure and record how the party solves it.",
+      capabilities: [
+        "Keep the labelled GM-Only Solution and Escalating Hints in GM notes",
+        "Link the Note to the place it blocks and the encounter or objective it changes",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
     },
     "alien-race": {
       headline: "Give this species a place in your world",
@@ -366,6 +439,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       ],
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
+    },
+    creature: {
+      headline: "Keep this inhabitant in your campaign's ecology",
+      summary:
+        "Save this generated creature as one Creature entry in your local Codex vault, so you can revisit its signs, behaviour and encounters.",
+      capabilities: [
+        "The AI is asked to keep hidden ecology, surprises and secret weaknesses in GM notes; review AI text before sharing",
+        "Link the Creature to habitats, hunters or campaign events and update its behaviour as play changes the region",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
     },
     world: {
       headline: "Keep this world connected",

@@ -138,13 +138,17 @@ function resolveMechanicsSaveExtension(
   return {};
 }
 
+function usesPrivateBodyAndLore(generatorType?: string) {
+  return generatorType === "heist" || usesSourceHandoff(generatorType);
+}
+
 function resolveSaveBodyAndLore(
   data: GeneratorOutput,
   layout: GeneratorSaveLayout,
   generatorType?: string,
 ): { content: string; lore: string } {
   const summaryPrefix = data.summary ? `*${data.summary}*` : "";
-  if (usesSourceHandoff(generatorType)) {
+  if (usesPrivateBodyAndLore(generatorType)) {
     return {
       content: [summaryPrefix, layout.content].filter(Boolean).join("\n\n"),
       lore: layout.lore,
@@ -180,6 +184,15 @@ function vaultSaveLayout(
   layout: GeneratorSaveLayout,
   generatorType?: string,
 ): GeneratorSaveLayout {
+  // These item generators intentionally put the full effect and campaign
+  // reference in source lore. The preview may promote it for reading, but an
+  // explicit save must not expose hidden costs, rumours or destruction terms.
+  if (
+    generatorType === "minor-magic-item" ||
+    generatorType === "artifact-generator"
+  ) {
+    return { content: data.content, lore: data.lore ?? "" };
+  }
   return generatorType === "quest"
     ? { content: data.content, lore: data.lore ?? "" }
     : getGeneratorHandoffLayout(data, layout, generatorType);
@@ -192,7 +205,7 @@ export function buildGeneratorSavePayload(
   generatorType?: string,
 ): GeneratorSavePayload {
   const isAdventure =
-    !usesSourceHandoff(generatorType) &&
+    !usesPrivateBodyAndLore(generatorType) &&
     (data.kind === "adventure" || data.labels.includes("adventure"));
   const { content, lore: initialLore } = resolveCalendarTwistSaveBodyAndLore(
     data,
@@ -213,7 +226,9 @@ export function buildGeneratorSavePayload(
     content,
     lore,
     labels: data.labels,
-    status: data.status,
+    // An explicit public Mystery save is the acceptance action; preserving its
+    // preview draft status hides the case from the normal vault table.
+    status: generatorType === "mystery-investigation" ? "active" : data.status,
     systemId: data.systemId ?? data.mechanics?.systemId,
     ...(mapImageDataUrl ? { mapImageDataUrl } : {}),
     ...(metadata ? { metadata } : {}),

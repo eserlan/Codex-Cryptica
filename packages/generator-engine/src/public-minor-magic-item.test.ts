@@ -251,6 +251,21 @@ describe("parseMinorMagicItemResponse", () => {
     expect(out.labels).toEqual(["minor-magic-item", "imported-draft"]);
   });
 
+  it("rejects a blank description even when lore contains a Description section", () => {
+    for (const content of [undefined, "  "]) {
+      expect(() =>
+        parseMinorMagicItemResponse(
+          JSON.stringify({
+            title: "Glimmer Phial",
+            content,
+            lore: "### Description\nA small glass phial.",
+          }),
+          resolved,
+        ),
+      ).toThrow("Minor magic item response is missing its description.");
+    }
+  });
+
   it("enforces required Quick Reference and mechanics heading when omitted by model", () => {
     const out = parseMinorMagicItemResponse(
       '{"title":"Iron Charm","content":"A heavy iron charm.","lore":"### Quirk or Drawback\\nCold to the touch."}',
