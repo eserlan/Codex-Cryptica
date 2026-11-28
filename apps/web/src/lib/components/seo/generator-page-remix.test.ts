@@ -4,6 +4,8 @@ import {
   createGeneratorRemixLoader,
   type GeneratorRemixLoaderOptions,
 } from "./generator-page-remix";
+import { getGeneratorDocumentLayout } from "./generator-document-layout";
+import { buildGeneratorSavePayload } from "./generator-save";
 
 interface ShareFixture {
   shareId: string;
@@ -65,6 +67,44 @@ describe("loadGeneratorRemixDraft", () => {
         status: "draft",
       },
       theme: "Classic Fantasy",
+    });
+  });
+
+  it("restores a BBEG share as one Character with concatenated text in GM notes", async () => {
+    const share = makeShare({
+      content:
+        "# Shared villain\n*Secret summary*\nLabels: villain\n\n### Public Face\nA governor.\n\n### True Nature\nThe governor plans a diversion.",
+      metadata: {
+        generatorPath: "/generators/bbeg-generator",
+        labels: ["villain", "bbeg-generator"],
+      },
+    });
+    const result = await loadGeneratorRemixDraft(
+      options(vi.fn().mockResolvedValue(share), {
+        targetPath: "/generators/bbeg-generator",
+      }),
+    );
+    expect(result?.draft).toMatchObject({
+      type: "character",
+      content: "",
+      summary: "",
+      lore: "*Secret summary*\n\n### Public Face\nA governor.\n\n### True Nature\nThe governor plans a diversion.",
+      labels: share.metadata.labels,
+    });
+    const draft = result!.draft;
+    const preview = getGeneratorDocumentLayout(draft);
+    expect(preview.content).toContain("The governor plans a diversion.");
+    const payload = buildGeneratorSavePayload(
+      draft,
+      preview,
+      undefined,
+      "bbeg-generator",
+    );
+    expect(payload).toMatchObject({
+      type: "character",
+      content: "",
+      lore: draft.lore,
+      labels: share.metadata.labels,
     });
   });
 

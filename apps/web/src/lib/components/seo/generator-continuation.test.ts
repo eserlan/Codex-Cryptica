@@ -408,6 +408,37 @@ describe("generator-continuation", () => {
     }
   });
 
+  it("configures BBEG as a new Character with private lore near explicit results", () => {
+    const config = getGeneratorContinuationConfig("bbeg-generator");
+    expect(config).toMatchObject({
+      headline: "Keep the villain's next move ready for play",
+      placement: "near-result",
+      ctaLabel: "Add to my Codex",
+      localFirstNotice: "No account needed; stored locally in this browser.",
+    });
+    expect(config?.summary).toContain("one new Character");
+    expect(config?.capabilities.join(" ")).toContain(
+      "hidden plan and vulnerabilities in GM notes",
+    );
+    for (const overrides of [
+      {},
+      { userGenerationSucceeded: false },
+      { isExampleDraft: true },
+      { isBusy: true },
+    ]) {
+      expect(
+        shouldShowGeneratorContinuation({
+          generatorType: "bbeg-generator",
+          userGenerationSucceeded: true,
+          isExampleDraft: false,
+          isBusy: false,
+          variant: "default",
+          ...overrides,
+        }),
+      ).toBe(Object.keys(overrides).length === 0);
+    }
+  });
+
   it("returns null for Wave 2, names, and unknown generator types", () => {
     for (const type of [
       "point-crawl",

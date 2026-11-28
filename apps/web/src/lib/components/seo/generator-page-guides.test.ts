@@ -853,6 +853,33 @@ describe("generator guide distinctness", () => {
   });
 });
 
+describe("BBEG editorial guide", () => {
+  it("teaches scale, motive and adapting the next move, with a campaign reading sequence", () => {
+    const guide = getGeneratorGuide("bbeg-generator", "BBEG Generator");
+    const text = guide.tips.map(({ detail }) => detail).join(" ");
+    for (const label of [
+      "Threat Scale",
+      "Villain Archetype",
+      "World Relation",
+      "Tone",
+      "Degree of Sympathy / Redeemability",
+      "The Villain's Plan",
+      "Escalation If Ignored",
+    ]) {
+      expect(text).toContain(label);
+    }
+    expect(text).toContain("change the next viable stage");
+    expect(text).not.toContain("Save to Codex");
+    expect(guide.linksTitle).toBe("Build, run and update the campaign threat");
+    expect(guide.links?.map(({ href }) => href)).toEqual([
+      "/answers/how-do-i-plan-story-arcs-for-an-rpg-campaign",
+      "/answers/how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
+      "/answers/how-do-you-track-faction-turns-between-rpg-sessions",
+    ]);
+    expect(guide.links?.every(({ description }) => description)).toBe(true);
+  });
+});
+
 describe("Quest editorial guide", () => {
   it("teaches table decisions using field labels and three progressive Answers", () => {
     const guide = getGeneratorGuide("quest", "RPG Quest Generator");

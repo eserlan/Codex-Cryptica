@@ -584,28 +584,43 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "bbeg-generator": {
     summary:
-      "A compelling main villain believes they are solving a real problem—and uses lieutenants, leverage, and a ticking clock so the party feels their reach before meeting them.",
+      "Build a campaign around an antagonist whose influence is felt before the party meets them. Use the first signs, the people carrying out the plan and the consequences of interference to make an evolving threat rather than a sequence of compulsory encounters.",
     tips: [
       {
-        title: "Define what happens if the party does nothing",
+        title: "Make the scale of the threat tangible",
         detail:
-          "Give the villain three concrete milestones so their scheme advances visibly between sessions.",
+          "Choose a Threat Scale the party can see and affect: a Regional villain might close the only ferry between two towns, while a Local one could control a single market. Pick one First Signs clue the players can encounter in ordinary travel and give them at least two ways to investigate it.",
       },
       {
-        title: "Put lieutenants in the spotlight early",
+        title: "Decide what the villain will sacrifice",
         detail:
-          "Let players clash with the villain's agents and policies long before the final confrontation.",
+          "Combine Corrupt Ruler in Villain Archetype with Guardian in World Relation; someone protecting a city might sacrifice the surrounding villages to do it. Use Tragic in Tone and Understandable, Still Wrong in Degree of Sympathy / Redeemability, then give a loyal lieutenant a line they will not cross, so the party can expose that cost and win an ally.",
       },
       {
-        title: "Offer a moral or tactical flaw",
+        title: "Let interference change the next move",
         detail:
-          "A blind spot—pride, an oath, or an old ally—gives clever players a way to disrupt the plan without brute force.",
+          "Read The Villain's Plan and Escalation If Ignored as what the antagonist would attempt without opposition. If the party exposes a forged order, decide what resource or support was lost, change the next viable stage, and show the fallout at the table through a cancelled patrol, a public accusation or an offer to negotiate.",
       },
     ],
+    linksTitle: "Build, run and update the campaign threat",
     links: [
       {
+        href: "/answers/how-do-i-plan-story-arcs-for-an-rpg-campaign",
+        label: "Turn an antagonist's agenda into playable arcs",
+        description:
+          "Separate the long-term stakes from the current problem and prep only the next session in detail.",
+      },
+      {
         href: "/answers/how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
-        label: "Making threats feel urgent",
+        label: "Show the threat advancing without forcing a path",
+        description:
+          "Use visible consequences, soft clocks and rival actors to create informed choices even when the party goes elsewhere.",
+      },
+      {
+        href: "/answers/how-do-you-track-faction-turns-between-rpg-sessions",
+        label: "Resolve the villain's next move between sessions",
+        description:
+          "Give the organisation one targeted action, resolve its outcome and log a consequence that the party can notice next time.",
       },
     ],
   },

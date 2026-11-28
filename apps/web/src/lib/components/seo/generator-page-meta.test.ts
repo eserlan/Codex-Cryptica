@@ -234,6 +234,67 @@ describe("generator-page-meta completeness and social preview tags", () => {
   });
 });
 
+describe("BBEG editorial example and FAQ", () => {
+  it("keeps Governor Holt's three public sections and nineteen GM sections, with six concrete stages", () => {
+    const draft = slugDrafts["bbeg-generator"]!;
+    expect(draft).toMatchObject({
+      type: "character",
+      title: "Governor Ysra Holt",
+      labels: ["villain", "bbeg-generator", "imported-draft"],
+    });
+    expect(
+      [...draft.content.matchAll(/^### (.+)$/gm)].map((match) => match[1]),
+    ).toEqual(["Public Face", "Signature / Calling Card", "First Signs"]);
+    expect(
+      [...draft.lore!.matchAll(/^### (.+)$/gm)].map((match) => match[1]),
+    ).toEqual([
+      "Core Concept",
+      "True Nature",
+      "Ultimate Goal",
+      "Why Now",
+      "Motivation",
+      "Fatal Flaw",
+      "Methods",
+      "Resources",
+      "Lieutenants & Inner Circle",
+      "Organisation & Power Structure",
+      "Territory / Lair",
+      "The Villain's Plan",
+      "Escalation If Ignored",
+      "Discovery Layers",
+      "Personal Connections",
+      "Weakness / Vulnerability",
+      "Moral Complication",
+      "Final Confrontation",
+      "If Defeated",
+    ]);
+    expect(
+      [...draft.lore!.matchAll(/\*\*Stage (\d+):/g)].map((match) => match[1]),
+    ).toEqual(["1", "2", "3", "4", "5", "6"]);
+    expect(draft.lore).toContain("Bellan Cairn");
+    expect(draft.lore).toContain("Captain Vara Silt");
+    expect(draft.content).not.toContain("requisition the abandoned land");
+    expect(draft.lore).toContain("requisition the abandoned land");
+  });
+
+  it("distinguishes mode limitations and textual lieutenants from persisted graph connections", () => {
+    const answers = slugMeta["bbeg-generator"].faqs
+      ?.map(({ answer }) => answer)
+      .join(" ");
+    expect(answers).toContain(
+      "does not incorporate the campaign context or tailor the prose to Tone",
+    );
+    expect(answers).toContain("one new Character");
+    expect(answers).toContain("generated GM lore in GM notes");
+    expect(answers).toContain(
+      "a shared remix saves the restored text in GM notes",
+    );
+    expect(answers).toContain(
+      "not automatically created Characters, relationships or timeline events",
+    );
+  });
+});
+
 describe("Quest editorial example", () => {
   it("provides a coherent Event example and four substantive FAQs", () => {
     expect(slugDrafts.quest).toMatchObject({

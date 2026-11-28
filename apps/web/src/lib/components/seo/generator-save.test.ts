@@ -9,6 +9,7 @@ import {
   buildHubSaveDrafts,
 } from "./generator-save";
 import { getGeneratorDocumentLayout } from "./generator-document-layout";
+import { slugDrafts } from "./generator-page-drafts";
 
 const baseOutput: GeneratorOutput = {
   type: "location",
@@ -67,6 +68,60 @@ describe("generator save payloads", () => {
     expect(payload.lore).toContain("The deed is forged.");
     expect(payload.lore).toContain("A purse of silver.");
   });
+
+  it.each([
+    ["villain", "bbeg-generator", "imported-draft"],
+    ["villain", "npc-generator", "imported-draft"],
+    ["bbeg-generator", "adventure", "encounter"],
+  ])(
+    "keeps the full BBEG GM lore private in the saved Character and guest export (%s, %s, %s)",
+    (...labels) => {
+      const output = { ...slugDrafts["bbeg-generator"]!, labels };
+      const layout = getGeneratorDocumentLayout(output);
+      const secret = "requisition the abandoned land";
+      // The public generator's reading layout promotes long-form narrative.
+      expect(layout.content).toContain(secret);
+      const payload = buildGeneratorSavePayload(
+        output,
+        layout,
+        undefined,
+        "bbeg-generator",
+      );
+      expect(payload.type).toBe("character");
+      expect(payload.content).toBe(output.content);
+      expect(payload.lore).toBe(output.lore);
+      expect(payload.labels).toEqual(labels);
+      expect(payload.content).not.toContain(secret);
+      expect(payload.content).not.toContain("The Villain's Plan");
+      const bundle = GuestExporter.export({
+        entities: [
+          {
+            id: "bbeg-import",
+            type: payload.type,
+            title: payload.title,
+            content: payload.content,
+            lore: payload.lore,
+            labels: payload.labels,
+            status: payload.status,
+            aliases: [],
+            connections: [],
+          } satisfies Entity,
+        ],
+        defaultVisibility: "visible",
+        activeTheme: { primaryColor: "#000000" },
+        publishId: "bbeg-export-test",
+        vaultTitle: "Test Vault",
+        publisherVersion: "test",
+      });
+      const exported = JSON.stringify(bundle);
+      expect(exported).toContain(
+        "Emergency notices bearing three blue triangles",
+      );
+      expect(exported).not.toContain(secret);
+      expect(exported).not.toContain("The Villain's Plan");
+      expect(exported).not.toContain("Bellan Cairn");
+    },
+  );
 
   it("keeps controversial holiday history out of saved content and guest exports", () => {
     const output = {

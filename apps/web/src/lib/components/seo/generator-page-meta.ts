@@ -1419,11 +1419,11 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     pageTitle:
       "BBEG / Campaign Villain Generator | Free RPG Antagonist Tool | Codex Cryptica",
     metaDescription:
-      "Generate a campaign-scale RPG villain with a concrete goal, methods, lieutenants, an escalating multi-stage plan, and consequences — not just a biography. Works for any genre.",
+      "Draft a campaign villain with a goal, lieutenants, clues, an escalating plan and weaknesses. Give your RPG party meaningful ways to interrupt it.",
     introTitle: "BBEG / Campaign Villain Generator",
     eyebrow: "Campaign Villain Generator",
     introText:
-      "Create a campaign antagonist who functions as a campaign engine: a goal, motivation, methods, lieutenants, an escalating plan the party can discover and disrupt, and consequences whether they act or not. Works without login, then imports into your local vault.",
+      "Give your campaign a villain who acts even when the party is elsewhere. Develop their public face, private goal, subordinates and escalating plan, then decide what the players can discover, interrupt or change.",
     canonicalPath: "/generators/bbeg-generator",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-bbeg-generator.jpg",
@@ -1438,19 +1438,30 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     ],
     faqs: [
       {
-        question: "What does the BBEG generator create?",
+        question: "What does the BBEG Generator create?",
         answer:
-          "It creates a full campaign villain: a public face and true nature, a concrete ultimate goal, motivation, a fatal flaw, methods and resources, named lieutenants, an escalating 5-7 stage plan with clues and consequences, what happens if the party does nothing, discoverable weaknesses, and the consequences of defeating them.",
+          "A system-neutral antagonist profile with public reputation and early signs, plus motives, methods, named lieutenants, an escalating plan, discovery layers, a vulnerability and the consequences of defeat. It is not a combat stat block or a complete adventure.",
       },
       {
-        question: "Is the villain tied to a specific game system?",
+        question:
+          "What is the difference between Villain Archetype and World Relation?",
         answer:
-          "No. The generator is system-neutral — it produces narrative goals, plans, and stakes rather than stat blocks, so it works for D&D, Pathfinder, OSR games, or any other RPG.",
+          "Archetype describes the kind of antagonist and their usual methods. World Relation describes what they want from the existing order. A Guardian might be a cult leader or a corrupt ruler, but both would harm others in the name of protecting something. Degree of Sympathy / Redeemability helps you decide whether the party could understand or negotiate with them.",
       },
       {
-        question: "Can the villain's plan survive the party ignoring it?",
+        question: "How do the AI and non-AI modes differ?",
         answer:
-          "Yes. Each generated villain includes an escalation path describing how their plan advances if the party never intervenes, so the antagonist stays a live threat rather than waiting in a final dungeon.",
+          "AI generation uses the selected tone, threat scale, archetype, sympathy, world relation and optional campaign context as guidance. Non-AI mode uses prewritten material and incorporates some selected details, but does not incorporate the campaign context or tailor the prose to Tone. Treat either result as a draft to adapt before play.",
+      },
+      {
+        question: "What if the party disrupts a stage or ignores the villain?",
+        answer:
+          "The plan describes the villain's intended progression, not a set of required chapters. Use Escalation If Ignored to decide what happens without interference. If the players foil an objective, revise subsequent stages based on what the villain lost, who intervened and what the remaining allies can still accomplish.",
+      },
+      {
+        question: "What does Add to my Codex save?",
+        answer:
+          "A newly generated villain becomes one new Character in your local vault, with the public face, calling card and first signs in the main description and the generated GM lore in GM notes. Named lieutenants and stages are text, not automatically created Characters, relationships or timeline events. Copy and Share include the full draft; a shared remix saves the restored text in GM notes, so you can decide which details to make public.",
       },
     ],
     relatedLinks: [

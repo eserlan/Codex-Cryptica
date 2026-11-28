@@ -35,6 +35,8 @@ function setup(
     autoGenerateExplicit?: boolean;
     aiModeRequired?: boolean;
     supportsStreaming?: boolean;
+    generatorType?: string;
+    documentLayout?: { content: string; lore: string };
   } = {},
 ) {
   const generate = options.generate ?? vi.fn(async () => output);
@@ -49,8 +51,9 @@ function setup(
       getAiModeRequired: () => options.aiModeRequired ?? false,
       getSupportsStreaming: () => options.supportsStreaming ?? false,
       getSingleColumn: () => false,
-      getGeneratorType: () => "npc",
-      getDocumentLayout: () => ({ content: "Body", lore: "Lore" }) as never,
+      getGeneratorType: () => options.generatorType ?? "npc",
+      getDocumentLayout: () =>
+        options.documentLayout ?? { content: "Body", lore: "Lore" },
       getContextSelection: () => ({ entities: [], trimmed: false }) as never,
       getOutputCard: () => null,
       generate: generate as never,
@@ -76,6 +79,33 @@ describe("useGeneratorSession", () => {
     track.mockClear();
   });
   afterEach(() => cleanup?.());
+
+  it("records a BBEG's original public face and GM lore in the Session Hub even when the preview promotes it", async () => {
+    const villain = {
+      ...output,
+      summary: "",
+      content: "Public face",
+      lore: "GM secret plan",
+      labels: ["villain", "npc-generator", "imported-draft"],
+    };
+    const ctx = setup({
+      generate: vi.fn(async () => villain),
+      generatorType: "bbeg-generator",
+      documentLayout: { content: "Public face\nGM secret plan", lore: "" },
+    });
+    cleanup = ctx.cleanup;
+    await ctx.session.handleGenerate();
+    expect(hub.addEntity).toHaveBeenCalledOnce();
+    expect(hub.addEntity).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "character",
+        content: villain.content,
+        lore: villain.lore,
+        labels: villain.labels,
+      }),
+    );
+    expect(ctx.session.generatedData).toEqual(villain);
+  });
 
   it("generates with AI by default, records the result and tracks the run", async () => {
     const ctx = setup();

@@ -40,13 +40,20 @@ export async function loadGeneratorRemixDraft(
     }
 
     const parsed = parseGeneratorShareMarkdown(shared.content);
+    // Share markdown combines the original content and lore without a reliable
+    // delimiter. BBEG restoration must not guess which text is player-safe.
+    const isVillain = options.targetPath === "/generators/bbeg-generator";
     return {
       draft: {
-        type: "note",
+        type: isVillain ? "character" : "note",
         title: shared.title,
-        summary: parsed.summary,
-        content: parsed.content,
-        lore: "",
+        summary: isVillain ? "" : parsed.summary,
+        content: isVillain ? "" : parsed.content,
+        lore: isVillain
+          ? [parsed.summary ? `*${parsed.summary}*` : "", parsed.content]
+              .filter(Boolean)
+              .join("\n\n")
+          : "",
         labels: shared.metadata.labels ?? [],
         status: "draft",
       },

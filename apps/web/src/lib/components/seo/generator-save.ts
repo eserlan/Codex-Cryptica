@@ -8,7 +8,10 @@ import type {
   ProvenanceRecord,
   SessionEntity,
 } from "generator-engine/session-hub-helpers";
-import { deduplicateMarkdownSections } from "./generator-document-layout";
+import {
+  deduplicateMarkdownSections,
+  getGeneratorHandoffLayout,
+} from "./generator-document-layout";
 
 export interface GeneratorSaveLayout {
   content: string;
@@ -136,8 +139,16 @@ function resolveMechanicsSaveExtension(
 function resolveSaveBodyAndLore(
   data: GeneratorOutput,
   layout: GeneratorSaveLayout,
+  generatorType?: string,
 ): { content: string; lore: string } {
   const summaryPrefix = data.summary ? `*${data.summary}*` : "";
+  if (generatorType === "bbeg-generator") {
+    return {
+      content: [summaryPrefix, layout.content].filter(Boolean).join("\n\n"),
+      lore: layout.lore,
+    };
+  }
+
   if (data.kind === "adventure" || data.labels.includes("adventure")) {
     return {
       content: summaryPrefix,
@@ -152,10 +163,7 @@ function resolveSaveBodyAndLore(
   const body = isEncounter
     ? deduplicateMarkdownSections(data.content, seenHeadings)
     : layout.content;
-  const content =
-    summaryPrefix && body
-      ? `${summaryPrefix}\n\n${body}`
-      : summaryPrefix || body;
+  const content = [summaryPrefix, body].filter(Boolean).join("\n\n");
   const lore = isEncounter
     ? data.lore
       ? deduplicateMarkdownSections(data.lore, seenHeadings)
@@ -172,7 +180,7 @@ function vaultSaveLayout(
 ): GeneratorSaveLayout {
   return generatorType === "quest"
     ? { content: data.content, lore: data.lore ?? "" }
-    : layout;
+    : getGeneratorHandoffLayout(data, layout, generatorType);
 }
 
 export function buildGeneratorSavePayload(
@@ -182,10 +190,12 @@ export function buildGeneratorSavePayload(
   generatorType?: string,
 ): GeneratorSavePayload {
   const isAdventure =
-    data.kind === "adventure" || data.labels.includes("adventure");
+    generatorType !== "bbeg-generator" &&
+    (data.kind === "adventure" || data.labels.includes("adventure"));
   const { content, lore: initialLore } = resolveSaveBodyAndLore(
     data,
     vaultSaveLayout(data, layout, generatorType),
+    generatorType,
   );
   let lore = initialLore;
 
