@@ -96,14 +96,7 @@ for (const entry of cases) {
     await page.reload();
     await expect(rows).toHaveCount(1, { timeout: 30_000 });
     await page.setViewportSize({ width: 1280, height: 844 });
-    let second = await generate(page, entry.second);
-    if (second === title) {
-      await page.locator("#generate-button").click();
-      await expect
-        .poll(() => page.locator("h2").first().innerText())
-        .not.toBe(title);
-      second = await page.locator("h2").first().innerText();
-    }
+    const second = await generate(page, entry.second);
     await page.locator("#save-to-codex-btn").focus();
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL(/\/$/, { timeout: 30_000 });
