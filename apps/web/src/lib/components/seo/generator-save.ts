@@ -229,6 +229,19 @@ function vaultSaveLayout(
   layout: GeneratorSaveLayout,
   generatorType?: string,
 ): GeneratorSaveLayout {
+  if (generatorType === "dark-fantasy-faction") {
+    const requiredSections = ["What they control", "What they want"];
+    const missingSections = requiredSections.filter(
+      (section) =>
+        !new RegExp(`^#{2,3}\\s+${section}\\s*$`, "im").test(data.content),
+    );
+    if (missingSections.length > 0) {
+      throw new InvalidGeneratorOutputError(
+        `This faction draft is missing required public sections (${missingSections.join(", ")}). Generate it again or copy the draft manually.`,
+      );
+    }
+  }
+
   // These item generators intentionally put the full effect and campaign
   // reference in source lore. The preview may promote it for reading, but an
   // explicit save must not expose hidden costs, rumours or destruction terms.

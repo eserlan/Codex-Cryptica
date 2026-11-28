@@ -6,7 +6,10 @@ import {
   shouldShowGeneratorContinuation,
 } from "./generator-continuation";
 import { getGeneratorDocumentLayout } from "./generator-document-layout";
-import { buildGeneratorSavePayload } from "./generator-save";
+import {
+  buildGeneratorSavePayload,
+  InvalidGeneratorOutputError,
+} from "./generator-save";
 
 describe.each([
   {
@@ -120,3 +123,23 @@ it("keeps equivalent vampire overview headings in main text", () => {
   expect(payload.lore).toContain("Take the hospital trust");
   expect(payload.content).not.toContain("Take the hospital trust");
 });
+
+it.each([
+  "The faction controls the only bridge and wants to keep the fever contained.",
+  "### Overview\nThe faction controls the only bridge and wants to keep the fever contained.",
+])(
+  "refuses to save dark-faction output without its public sections",
+  (content) => {
+    const sample = slugDrafts["dark-fantasy-faction"]!;
+    const draft = { ...sample, content };
+
+    expect(() =>
+      buildGeneratorSavePayload(
+        draft,
+        getGeneratorDocumentLayout(draft),
+        undefined,
+        "dark-fantasy-faction",
+      ),
+    ).toThrow(InvalidGeneratorOutputError);
+  },
+);
