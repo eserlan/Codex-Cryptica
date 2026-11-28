@@ -11,6 +11,7 @@ import type {
 import {
   deduplicateMarkdownSections,
   getGeneratorHandoffLayout,
+  getInhabitedPlaceHandoffLayout,
   usesSourceHandoff,
 } from "./generator-document-layout";
 
@@ -154,6 +155,13 @@ function resolveSaveBodyAndLore(
   generatorType?: string,
 ): { content: string; lore: string } {
   const summaryPrefix = data.summary ? `*${data.summary}*` : "";
+  if (generatorType === "tavern" || generatorType === "kingdom") {
+    return {
+      content: layout.content,
+      lore: [summaryPrefix, layout.lore].filter(Boolean).join("\n\n"),
+    };
+  }
+
   if (usesPrivateBodyAndLore(generatorType)) {
     return {
       content: [summaryPrefix, layout.content].filter(Boolean).join("\n\n"),
@@ -250,7 +258,11 @@ export function buildGeneratorSavePayload(
     (data.kind === "adventure" || data.labels.includes("adventure"));
   const { content, lore: initialLore } = resolveSaveBodyAndLore(
     data,
-    vaultSaveLayout(data, layout, generatorType),
+    vaultSaveLayout(
+      data,
+      getInhabitedPlaceHandoffLayout(data, layout, generatorType),
+      generatorType,
+    ),
     generatorType,
   );
   let lore = initialLore;

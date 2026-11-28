@@ -358,6 +358,42 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    settlement: {
+      headline: "Keep the settlement ready for a return visit",
+      summary:
+        "Save one new Location in your local Codex vault and record what changes as the party uses its services, explores its places and meets its factions.",
+      capabilities: [
+        "Keep the settlement overview in the Location and people, factions, tension and hooks in GM notes",
+        "Link existing contacts and locations, and expand the places the party actually visits",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
+    tavern: {
+      headline: "Keep the party's favourite meeting place in play",
+      summary:
+        "Save one new Location in your local Codex vault and update its regulars, rumours and unresolved trouble after each visit.",
+      capabilities: [
+        "Keep trouble, hidden problem, hook, regulars and rumours in GM notes",
+        "Link the tavern to existing people and settlements and record what the party learns",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
+    kingdom: {
+      headline: "Keep the realm's power and pressures together",
+      summary:
+        "Save one new Faction in your local Codex vault and track which allies, resources and claims change as the campaign unfolds.",
+      capabilities: [
+        "Keep government detail, hidden problem, rivals, rumours and seeds in GM notes",
+        "Link existing rulers, capitals and factions as you develop them, and update the realm after play",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
     nation: {
       headline: "Keep building this nation",
       summary:

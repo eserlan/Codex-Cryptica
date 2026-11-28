@@ -81,7 +81,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Settlement Generator",
     eyebrow: "Settlement Generator",
     introText:
-      "Generate an inhabited place that answers three questions: why does it exist, who really controls it, and what is about to go wrong. Works for any genre — fantasy, cyberpunk, sci-fi, horror, post-apocalyptic, and more.",
+      "Create a settlement the party can visit and return to. Choose its scale, environment, purpose, tone and dominant tension; then use its daily life, named places, contacts and factions to prepare the next scene.",
     canonicalPath: "/generators/settlement",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-settlement.jpg",
@@ -93,6 +93,23 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "town generator",
       "worldbuilding location creator",
       "district generator",
+    ],
+    faqs: [
+      {
+        question: "What does a settlement draft include?",
+        answer:
+          "A named inhabited place with an overview, first impression, inhabitants, daily life and history, plus a tension, points of interest, notable people, factions and hooks in GM reference.",
+      },
+      {
+        question: "Can I use this outside fantasy?",
+        answer:
+          "Yes. The available settlement choices follow the selected setting. Use the controls for the kind of town, city, outpost or district your party will actually visit.",
+      },
+      {
+        question: "What happens when I add the settlement to Codex?",
+        answer:
+          "Save one Location in your local vault with the settlement overview in main text and source GM reference, points of interest, people, factions and hooks in GM notes. They are textual references, not separately created entries.",
+      },
     ],
   },
   "magic-item": {
@@ -646,7 +663,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Kingdom Generator",
     eyebrow: "Kingdom Generator",
     introText:
-      "Create a campaign-ready fantasy realm with a ruler, major factions, internal tensions, and adventure hooks. Works without login, then imports into your local vault.",
+      "Create a fantasy realm whose laws, resources and conflicts give your party reasons to deal with its ruler and factions. Choose the polity, government, geography, scale, conflict and magic, then decide what pressures reach the places the party visits.",
     canonicalPath: "/generators/kingdom",
     labels: ["fantasy"],
     ogImage:
@@ -659,6 +676,23 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "empire generator",
       "worldbuilding kingdoms",
       "rpg realm generator",
+    ],
+    faqs: [
+      {
+        question: "What does a kingdom draft include?",
+        answer:
+          "A named realm, ruler, capital, government, society, two or three major factions, a hidden problem, rumours, hooks and entity seeds.",
+      },
+      {
+        question: "Does it need to be a hereditary monarchy?",
+        answer:
+          "No. Polity type and Government style let you choose different kinds of realm and how power is exercised. Decide who actually has authority when the party asks for help.",
+      },
+      {
+        question: "What happens when I add the realm to Codex?",
+        answer:
+          "Save one Faction in your local vault with the realm and society in main text. Government details, secrets, factions, rumours, hooks and seeds stay in GM notes. Create or link the ruler, capital and factions yourself as you develop them.",
+      },
     ],
   },
   nation: {
@@ -691,7 +725,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Tavern Generator",
     eyebrow: "Tavern Generator",
     introText:
-      "Create a campaign-ready tavern with atmosphere, owner, notable patrons, rumours, and a hidden problem. Works without login, then imports into your local vault.",
+      "Create an inn, alehouse or gathering place with a recognisable atmosphere, an owner, regular patrons and rumours. Choose the crowd and kind of settlement, then use its hidden trouble to decide what happens when the party comes in for a drink.",
     canonicalPath: "/generators/tavern",
     labels: ["fantasy"],
     ogImage:
@@ -704,6 +738,24 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "fantasy tavern creator",
       "alehouse generator",
       "dnd tavern",
+    ],
+    faqs: [
+      {
+        question: "What does the tavern draft contain?",
+        answer:
+          "A named tavern, room and hospitality, owner, two or three notable regulars, signature food or drink, hidden problem, immediate hook, rumours and entity seeds.",
+      },
+      {
+        question:
+          "Can it be a recurring safe place rather than an adventure site?",
+        answer:
+          "Yes. Let the party encounter familiar regulars and ordinary comforts first. Treat the trouble as a possible lead, and decide how it changes when the party visits again.",
+      },
+      {
+        question: "What happens when I add the tavern to Codex?",
+        answer:
+          "Save one Location in your local vault. The place and people overview remain in main text; the trouble, table guidance, owner and patron reference, rumours, hook and entity seeds stay in GM notes. The named contacts are not separate Characters until you create or link them.",
+      },
     ],
   },
   "vampire-clan": {

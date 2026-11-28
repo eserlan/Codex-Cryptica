@@ -512,32 +512,43 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   settlement: {
     summary:
-      "A believable settlement exists for a reason—a ford, mine, shrine, or relay—and stays interesting because two local groups disagree on how to run it.",
+      "Create an inhabited place the party can navigate and return to. Give it a reason to exist, a recognisable everyday routine and a tension that changes what visitors can do.",
     tips: [
       {
-        title: "Anchor the economy to one export",
+        title: "Choose the reason people settled here",
         detail:
-          "Build the market, guards, and visitor traffic around the town's main trade good or strategic choke point.",
+          "Pair Environment with Primary Function: Forest edge and Trade hub gives you a market where guides and foresters meet merchants. Make the main route, resource or service visible on arrival, then decide what travellers must ask for and what locals can deny them.",
       },
       {
-        title: "Put the tension on main street",
+        title: "Set the size for the scene you need",
         detail:
-          "Show the local conflict in the first scene—a closed gate, a tax dispute, or a ration queue—rather than burying it in lore.",
+          "Choose Scale as Village when the party should quickly learn who knows whom, or Town for distinct neighbourhoods and competing contacts. Use Points of Interest and Notable Inhabitants to prepare an official, a broker and a resident who offers a different perspective.",
       },
       {
-        title: "Seed three recurring faces",
+        title: "Put the tension on the party's path",
         detail:
-          "Pair the settlement with an official, a broker, and a local troublemaker so players have immediate contacts.",
+          "Pair Dominant Tension with Tone: a cosy town in Succession crisis can welcome visitors while its factions argue over who may collect tolls. Show that disagreement at the gate or market; give two NPCs different reasons for asking the party to act.",
       },
     ],
+    linksTitle: "Build a place, then put it into play",
     links: [
       {
         href: "/answers/how-do-i-design-a-geographically-realistic-town-or-village",
-        label: "Designing realistic settlements",
+        label: "Put the settlement where it makes sense",
+        description:
+          "Make terrain, roads and water explain why people live there.",
       },
       {
         href: "/answers/how-do-i-decide-what-a-settlement-produces-imports-and-exports",
-        label: "Settlement trade and exports",
+        label: "Turn local trade into dependencies",
+        description:
+          "Choose what locals need and what they can offer visitors.",
+      },
+      {
+        href: "/answers/what-should-an-rpg-settlement-contain",
+        label: "Prepare the places and contacts players actually use",
+        description:
+          "Make the town ready for a session without detailing every house.",
       },
     ],
   },
@@ -1051,43 +1062,72 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   kingdom: {
     summary:
-      "Each draft names a realm, its ruler and capital, two rival factions and the hidden problem its rulers would rather nobody found. In an offline draft the Immediate Hook, two of the rumours and the last entity seed all lead back to that problem; the examples below come from the offline draft, and the AI draft works from the same choices in its own words.",
+      "Build a realm whose ruler depends on powerful people, valuable places and fragile agreements. Use its factions and hidden problem to decide what the party can change, even when the kingdom itself is much larger than their adventure.",
     tips: [
       {
-        title: "Pick Government style for the person the party petitions",
+        title: "Decide whose permission the party needs",
         detail:
-          "Government style sets how the ruler holds power and the note beside their name, from an heir without a trusted successor under Hereditary dynasty to a general who never stood down under Military dictatorship. Choose it for the kind of audience the party will have to win.",
+          "Set Government style to Hereditary dynasty if a noble's claim matters, or Military dictatorship if rank and orders matter. Pair this with Magic level to decide who can grant an exception or issue a warrant when the party needs access.",
       },
       {
-        title: "Let Geography decide the capital and the prize",
+        title: "Make the geography a source of leverage",
         detail:
-          "Geography places the capital, such as an oasis city with guarded wells in Arid desert, and decides what the first faction controls, such as the mines and the mountain passes in Mountain range. That faction is the easiest employer for a party looking for work, and Geography also adds one rumour.",
+          "Set Geography to Mountain range when the passes and mines are worth holding, or Arid desert when access to wells matters. Choose Scale for how far a ruler can respond and give one faction control over the route or resource the party needs.",
       },
       {
-        title: "Use Conflict level to set the opposition's next move",
+        title: "Let the next crisis change daily life",
         detail:
-          "Conflict level writes the Society & Culture section and the second faction's agenda: during Total war it is talking to the enemy in secret, and after Post-war recovery it wants a reckoning. Magic level adds its own line under Government & Power, and an offline draft files Campaign context (optional) under its own heading in the GM notes.",
+          "Set Conflict level to Total war when roads and supplies are contested, or Post-war recovery when former allies demand repayment. Name a borderland or noble family in Campaign context (optional), then make the hidden problem create an observable event and give rivals incompatible responses.",
+      },
+    ],
+    linksTitle: "Turn the realm into choices and consequences",
+    links: [
+      {
+        href: "/answers/how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
+        label: "Give the realm practical strengths and limits",
+        description:
+          "Make institutions, resources and vulnerabilities matter rather than relying on stereotypes.",
+      },
+      {
+        href: "/answers/how-do-i-run-political-intrigue-and-faction-play",
+        label: "Turn competing claims into playable politics",
+        description: "Give rivals goals and leverage the party can use.",
       },
     ],
   },
   tavern: {
     summary:
-      "Each result is a named tavern with an owner, a few regulars, a hidden problem, an opening hook and a short list of rumours in the GM notes. Read the Hidden Problem line first: in an offline draft, the Immediate Hook and two of the rumours lead the party towards it.",
+      "Prepare a meeting place that players want to return to. Use its owner, clientele, signature food or drink and hidden trouble to make an ordinary stop become a lead, a refuge or a difficult choice.",
     tips: [
       {
-        title: "Let Wealth level set the table",
+        title: "Make the room feel like their next stop",
         detail:
-          "Wealth level changes the signature drink or dish and the line about the room, from thin barley beer on a dirt floor to brandy poured from a locked cabinet. Pick it for what the party can afford tonight, not for the size of the town.",
+          "Pair Atmosphere with Wealth level to decide whom visitors will meet and what hospitality costs, from a cheap fire and bench to a private table. Give the regulars one recognisable routine so the party notices when something changes.",
       },
       {
         title: "Choose Primary clientele for the contact you need",
         detail:
-          "Primary clientele decides who the two notable patrons are, such as a one-handed sergeant for Soldiers and mercenaries or a fence at the corner table for Criminals and fence-seekers. Pick the crowd that holds the witness or ally your next scene needs.",
+          "Set Primary clientele to Soldiers and mercenaries for a witness to trouble on the road, or Criminals and fence-seekers for someone who can arrange an illicit trade. Let the owner introduce the contact, but give them a reason to ask for something in return.",
       },
       {
-        title: "Use Settlement type to point outside",
+        title: "Give rumours somewhere to lead",
         detail:
-          "In an offline draft the last rumour comes from the Settlement type, such as a ship that has not unloaded in a Coastal port. Use it to send the party back out once the tavern's own trouble is known; anything typed in Campaign context (optional) stays in the GM notes.",
+          "Use Settlement type to choose a destination outside the tavern: a Coastal port can point to a ship that has not unloaded. Name an existing place or feud in Campaign context (optional), then decide which rumour reveals the hidden problem and which sends the party to a different scene.",
+      },
+    ],
+    linksTitle: "From a memorable inn to an adventure lead",
+    links: [
+      {
+        href: "/answers/what-should-an-rpg-settlement-contain",
+        label: "Give the inn a job in the settlement",
+        description:
+          "Place the tavern among the everyday services and contacts the party needs.",
+      },
+      {
+        href: "/answers/how-to-create-rumours-for-a-fantasy-town",
+        label: "Make overheard rumours actionable",
+        description:
+          "Give each source a reason to speak and a next place to investigate.",
       },
     ],
   },
