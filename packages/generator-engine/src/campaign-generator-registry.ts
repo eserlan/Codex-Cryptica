@@ -1,5 +1,6 @@
 import { EXEMPLARS } from "./campaign-generator-exemplars";
 import { formatConceptBlock, rollConcept } from "./concept-dimensions";
+import { defaultRng, type Rng } from "./random-utils";
 import {
   type CampaignGeneratorDefinition,
   type GeneratedDraft,
@@ -690,9 +691,9 @@ function conceptInputs(request: GeneratorRunRequest): {
   };
 }
 
-function rollConceptBlock(request: GeneratorRunRequest): string {
+function rollConceptBlock(request: GeneratorRunRequest, rng: Rng): string {
   const { genre, tone } = conceptInputs(request);
-  const block = formatConceptBlock(rollConcept(genre, tone));
+  const block = formatConceptBlock(rollConcept(genre, tone, rng));
   if (!block) return "";
   const spread = MULTI_ITEM_GENERATORS.has(request.generatorId)
     ? `\n${SPREAD_NOTE}`
@@ -700,25 +701,28 @@ function rollConceptBlock(request: GeneratorRunRequest): string {
   return `\n${block}${spread}\n`;
 }
 
-function conceptBlock(request: GeneratorRunRequest): string {
+function conceptBlock(request: GeneratorRunRequest, rng: Rng): string {
   if (request.interaction || !CONCEPT_GENERATORS.has(request.generatorId)) {
     return "";
   }
   let block = conceptByRequest.get(request);
   if (block === undefined) {
-    block = rollConceptBlock(request);
+    block = rollConceptBlock(request, rng);
     conceptByRequest.set(request, block);
   }
   return block;
 }
 
 /** Shared prompt context chain (everything before the task instruction). */
-export function contextChain(request: GeneratorRunRequest): string {
+export function contextChain(
+  request: GeneratorRunRequest,
+  rng: Rng = defaultRng,
+): string {
   // Preferences (the form's explicit dropdown selections, e.g. race/role) are
   // direct user choices like the free-text instructions above them — surface
   // them right after, ahead of the generic world context, rather than buried
   // several paragraphs down where a model can lose track of them.
-  return `${instructionsBlock(request)}${optionsBlock(request)}${conceptBlock(request)}${vaultContextBlock(request)}${worldBlock(request)}${bannedNamesBlock(request)}${namingBlock(request)}${templateBlock(request)}`;
+  return `${instructionsBlock(request)}${optionsBlock(request)}${conceptBlock(request, rng)}${vaultContextBlock(request)}${worldBlock(request)}${bannedNamesBlock(request)}${namingBlock(request)}${templateBlock(request)}`;
 }
 
 function npcPrompt(request: GeneratorRunRequest): string {

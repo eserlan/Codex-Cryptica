@@ -831,6 +831,9 @@ export function parseMinorMagicItemResponse(
   resolved: ResolvedMinorMagicItem,
 ): PublicGeneratorOutput {
   const data = parseFencedJson(text);
+  if (typeof data.content !== "string" || !data.content.trim()) {
+    throw new Error("Minor magic item response is missing its description.");
+  }
   const causality = getGenreCausality(resolved.genre);
   const mechanicsHeading =
     causality === "technological"
@@ -869,7 +872,7 @@ export function parseMinorMagicItemResponse(
     type: "item",
     title: data.title || resolved.suggestedName,
     summary: data.summary || "",
-    content: data.content || "",
+    content: data.content,
     lore,
     labels: Array.isArray(data.labels)
       ? data.labels

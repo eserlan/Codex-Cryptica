@@ -665,6 +665,54 @@ describe("generator save payloads", () => {
     expect(serialized).not.toContain(hiddenProblem!);
   });
 
+  it.each([
+    ["Nation label", ["nation-generator"]],
+    ["competing Kingdom label", ["kingdom-generator", "nation-generator"]],
+  ])(
+    "keeps a Hidden Problem under an unexpected Nation lore heading private with %s",
+    (_case, labels) => {
+      const hiddenProblem = "The ruler concealed the failed pumps.";
+      const nation: GeneratorOutput = {
+        ...baseOutput,
+        type: "faction",
+        title: "The Brasswater Compact",
+        content: "### The State\nThe compact controls the river gates.",
+        lore: `### Hidden Problem\n${hiddenProblem}`,
+        labels,
+        status: "active",
+      };
+      const layout = getGeneratorDocumentLayout(nation);
+      const payload = buildGeneratorSavePayload(nation, layout);
+
+      expect(layout.content).not.toContain(hiddenProblem);
+      expect(layout.lore).toContain(hiddenProblem);
+      expect(payload.content).not.toContain(hiddenProblem);
+      expect(payload.lore).toContain(hiddenProblem);
+
+      const entity = {
+        id: "nation-malformed-lore",
+        type: payload.type,
+        title: payload.title,
+        content: payload.content,
+        lore: payload.lore,
+        labels: payload.labels,
+        status: payload.status,
+        aliases: [],
+        connections: [],
+      } satisfies Entity;
+      const bundle = GuestExporter.export({
+        entities: [entity],
+        defaultVisibility: "visible",
+        activeTheme: { primaryColor: "#000000" },
+        publishId: "nation-malformed-lore-export-test",
+        vaultTitle: "Test Vault",
+        publisherVersion: "test",
+      });
+
+      expect(JSON.stringify(bundle)).not.toContain(hiddenProblem);
+    },
+  );
+
   it("keeps the heist's hidden factor and response plan in GM lore despite preview promotion", async () => {
     const { generateHeistLocal } =
       await import("generator-engine/public-heist");

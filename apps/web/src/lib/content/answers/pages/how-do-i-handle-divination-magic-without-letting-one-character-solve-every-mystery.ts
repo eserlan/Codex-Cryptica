@@ -168,6 +168,12 @@ export const howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMyst
     },
     relatedTools: [
       {
+        title: "Minor Magic Item & Trinket Generator",
+        description:
+          "Draft a limited-use detection tool and define exactly which information it can reveal before play.",
+        href: "/generators/minor-magic-item",
+      },
+      {
         title: "RPG knowledge graph",
         description:
           "Link divination sources, layers, proof, and compromised allies so each answer builds on the same case.",

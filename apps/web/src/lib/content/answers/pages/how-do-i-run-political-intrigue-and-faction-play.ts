@@ -299,6 +299,12 @@ export const howDoIRunPoliticalIntrigueAndFactionPlay: AnswerConfigInput = {
         "Named states with a leader, competing power blocs and a hidden problem.",
       href: "/generators/nation",
     },
+    {
+      title: "Kingdom Generator",
+      description:
+        "Draft a realm with a ruler, rival houses, resources and a hidden crisis that can drive political choices.",
+      href: "/generators/kingdom",
+    },
   ],
   relatedForPages: [
     {
