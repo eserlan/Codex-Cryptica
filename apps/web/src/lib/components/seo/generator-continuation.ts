@@ -205,7 +205,7 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
         "Check the graph's Saving points count first. Add to my Codex opens an overview Note and creates one Location for each included point in your local vault.",
       capabilities: [
         "Preserve connections between selected points, with encounters, clues and route details in each Location's GM notes",
-        "Use the full overview and attached diagram for GM prep, then update the Locations as the party explores",
+        "Use the full overview and, when available, its attached diagram for GM prep, then update the Locations as the party explores",
       ],
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
