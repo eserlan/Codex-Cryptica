@@ -127,6 +127,12 @@ export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
   },
   relatedTools: [
     {
+      title: "God & Deity Generator",
+      description:
+        "Draft a deity with a symbol, ritual, taboo and worshippers; connect the faith to daily life and local institutions.",
+      href: "/generators/god-generator",
+    },
+    {
       title: "Faction generator",
       description:
         "Churches, orders and heresies behave like factions: start from goals and obstacles.",

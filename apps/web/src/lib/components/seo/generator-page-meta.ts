@@ -1032,7 +1032,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "RPG God & Deity Generator",
     eyebrow: "Deity Generator",
     introText:
-      "Design detailed single deities, ancestors, or abstract forces with portfolio, rituals, and myths. Works without login, then imports into your local vault.",
+      "Create a god, spirit, saint, ancestor or abstract power for your setting. Choose its type, domain, tone and worshippers, then use the portfolio, symbol, rituals and taboo to decide how mortals encounter the faith. Choose Pantheon under Generate target if you need a group of competing gods instead.",
     canonicalPath: "/generators/god-generator",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-god-generator.jpg",
@@ -1044,6 +1044,33 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "rpg god creator",
       "mythic deity tool",
       "domain and taboos generator",
+    ],
+    faqs: [
+      {
+        question: "What does a single deity draft include?",
+        answer:
+          "A named deity with its description, divine portfolio, worship and cults, sacred symbol, rite, taboo, myth, secret and adventure hooks. The draft is system-neutral; decide how much divine power is actually available in your campaign.",
+      },
+      {
+        question: "Do I need a pantheon first?",
+        answer:
+          "No. Start with the god or spirit a particular community invokes. Give its worshippers a practical reason to seek help, then decide whether other gods share its domain or disagree with its cult.",
+      },
+      {
+        question: "Can I make a pantheon instead?",
+        answer:
+          "Yes. Switch Generate target from Single Deity / Spirit to Pantheon to choose its size, focus and conflict. The result describes the divine group, not a collection of separately created Characters.",
+      },
+      {
+        question: "What happens when I add the result to Codex?",
+        answer:
+          "A single deity becomes one Character with divine description and worship in the main text and source reference, rites, secret, myths and hooks in GM notes. A pantheon becomes one Faction with its hidden problem and rumours in GM notes. Link temples, cults and individual gods yourself as you develop them. No account needed.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/pantheon-generator", label: "Pantheon Generator" },
+      { href: "/generators/faction", label: "Faction Generator" },
+      { href: "/generators/holiday", label: "Holiday & Festival Generator" },
     ],
   },
   "ship-generator": {

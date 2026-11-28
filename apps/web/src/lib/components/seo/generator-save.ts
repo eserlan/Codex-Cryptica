@@ -173,6 +173,19 @@ function resolveSaveBodyAndLore(
   return { content, lore };
 }
 
+/** Single Deity mode has the same GM-reference boundary on both routes. */
+function singleDeitySaveLayout(
+  data: GeneratorOutput,
+  layout: GeneratorSaveLayout,
+  generatorType?: string,
+): GeneratorSaveLayout {
+  return data.type === "character" &&
+    (generatorType === "god-generator" ||
+      generatorType === "pantheon-generator")
+    ? { content: data.content, lore: data.lore ?? "" }
+    : layout;
+}
+
 /** The preview's reading layout is not always the vault's secrecy boundary. */
 function vaultSaveLayout(
   data: GeneratorOutput,
@@ -181,7 +194,11 @@ function vaultSaveLayout(
 ): GeneratorSaveLayout {
   return generatorType === "quest"
     ? { content: data.content, lore: data.lore ?? "" }
-    : getGeneratorHandoffLayout(data, layout, generatorType);
+    : getGeneratorHandoffLayout(
+        data,
+        singleDeitySaveLayout(data, layout, generatorType),
+        generatorType,
+      );
 }
 
 export function buildGeneratorSavePayload(

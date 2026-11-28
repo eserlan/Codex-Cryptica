@@ -107,6 +107,12 @@ export const canMultipleGodsShareADomain: AnswerConfigInput = {
   },
   relatedTools: [
     {
+      title: "God & Deity Generator",
+      description:
+        "Draft one god or spirit, then give its worshippers a promise that distinguishes it from other gods in the same domain.",
+      href: "/generators/god-generator",
+    },
+    {
       title: "Pantheon generator",
       description:
         "Create gods with relationships and rivalries that can support overlapping claims.",
