@@ -100,11 +100,11 @@
               </button>
               <div class="p-6">
                 <h3
-                  class="font-header font-bold text-sm uppercase tracking-wider mb-2"
+                  class="font-header font-bold text-xl md:text-lg leading-snug uppercase tracking-wider mb-2"
                 >
                   {faq.question}
                 </h3>
-                <p class="text-sm text-theme-text leading-relaxed">
+                <p class="text-lg md:text-base text-theme-text leading-relaxed">
                   {faq.answer}
                 </p>
                 {#if faq.inlineImage}
@@ -116,7 +116,7 @@
                       class="rounded-lg border border-theme-primary/25 max-w-full h-auto"
                     />
                     <span
-                      class="text-nano uppercase tracking-widest font-header text-theme-text"
+                      class="text-sm md:text-xs uppercase tracking-widest font-header text-theme-text"
                     >
                       {faq.inlineImageCaption ?? faq.inlineImageAlt ?? ""}
                     </span>
@@ -129,11 +129,11 @@
               class="border border-theme-border/60 bg-theme-surface/30 rounded-xl p-5"
             >
               <h3
-                class="font-header font-bold text-sm uppercase tracking-wider mb-2"
+                class="font-header font-bold text-xl md:text-lg leading-snug uppercase tracking-wider mb-2"
               >
                 {faq.question}
               </h3>
-              <p class="text-sm text-theme-text leading-relaxed">
+              <p class="text-lg md:text-base text-theme-text leading-relaxed">
                 {faq.answer}
               </p>
             </article>
