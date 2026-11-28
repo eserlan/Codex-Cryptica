@@ -450,7 +450,7 @@ function getDarkOrVampireHandoffLayout(
   const publicHeadings = new Set(
     generatorType === "dark-fantasy-faction"
       ? ["what they control", "what they want"]
-      : ["", "overview", "public facade"],
+      : ["", "overview", "history", "public facade", "public role"],
   );
   const content: string[] = [];
   const gm: string[] = [];
