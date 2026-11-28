@@ -98,6 +98,48 @@ describe("useGeneratorRefinement", () => {
     });
   });
 
+  it("passes original NPC GM notes to refinement even when the preview promotes them", () => {
+    const { refinement } = setup({
+      generatorType: "npc",
+      documentLayout: { content: "Body\nold lore", lore: "" },
+    });
+    refinement.openForCurrentOutput();
+    expect(service.start).toHaveBeenCalledWith(
+      expect.objectContaining({ content: current.content, lore: current.lore }),
+    );
+  });
+
+  it("keeps a refined Table Card's newly proposed secret out of the Session Hub body", async () => {
+    const { refinement, applyRefinedOutput } = setup({ generatorType: "npc" });
+    refinement.openForCurrentOutput();
+    const secret = "The ferry has a forged manifest.";
+    await refinement.accept({
+      type: "character",
+      title: "Mira the Bold",
+      summary: "s2",
+      labels: ["table-card"],
+      status: "draft",
+      content: `### The Six Elements\n- **Immediate Want**: A boat.\n- **Knowledge & Secrets**: ${secret}`,
+      lore: "old lore",
+    });
+    expect(hub.addEntity).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: expect.stringContaining("A boat."),
+        lore: expect.stringContaining(secret),
+      }),
+    );
+    expect(hub.addEntity).not.toHaveBeenCalledWith(
+      expect.objectContaining({ content: expect.stringContaining(secret) }),
+    );
+    expect(applyRefinedOutput).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: expect.not.stringContaining(secret),
+        lore: expect.stringContaining(secret),
+      }),
+      "derived-1",
+    );
+  });
+
   it("passes the original BBEG public fields and private plan to refinement, not the reading layout", async () => {
     const { refinement, applyRefinedOutput } = setup({
       generatorType: "bbeg-generator",

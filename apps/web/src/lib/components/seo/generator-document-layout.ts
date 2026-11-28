@@ -299,16 +299,26 @@ function extractBullets(body: string, labels: Set<string>) {
   return { kept: kept.join("\n").trim(), moved };
 }
 
+/** Keep an entire labelled secret bullet, including wrapped/nested lines. */
+function extractTableCardSecretBlocks(body: string) {
+  const moved: string[] = [];
+  const kept = body.replace(
+    /^-[ \t]+\*\*Knowledge & Secrets\*\*[^\n]*(?:\n(?!-[ \t]+\*\*[^*\n]+\*\*)[^\n]*)*/gm,
+    (block) => {
+      moved.push(block.trim());
+      return "";
+    },
+  );
+  return { kept: kept.trim(), moved };
+}
+
 function extractTableCardSecrets(
   markdown: string,
   gmOnlyBullets: string[],
 ): string {
   return splitMarkdownSections(markdown)
     .map((section) => {
-      const { kept, moved } = extractBullets(
-        section.body,
-        new Set(["Knowledge & Secrets"]),
-      );
+      const { kept, moved } = extractTableCardSecretBlocks(section.body);
       for (const bullet of moved) {
         if (!gmOnlyBullets.includes(bullet)) {
           gmOnlyBullets.push(bullet);
@@ -421,7 +431,36 @@ export function deduplicateMarkdownSections(
     : markdown;
 }
 
-/** BBEG's reading layout is not its storage or refinement secrecy boundary.
+/** Canonical RPG NPC routes share one generator and import contract. */
+function isRpgNpcGenerator(generatorType?: string) {
+  return generatorType === "npc" || generatorType === "rpg-npc-generator";
+}
+
+export function usesSourceHandoff(generatorType?: string) {
+  return generatorType === "bbeg-generator" || isRpgNpcGenerator(generatorType);
+}
+
+function getNpcHandoffLayout(data: GeneratorOutput) {
+  const lore = data.lore ?? "";
+  // Table Card repeats the labelled secret in its body. Keep the original
+  // reference notes private and preserve any distinct secret from the body.
+  if (!data.content.includes("**Knowledge & Secrets**")) {
+    return { content: data.content, lore };
+  }
+  const secrets: string[] = [];
+  const content = extractTableCardSecrets(data.content, secrets);
+  const missing = secrets.filter((secret) => !lore.includes(secret));
+  return {
+    content,
+    lore: missing.length
+      ? [lore, `### GM-Only Secrets\n${missing.join("\n")}`]
+          .filter(Boolean)
+          .join("\n\n")
+      : lore,
+  };
+}
+
+/** The reading layout is not the storage or refinement secrecy boundary.
  * Use the trusted route, not generated labels, to preserve the original fields.
  */
 export function getGeneratorHandoffLayout(
@@ -429,6 +468,7 @@ export function getGeneratorHandoffLayout(
   layout: { content: string; lore: string },
   generatorType?: string,
 ): { content: string; lore: string } {
+  if (isRpgNpcGenerator(generatorType)) return getNpcHandoffLayout(data);
   return generatorType === "bbeg-generator"
     ? { content: data.content, lore: data.lore ?? "" }
     : layout;

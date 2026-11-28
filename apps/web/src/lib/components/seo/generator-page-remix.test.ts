@@ -58,17 +58,43 @@ describe("loadGeneratorRemixDraft", () => {
 
     expect(result).toEqual({
       draft: {
-        type: "note",
+        type: "character",
         title: "Shared result",
-        summary: "Brief summary",
-        content: "The content.",
-        lore: "",
+        summary: "",
+        content: "",
+        lore: "*Brief summary*\n\nThe content.",
         labels: ["ally"],
         status: "draft",
       },
       theme: "Classic Fantasy",
     });
   });
+
+  it.each(["/generators/npc", "/tools/rpg-npc-generator"])(
+    "restores %s as a private Character rather than exposing an unrecoverable share split",
+    async (targetPath) => {
+      const share = makeShare({
+        content:
+          "# Shared guard\n*Secret summary*\nLabels: npc-generator\n\n### Secrets & Hooks\nThe manifest is forged.",
+        metadata: { generatorPath: targetPath, labels: ["npc-generator"] },
+      });
+      const result = await loadGeneratorRemixDraft(
+        options(vi.fn().mockResolvedValue(share), { targetPath }),
+      );
+      const draft = result!.draft;
+      const payload = buildGeneratorSavePayload(
+        draft,
+        getGeneratorDocumentLayout(draft),
+        undefined,
+        targetPath.split("/").at(-1),
+      );
+      expect(payload).toMatchObject({
+        type: "character",
+        content: "",
+        lore: "*Secret summary*\n\n### Secrets & Hooks\nThe manifest is forged.",
+      });
+    },
+  );
 
   it("restores a BBEG share as one Character with concatenated text in GM notes", async () => {
     const share = makeShare({

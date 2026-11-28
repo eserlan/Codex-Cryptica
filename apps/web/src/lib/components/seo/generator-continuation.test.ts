@@ -17,9 +17,11 @@ describe("generator-continuation", () => {
     const rpgNpc = getGeneratorContinuationConfig("rpg-npc-generator");
     const dndNpc = getGeneratorContinuationConfig("dnd-npc");
     expect(rpgNpc).toBe(npc);
-    expect(dndNpc).toBe(npc);
+    expect(dndNpc).not.toBe(npc);
+    expect(dndNpc?.headline).toBe("Give this character a place in your world");
     expect(npc).toMatchObject({
-      headline: "Give this character a place in your world",
+      headline: "Keep this contact ready for their return",
+      placement: "near-result",
       ctaLabel: "Add to my Codex",
       localFirstNotice: "No account needed; stored locally in this browser.",
     });
@@ -359,7 +361,9 @@ describe("generator-continuation", () => {
     });
     expect(config?.summary).toContain("Event");
     expect(config?.capabilities.join(" ")).toContain("GM-only lore");
-    expect(getGeneratorContinuationConfig("npc")?.placement).toBeUndefined();
+    expect(
+      getGeneratorContinuationConfig("dnd-npc")?.placement,
+    ).toBeUndefined();
   });
 
   it("configures the roster as one Note near the result, not a batch of Characters", () => {

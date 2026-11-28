@@ -8,6 +8,7 @@ import { buildLoreMergePlan } from "#lib/utils/lore-sections.js";
 import { trackEvent } from "#lib/services/analytics/zaraz-analytics.js";
 import {
   getGeneratorHandoffLayout,
+  usesSourceHandoff,
   type getGeneratorDocumentLayout,
 } from "#lib/components/seo/generator-document-layout.js";
 import { getContextSelection } from "generator-engine/session-hub-helpers";
@@ -82,12 +83,14 @@ export function useGeneratorRefinement(deps: {
       deps.getDocumentLayout(),
       deps.getGeneratorType(),
     );
+    const source = usesSourceHandoff(deps.getGeneratorType())
+      ? documentLayout
+      : {
+          content: documentLayout.content || generatedData.content,
+          lore: documentLayout.lore || generatedData.lore,
+        };
     start(
-      {
-        ...generatedData,
-        content: documentLayout.content || generatedData.content,
-        lore: documentLayout.lore || generatedData.lore,
-      },
+      { ...generatedData, ...source },
       "current_output",
       deps.getCurrentEntityId() ?? undefined,
     );
@@ -145,10 +148,20 @@ export function useGeneratorRefinement(deps: {
     const acceptedOrigin = origin ?? "current_output";
     const fromId = sourceId;
     const generatedData = deps.getGeneratedData();
-    const accepted = buildAcceptedOutput(
+    const draft = buildAcceptedOutput(
       document,
       acceptedOrigin === "current_output" ? generatedData : null,
     );
+    // A refinement may repeat the Table Card's secret in its body. Apply
+    // the same handoff boundary before recording it in the Session Hub.
+    const accepted = {
+      ...draft,
+      ...getGeneratorHandoffLayout(
+        draft,
+        { content: draft.content, lore: draft.lore ?? "" },
+        deps.getGeneratorType(),
+      ),
+    };
 
     const derivedId = recordGeneratedEntity(
       sessionHubStore,

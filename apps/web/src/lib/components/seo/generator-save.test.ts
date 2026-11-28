@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { GuestExporter } from "@codex/vault-engine";
 import type { Entity } from "schema";
 import type { SessionEntity } from "generator-engine";
-import { generateHolidayLocal } from "generator-engine";
+import { generateHolidayLocal, generateNpcLocal } from "generator-engine";
 import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 import {
   buildGeneratorSavePayload,
@@ -122,6 +122,117 @@ describe("generator save payloads", () => {
       expect(exported).not.toContain("Bellan Cairn");
     },
   );
+
+  it.each(["npc", "rpg-npc-generator"])(
+    "preserves Full Dossier reference in GM notes and guest exports for %s",
+    (key) => {
+      const output = {
+        ...generateNpcLocal(
+          { role: "Guard", mode: "dossier", campaignContext: "Harbour gate" },
+          () => 0.21,
+        ),
+        type: "character",
+      } satisfies GeneratorOutput;
+      const preview = getGeneratorDocumentLayout(output);
+      expect(preview.content).toContain("Secrets & Hooks");
+      const payload = buildGeneratorSavePayload(
+        output,
+        preview,
+        undefined,
+        key,
+      );
+      expect(payload).toMatchObject({
+        type: "character",
+        lore: output.lore,
+        labels: output.labels,
+      });
+      for (const heading of [
+        "Who they are",
+        "What they want",
+        "Why they are useful",
+        "How to use them at the table",
+      ])
+        expect(payload.content).toContain(heading);
+      for (const heading of [
+        "Secret",
+        "Immediate Hook",
+        "Leverage & Price",
+        "Faction Connection",
+      ]) {
+        expect(payload.content).not.toContain(heading);
+        expect(payload.lore).toContain(heading);
+      }
+      const exported = JSON.stringify(
+        GuestExporter.export({
+          entities: [
+            {
+              id: "npc-1",
+              type: payload.type,
+              title: payload.title,
+              content: payload.content,
+              lore: payload.lore,
+              labels: payload.labels,
+              status: payload.status,
+              aliases: [],
+              connections: [],
+            } satisfies Entity,
+          ],
+          defaultVisibility: "visible",
+          activeTheme: { primaryColor: "#000000" },
+          publishId: "npc-test",
+          vaultTitle: "Test",
+          publisherVersion: "test",
+        }),
+      );
+      expect(exported).not.toContain("Immediate Hook");
+      expect(exported).not.toContain("Leverage & Price");
+      expect(exported).toContain("Who they are");
+    },
+  );
+
+  it("keeps distinct and multiline Table Card secrets private even with misleading generated labels", () => {
+    const output = {
+      ...slugDrafts.npc!,
+      content:
+        "### The Six Elements\n- **Immediate Want**: Leave the town.\n- **Knowledge & Secrets**: First clue.\n  The hidden manifest is forged.\n  - **Concealed**: A second ledger.\n- **Sensory Tag**: Wet wool.\n\n### Table Delivery\nAsk for a boat.",
+      lore: "### At a Glance\n- **Knowledge & Secrets**: Another clue.\n\n### Unexpected reference\nThe watch is compromised.",
+      labels: ["npc-generator", "adventure", "encounter"],
+    };
+    const payload = buildGeneratorSavePayload(
+      output,
+      getGeneratorDocumentLayout(output),
+      undefined,
+      "npc",
+    );
+    expect(payload.type).toBe("character");
+    expect(payload.content).toContain("Wet wool");
+    expect(payload.content).toContain("Ask for a boat");
+    for (const secret of [
+      "First clue",
+      "hidden manifest",
+      "second ledger",
+      "Another clue",
+      "watch is compromised",
+    ]) {
+      expect(payload.content).not.toContain(secret);
+      expect(payload.lore).toContain(secret);
+    }
+  });
+
+  it("keeps normal Table Card's five cues and deduplicates its identical secret in GM notes", () => {
+    const output = slugDrafts.npc!;
+    const payload = buildGeneratorSavePayload(
+      output,
+      getGeneratorDocumentLayout(output),
+      undefined,
+      "npc",
+    );
+    expect(payload.content).toContain("Five public cues below");
+    expect(payload.content).not.toContain("second manifest in her boot");
+    expect(payload.lore.match(/second manifest in her boot/g)).toHaveLength(1);
+    expect(payload.content).toContain("Table Delivery");
+    expect(payload.lore).toContain("Faction Connection");
+  });
 
   it("keeps controversial holiday history out of saved content and guest exports", () => {
     const output = {

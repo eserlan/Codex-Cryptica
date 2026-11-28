@@ -1,6 +1,7 @@
 import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 import { parseGeneratorShareMarkdown } from "./generator-copy";
 import { resolveGeneratorShareTheme } from "./generator-page-identity";
+import { usesSourceHandoff } from "./generator-document-layout";
 
 interface SharedGeneratorSnapshot {
   title: string;
@@ -41,15 +42,17 @@ export async function loadGeneratorRemixDraft(
 
     const parsed = parseGeneratorShareMarkdown(shared.content);
     // Share markdown combines the original content and lore without a reliable
-    // delimiter. BBEG restoration must not guess which text is player-safe.
-    const isVillain = options.targetPath === "/generators/bbeg-generator";
+    // delimiter. Character restoration must not guess which text is player-safe.
+    const isPrivateCharacter = usesSourceHandoff(
+      options.targetPath?.split("/").at(-1),
+    );
     return {
       draft: {
-        type: isVillain ? "character" : "note",
+        type: isPrivateCharacter ? "character" : "note",
         title: shared.title,
-        summary: isVillain ? "" : parsed.summary,
-        content: isVillain ? "" : parsed.content,
-        lore: isVillain
+        summary: isPrivateCharacter ? "" : parsed.summary,
+        content: isPrivateCharacter ? "" : parsed.content,
+        lore: isPrivateCharacter
           ? [parsed.summary ? `*${parsed.summary}*` : "", parsed.content]
               .filter(Boolean)
               .join("\n\n")
