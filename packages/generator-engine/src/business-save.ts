@@ -181,7 +181,8 @@ export function buildBusinessImportDrafts(
     {
       type: "faction",
       title: doc.identity.name,
-      content: renderBusinessContent(doc),
+      content: renderBusinessContent(doc, { includeSecret: false }),
+      lore: stripBusinessMarkdownImages(`## Secret\n${doc.secret}`),
       labels: ["business", "business-generator"],
       status: "active",
       relationships: personLinks,

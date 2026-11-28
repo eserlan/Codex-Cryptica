@@ -5,6 +5,15 @@ import {
 } from "./generator-continuation";
 
 describe("generator-continuation", () => {
+  it("offers the heist continuation next to completed results", () => {
+    const config = getGeneratorContinuationConfig("heist");
+    expect(config).toMatchObject({
+      placement: "near-result",
+      ctaLabel: "Add to my Codex",
+    });
+    expect(config?.summary).toContain("one Event");
+  });
+
   it("returns Wave 1 configs for star-system, npc, rpg-npc-generator, and origin-generator", () => {
     const starSystem = getGeneratorContinuationConfig("star-system");
     expect(starSystem).toMatchObject({
@@ -454,6 +463,16 @@ describe("generator-continuation", () => {
     }
   });
 
+  it("configures Business beside the successful result and explains batch versus text-only remix", () => {
+    const config = getGeneratorContinuationConfig("business");
+    expect(config).toMatchObject({
+      placement: "near-result",
+      ctaLabel: "Add to my Codex",
+    });
+    expect(config?.capabilities.join(" ")).toContain("linked Characters");
+    expect(config?.capabilities.join(" ")).toContain("one Note");
+  });
+
   it("returns null for Wave 2, names, and unknown generator types", () => {
     for (const type of [
       "point-crawl",
@@ -466,6 +485,16 @@ describe("generator-continuation", () => {
     ]) {
       expect(getGeneratorContinuationConfig(type)).toBeNull();
     }
+  });
+
+  it("offers a near-result Puzzle continuation for its Note and GM solution", () => {
+    const config = getGeneratorContinuationConfig("puzzle");
+    expect(config).toMatchObject({
+      placement: "near-result",
+      ctaLabel: "Add to my Codex",
+    });
+    expect(config?.summary).toContain("one Note");
+    expect(config?.capabilities.join(" ")).toContain("GM-Only Solution");
   });
 
   it("gates visibility strictly on explicit completed generation for Wave 1 non-names generators", () => {

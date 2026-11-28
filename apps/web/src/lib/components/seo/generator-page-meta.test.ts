@@ -123,6 +123,20 @@ describe("generator-page-meta completeness and social preview tags", () => {
     expect(slugMeta.puzzle.ogImage).not.toContain("generator-quest");
   });
 
+  it("shows one coherent business example and describes the actual public batch", () => {
+    const draft = slugDrafts.business!;
+    expect(draft.business?.identity.type).toBe("Blacksmith");
+    expect(draft.content).toContain("The Crooked Compass");
+    for (const person of [draft.business!.leadership, ...draft.business!.staff])
+      expect(draft.content).toContain(person.name);
+    expect(draft.content).toContain(draft.business!.secret);
+    expect(
+      slugMeta.business.faqs?.some((faq) =>
+        faq.answer.includes("outside parties remain named references"),
+      ),
+    ).toBe(true);
+  });
+
   it("uses Business's own rendered social screenshot", () => {
     expect(slugMeta.business.ogImage).toBe(
       "https://assets.codexcryptica.com/screenshots/generator-business.png",

@@ -248,7 +248,10 @@ export function businessSectionLabel(section: BusinessSectionId): string {
 }
 
 /** Renders the business as GM-facing markdown (vault content). */
-export function renderBusinessContent(doc: BusinessDocument): string {
+export function renderBusinessContent(
+  doc: BusinessDocument,
+  { includeSecret = true }: { includeSecret?: boolean } = {},
+): string {
   const { identity, operations, leadership, staff, clientele } = doc;
   const lines: string[] = [
     "## Identity",
@@ -307,9 +310,7 @@ export function renderBusinessContent(doc: BusinessDocument): string {
     "## Unusual Asset",
     doc.asset,
     "",
-    "## Secret",
-    doc.secret,
-    "",
+    ...(includeSecret ? ["## Secret", doc.secret, ""] : []),
     "## Opportunity",
     doc.opportunity,
     "",
