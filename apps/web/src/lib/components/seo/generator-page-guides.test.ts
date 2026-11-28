@@ -924,6 +924,26 @@ describe("BBEG editorial guide", () => {
   });
 });
 
+describe("Puzzle editorial guide", () => {
+  it("teaches feedback, spotlight and consequences using the real form controls", () => {
+    const guide = SLUG_GUIDES.puzzle!;
+    const text = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const phrase of [
+      "Puzzle purpose",
+      "Puzzle style",
+      "PC capabilities to make matter",
+      "Participation style",
+      "Complexity",
+      "Failure pressure",
+    ])
+      expect(text).toContain(phrase);
+    expect(guide.links?.map((link) => link.href)).toEqual([
+      "/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
+      "/answers/how-do-you-give-hints-for-an-rpg-puzzle-without-giving-away-the-answer",
+    ]);
+  });
+});
+
 describe("Quest editorial guide", () => {
   it("teaches table decisions using field labels and three progressive Answers", () => {
     const guide = getGeneratorGuide("quest", "RPG Quest Generator");

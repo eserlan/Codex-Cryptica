@@ -356,6 +356,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    puzzle: {
+      headline: "Keep the puzzle's setup and solution ready for play",
+      summary:
+        "Save the generated encounter as one Note in your local Codex vault, so you can prepare its place in the adventure and record how the party solves it.",
+      capabilities: [
+        "Keep the labelled GM-Only Solution and Escalating Hints in GM notes",
+        "Link the Note to the place it blocks and the encounter or objective it changes",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
     "alien-race": {
       headline: "Give this species a place in your world",
       summary:
