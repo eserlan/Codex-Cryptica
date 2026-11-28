@@ -96,6 +96,34 @@ describe("loadGeneratorRemixDraft", () => {
     },
   );
 
+  it("restores heist share text as one Event with all GM material private", async () => {
+    const targetPath = "/generators/heist";
+    const share = makeShare({
+      content:
+        "# Shared score\n*Briefing*\nLabels: heist, heist-generator\n\n### The Hidden Factor\nThe clerk is an ally.",
+      metadata: {
+        generatorPath: targetPath,
+        labels: ["heist", "heist-generator"],
+      },
+    });
+    const result = await loadGeneratorRemixDraft(
+      options(vi.fn().mockResolvedValue(share), { targetPath }),
+    );
+    const draft = result!.draft;
+    expect(
+      buildGeneratorSavePayload(
+        draft,
+        getGeneratorDocumentLayout(draft),
+        undefined,
+        "heist",
+      ),
+    ).toMatchObject({
+      type: "event",
+      content: "",
+      lore: "*Briefing*\n\n### The Hidden Factor\nThe clerk is an ally.",
+    });
+  });
+
   it("restores a BBEG share as one Character with concatenated text in GM notes", async () => {
     const share = makeShare({
       content:

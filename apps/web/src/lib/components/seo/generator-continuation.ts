@@ -319,6 +319,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    heist: {
+      headline: "Keep the score ready for changing plans",
+      summary:
+        "Save this score as one Event in your local Codex vault, so you can revisit the objective, alarm state and consequences after play.",
+      capabilities: [
+        "Keep the hidden factor, security plan, alarm track and escape options in GM notes",
+        "Link the Event to the target, patron and prizes already in your vault",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
     tome: {
       headline: "Shelve this book in your campaign",
       summary:

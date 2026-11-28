@@ -1765,11 +1765,11 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     pageTitle:
       "Heist Generator | RPG Score & Infiltration Creator | Codex Cryptica",
     metaDescription:
-      "Generate a table-ready RPG heist: the score, a prize with a practical catch, casing intel, three security rings, an escalating alarm track, complications, and a compromised getaway.",
+      "Generate a table-ready RPG heist: the score, a prize with a practical catch, casing intel, three security rings, an escalating alarm track, complications, and conditional getaway routes.",
     introTitle: "Heist Generator",
     eyebrow: "Score & Infiltration Generator",
     introText:
-      "Build a playable heist instead of a planning session. You get a concrete objective, a prize that is awkward to move, three layered security rings that each allow more than one approach, a five-state alarm track, and a getaway whose original route has already failed. Works without login, then imports into your local vault.",
+      "Prepare a score the crew can approach in different ways. Draft a concrete objective with a practical catch, casing intel, layered security, an alarm track and exit options that change as defenders respond. Generate without an account and keep the score in your local vault.",
     canonicalPath: "/generators/heist",
     ogImage: "https://assets.codexcryptica.com/screenshots/generator-heist.jpg",
     ogImageAlt:
@@ -1787,7 +1787,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "What does the heist generator create?",
         answer:
-          "A complete score: the objective, the prize and its practical complication, at least three pieces of casing intel, three distinct security rings, a five-state alarm track from Quiet to Lethal Response, three complications with a trigger that fires when the prize is lifted, a compromised getaway with alternate routes, and a menu of flashbacks the players could establish.",
+          "A complete score: the objective, the prize and its practical complication, at least three pieces of casing intel, three distinct security rings, a five-state alarm track from Quiet to Lethal Response, complications, a transition into escape when the objective is achieved, alternate getaway routes and flashback opportunities. Discovery and alarm depend on the situation described in the score.",
       },
       {
         question: "Is there one correct way through the security?",
@@ -1797,17 +1797,22 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "How do the flashback opportunities work?",
         answer:
-          "They are offered, never dictated. The generator lists things the players could plausibly establish after the fact — a bribed guard, forged credentials, cached equipment, an inside contact — so the crew's competence is preserved without the table spending an hour planning for hypotheticals.",
+          "They are options the players could plausibly establish after the fact. Agree the cost under your game’s rules, and use a flashback to make a preparation relevant to a choice the crew has just made.",
       },
       {
         question: "Does it work outside fantasy?",
         answer:
-          "Yes. The target, its security, the alarm flavour, and the pursuit all follow the vibe you pick, so a cyberpunk data fortress, a frontier payroll car, an orbital station vault, and a cathedral undercroft each generate their own kind of score.",
+          "Yes. Choose a vibe and a matching Target, such as a fantasy Temple Reliquary or a cyberpunk Data Fortress. Adapt the score’s security and alarm response to your setting; it is not tied to a specific rules system.",
       },
       {
-        question: "What should I look for in a heist generator?",
+        question: "Does reaching the objective automatically trigger an alarm?",
         answer:
-          "Judge a heist generator on three things: whether every security layer has more than one way through, whether failure escalates instead of ending the scene, and whether the getaway is its own act rather than an afterthought. See the example scores linked below and judge for yourself.",
+          "Not necessarily. Check the transition and Alarm Track: a scheduled inspection, witness or visible evidence may expose the crew later, leaving a window to escape. Change the available routes only when the stated response occurs.",
+      },
+      {
+        question: "What gets saved in my Codex?",
+        answer:
+          "Add to my Codex opens the generated score as one Event, keeping the objective and casing in the main text and its hidden factor, security rings, alarm, complications and getaway in GM notes. Link the Event to existing locations, people and prizes yourself. A text-only shared remix retains the combined score in GM notes of an Event; review before sharing.",
       },
     ],
     relatedLinks: [

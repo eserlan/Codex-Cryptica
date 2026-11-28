@@ -1115,23 +1115,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   heist: {
     summary:
-      "A great RPG heist gives players a clear target, layered security they can scout in advance, and a complication that forces improvisation once they are inside.",
+      "Prepare a score whose objective, security and escalating response give the crew choices instead of a single intended plan. Use casing to establish what they know, the practical catch to shape how they act, and the getaway to reward or complicate those choices.",
     tips: [
       {
-        title: "Reward reconnaissance",
+        title: "Make success mean more than reaching the target",
         detail:
-          "Let every guard shift, delivery schedule, or blueprint detail be discoverable before the job begins.",
+          "Choose Heist Type according to what must change by the end of the score. Rescue means bringing someone out alive, while Information means getting knowledge the crew can use. In The Prize (optional), name an objective whose condition matters, such as a fragile royal seal or a witness who refuses to leave without their child.",
       },
       {
-        title: "Keep the exit harder than the entry",
+        title: "Make casing reveal a real alternative",
         detail:
-          "Triggering an alarm or rival crew during extraction creates tension without stalling the opening.",
+          "Use Target and Target Scale to set how much of the location needs to be negotiated or infiltrated. For each Security Ring, choose one discoverable fact that makes an alternative plausible, such as a trusted escort instead of a risky crossing. Reveal useful intel before asking the players how they enter.",
+      },
+      {
+        title: "Escalate when the fiction changes",
+        detail:
+          "Read the Alarm Track and The Getaway together. Decide what evidence would actually alert the defenders, when their response changes the exit options, and which alternative remains costly but possible. Offer a flashback when a player's idea needs a plausible prior preparation, not as a requirement.",
       },
     ],
+    linksTitle: "Build and run the score",
     links: [
       {
-        href: "/answers/how-do-i-run-a-stealth-mission-in-a-tabletop-rpg",
-        label: "Running stealth & heist missions",
+        href: "/answers/what-makes-a-good-heist-target-in-a-tabletop-rpg",
+        label: "Give the objective a practical catch and lasting stakes",
+        description:
+          "Choose why it matters, who keeps it and what makes getting it out difficult.",
+      },
+      {
+        href: "/answers/how-do-you-run-a-heist-in-a-tabletop-rpg",
+        label: "Run casing, infiltration, escalation and escape",
+        description:
+          "Move through the four beats without forcing a plan or a fixed solution.",
       },
     ],
   },

@@ -40,6 +40,23 @@ export async function loadGeneratorRemixDraft(
       return null;
     }
 
+    if (options.targetPath === "/generators/heist") {
+      const score = parseGeneratorShareMarkdown(shared.content);
+      return {
+        draft: {
+          type: "event",
+          title: shared.title,
+          summary: "",
+          content: "",
+          lore: [score.summary ? `*${score.summary}*` : "", score.content]
+            .filter(Boolean)
+            .join("\n\n"),
+          labels: shared.metadata.labels ?? [],
+          status: "draft",
+        },
+        theme: resolveGeneratorShareTheme(shared.metadata.theme),
+      };
+    }
     const parsed = parseGeneratorShareMarkdown(shared.content);
     // Share markdown combines the original content and lore without a reliable
     // delimiter. Character restoration must not guess which text is player-safe.
