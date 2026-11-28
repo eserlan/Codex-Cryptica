@@ -293,6 +293,34 @@ describe("generator save payloads", () => {
     expect(payload.lore).toContain(secret);
   });
 
+  it("preserves Holiday public bullets and routes indented secrets through preview and save", () => {
+    const secret = "The captain sank the relief ship.";
+    const publicDetail = "Traditions: ring the bells";
+    const output: GeneratorOutput = {
+      ...baseOutput,
+      type: "note",
+      title: "The Bell Calendar",
+      content: `### Observance One\n  - **Knowledge & Secrets**: ${secret}\n- ${publicDetail}`,
+      lore: "The inscription uses - **Knowledge & Secrets** as a label.",
+      labels: ["holiday-generator", "table-card"],
+    };
+
+    const preview = getCalendarPreviewLayout(output);
+    expect(preview.content).toContain(publicDetail);
+    expect(preview.content).not.toContain(secret);
+    expect(preview.lore).toContain(secret);
+
+    const payload = buildGeneratorSavePayload(
+      output,
+      preview,
+      undefined,
+      "holiday",
+    );
+    expect(payload.content).toContain(publicDetail);
+    expect(payload.content).not.toContain(secret);
+    expect(payload.lore).toContain(secret);
+  });
+
   it("preserves the plot twist preparation in GM notes, including the generated summary", () => {
     const output = {
       ...slugDrafts["plot-twist-generator"]!,

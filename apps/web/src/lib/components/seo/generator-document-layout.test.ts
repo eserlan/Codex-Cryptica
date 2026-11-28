@@ -1,7 +1,49 @@
 import { describe, expect, it } from "vitest";
-import { getGeneratorDocumentLayout } from "./generator-document-layout";
+import {
+  getGeneratorDocumentLayout,
+  routeTableCardSecretHandoff,
+} from "./generator-document-layout";
 
 describe("getGeneratorDocumentLayout", () => {
+  it("routes indented Table Card secret bullets out of content", () => {
+    const secret = "The captain sank the relief ship.";
+    const routed = routeTableCardSecretHandoff(
+      `### Observance\n  - **Knowledge & Secrets**: ${secret}`,
+      "### GM Reference",
+      true,
+    );
+
+    expect(routed.content).not.toContain(secret);
+    expect(routed.lore).toContain(secret);
+  });
+
+  it("keeps peer public bullets outside a Table Card secret block", () => {
+    const secret = "The hidden history.";
+    const publicDetail = "Traditions: ring the bells";
+    const routed = routeTableCardSecretHandoff(
+      `### Observance\n- **Knowledge & Secrets**: ${secret}\n  - **Evidence**: a sealed ledger\n- ${publicDetail}`,
+      "",
+      true,
+    );
+
+    expect(routed.content).toContain(publicDetail);
+    expect(routed.content).not.toContain(secret);
+    expect(routed.lore).toContain(secret);
+    expect(routed.lore).toContain("**Evidence**: a sealed ledger");
+  });
+
+  it("appends a moved secret when lore only mentions its label inline", () => {
+    const secret = "The inscription names the missing heir.";
+    const routed = routeTableCardSecretHandoff(
+      `### Observance\n- **Knowledge & Secrets**: ${secret}`,
+      "### GM Reference\nThe inscription uses - **Knowledge & Secrets** as a label.",
+      true,
+    );
+
+    expect(routed.content).not.toContain(secret);
+    expect(routed.lore).toContain(secret);
+  });
+
   it("keeps Table Card knowledge and secrets out of player-visible content", () => {
     const secret = "The ledger is a forgery; she conceals the stolen signet.";
     const layout = getGeneratorDocumentLayout({

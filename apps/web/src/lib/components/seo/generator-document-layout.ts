@@ -313,14 +313,59 @@ function extractBullets(body: string, labels: Set<string>) {
 /** Keep an entire labelled secret bullet, including wrapped/nested lines. */
 function extractTableCardSecretBlocks(body: string) {
   const moved: string[] = [];
-  const kept = body.replace(
-    /^-[ \t]+\*\*Knowledge & Secrets\*\*[^\n]*(?:\n(?!-[ \t]+\*\*[^*\n]+\*\*)[^\n]*)*/gm,
-    (block) => {
-      moved.push(block.trim());
-      return "";
-    },
-  );
-  return { kept: kept.trim(), moved };
+  const kept: string[] = [];
+  const lines = body.split("\n");
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index] ?? "";
+    const secretIndent = getTableCardSecretIndent(line);
+    if (secretIndent === null) {
+      kept.push(line);
+      continue;
+    }
+
+    const blockEnd = findSecretBlockEnd(lines, index, secretIndent);
+    moved.push(
+      lines
+        .slice(index, blockEnd + 1)
+        .join("\n")
+        .trim(),
+    );
+    index = blockEnd;
+  }
+
+  return { kept: kept.join("\n").trim(), moved };
+}
+
+function getTableCardSecretIndent(line: string): number | null {
+  const match = line.match(/^([ \t]{0,3})-[ \t]+\*\*Knowledge & Secrets\*\*/);
+  return match ? getMarkdownIndentWidth(match[1] ?? "") : null;
+}
+
+function findSecretBlockEnd(
+  lines: string[],
+  startIndex: number,
+  secretIndent: number,
+): number {
+  let endIndex = startIndex;
+  while (endIndex + 1 < lines.length) {
+    if (isPeerListItem(lines[endIndex + 1] ?? "", secretIndent)) break;
+    endIndex += 1;
+  }
+  return endIndex;
+}
+
+function isPeerListItem(line: string, secretIndent: number): boolean {
+  const match = line.match(/^([ \t]*)-[ \t]+/);
+  return !!match && getMarkdownIndentWidth(match[1] ?? "") <= secretIndent;
+}
+
+function getMarkdownIndentWidth(indent: string): number {
+  let width = 0;
+  for (const character of indent) {
+    width = character === "\t" ? width + (4 - (width % 4)) : width + 1;
+  }
+  return width;
 }
 
 function extractTableCardSecrets(
@@ -392,11 +437,12 @@ export function routeTableCardSecretHandoff(
 }
 
 function appendGmOnlySecrets(lore: string, bullets: string[]): string {
-  if (bullets.length === 0 || /-\s+\*\*Knowledge & Secrets\*\*/.test(lore)) {
+  const missingBullets = bullets.filter((bullet) => !lore.includes(bullet));
+  if (missingBullets.length === 0) {
     return lore;
   }
 
-  return [lore, `### GM-Only Secrets\n${bullets.join("\n")}`]
+  return [lore, `### GM-Only Secrets\n${missingBullets.join("\n")}`]
     .filter(Boolean)
     .join("\n\n");
 }
