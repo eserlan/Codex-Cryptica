@@ -681,7 +681,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "What does a kingdom draft include?",
         answer:
-          "A named realm, ruler, capital, government, society, two major factions, a hidden problem, rumours, hooks and entity seeds.",
+          "A named realm, ruler, capital, government, society, two or three major factions, a hidden problem, rumours, hooks and entity seeds.",
       },
       {
         question: "Does it need to be a hereditary monarchy?",
@@ -743,7 +743,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "What does the tavern draft contain?",
         answer:
-          "A named tavern, room and hospitality, owner, two notable regulars, signature food or drink, hidden problem, immediate hook, rumours and entity seeds.",
+          "A named tavern, room and hospitality, owner, two or three notable regulars, signature food or drink, hidden problem, immediate hook, rumours and entity seeds.",
       },
       {
         question:

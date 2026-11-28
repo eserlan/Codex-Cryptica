@@ -148,6 +148,13 @@ function resolveSaveBodyAndLore(
   generatorType?: string,
 ): { content: string; lore: string } {
   const summaryPrefix = data.summary ? `*${data.summary}*` : "";
+  if (generatorType === "tavern" || generatorType === "kingdom") {
+    return {
+      content: layout.content,
+      lore: [summaryPrefix, layout.lore].filter(Boolean).join("\n\n"),
+    };
+  }
+
   if (usesPrivateBodyAndLore(generatorType)) {
     return {
       content: [summaryPrefix, layout.content].filter(Boolean).join("\n\n"),

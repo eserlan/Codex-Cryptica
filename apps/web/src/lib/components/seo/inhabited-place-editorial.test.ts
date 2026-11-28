@@ -86,4 +86,19 @@ describe.each([
       false,
     );
   });
+
+  it("keeps a summary that repeats GM-only trouble in GM notes", () => {
+    if (slug === "settlement") return;
+
+    const draft = { ...slugDrafts[slug]!, summary: secret };
+    const payload = buildGeneratorSavePayload(
+      draft,
+      getGeneratorDocumentLayout(draft),
+      undefined,
+      slug,
+    );
+
+    expect(payload.content).not.toContain(secret);
+    expect(payload.lore).toContain(secret);
+  });
 });
