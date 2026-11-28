@@ -52,6 +52,30 @@ const RPG_NPC_CONTINUATION: GeneratorContinuationConfig = {
 
 const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
   {
+    "minor-magic-item": {
+      headline: "Keep track of this small find",
+      summary:
+        "Save this find as one Item in your local Codex vault so you can record when its owner uses the last charge or reveals its effect.",
+      capabilities: [
+        "Keep its description in the Item and its usage limit, activation, effect, quirk and provenance in GM notes",
+        "Link the Item to its owner or discovery site, and update it when spent",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
+    "artifact-generator": {
+      headline: "Keep the relic's history and demands together",
+      summary:
+        "Save this relic as one Item in your local Codex vault so you can record who holds it, which powers have awakened and what each use costs.",
+      capabilities: [
+        "Keep the description separate from the GM reference powers, requirements, cost, pursuers and sealing conditions",
+        "Link the Item to existing owners, factions and locations and record the consequences as the campaign unfolds",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
     "star-system": {
       headline: "Keep this system connected",
       summary:

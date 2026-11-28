@@ -815,22 +815,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "artifact-generator": {
     summary:
-      "Each result is a named relic with dormant, awakened and ascendant powers, an attunement ritual, a cost, factions that want it, adventure hooks and a way to destroy it. GM notes retain your campaign setting, while its vibe shapes the factions, rumours and hooks.",
+      "Build a relic that changes a campaign because people pursue it and its wielder has difficult choices to make. Treat its powers, its price and the means of ending its influence as parts of the same story.",
     tips: [
       {
-        title: "Set the curse to set the cost",
+        title: "Choose who has to live with its power",
         detail:
-          "In the offline draft, Curse / Cost / Drawback sets the Cost, Curse, Corruption, or Taboo paragraph. Choose None (Pure Burden of Custody) for a relic that is heavy to keep but has no supernatural price.",
+          "Set Power Tier / Scope to Heroic Wonder for a relic that changes a skirmish, or Regional Masterpiece when whole towns have reason to claim it. Check each of the three power stages against that reach; give the party a reason to hold back rather than always use the strongest power.",
       },
       {
-        title: "Let the status open the adventure",
+        title: "Start with a claim, not a free treasure",
         detail:
-          "In the offline draft, Current Status puts one matching hook first. A relic Sealed in Royal / High-Security Vault opens with a vault break, while one Lost in Ruined Sanctuary opens with getting into the sanctuary.",
+          "Choose Current Status as Lost in Ruined Sanctuary when several factions can race for the discovery, or Wielded by a Tyrant / Rival when the party must take it from someone. Give two pursuers incompatible demands and let the party decide whom to trust, bargain with or defy.",
       },
       {
-        title: "Use the tier to set how far it reaches",
+        title: "Make awakening and the price visible",
         detail:
-          "Power Tier / Scope changes only the Ascendant / Zenith Powers line. Heroic Wonder and Regional Masterpiece give it a smaller reach than Cataclysmic Power, and the dormant and awakened powers stay the same at every tier.",
+          "Match Curse / Cost / Drawback to a dilemma you want to play. With Strict Moral / Physical Taboo, show the vow in the relic's history before testing it; with None (Pure Burden of Custody), make its need for protection the real price. Reveal an achievable awakening requirement and a credible way to seal or destroy it.",
+      },
+    ],
+    linksTitle: "Make the relic matter beyond its first discovery",
+    links: [
+      {
+        href: "/answers/how-do-i-upgrade-a-player-characters-weapon-without-replacing-it",
+        label: "Unlock meaningful powers through deeds",
+        description:
+          "Let a relic develop with its bearer rather than simply increasing numbers.",
+      },
+      {
+        href: "/answers/how-much-loot-and-how-many-magic-items-should-i-give-my-players",
+        label: "Decide when a campaign-shaping reward belongs",
+        description:
+          "Pace major finds across the campaign and consider what happens if the party trades them.",
       },
     ],
   },
@@ -956,22 +971,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "minor-magic-item": {
     summary:
-      "Each result gives you a small item with a description, a quick reference, an effect, a quirk and a suggested use. The usage limit and the way the item is activated decide how it plays, so settle those before you read the effect.",
+      "Make a small find into a choice about when to spend it. Put a limited-use charm, draught or gadget in a place where it has a believable owner and gives the party an extra option, not an automatic answer.",
     tips: [
       {
-        title: "Set the usage limit before the effect",
+        title: "Give the item a job the party can choose",
         detail:
-          "The usage limit tells players how often the item can help them. A single-use item suits one dramatic moment, while fragile charges give a few uses before it breaks.",
+          "Set Focus / Primary Utility to Exploration & Travel when a river crossing or climb is coming up, or Infiltration & Stealth when the party needs another way past a guard. Leave the ordinary approach viable so using the item is a decision rather than a requirement.",
       },
       {
-        title: "Use the quirk as a cost",
+        title: "Choose the moment they spend it",
         detail:
-          "The quirk can be a sensory or environmental side effect, such as chalky residue or a sudden draft. Treat it as a giveaway or cost only when the generated detail fits, and set Quirk or Side Effect to 'None' when it should be clean.",
+          "Set Usage Limit / Charges to Single Use for one important decision or Fragile Charges for a tool worth saving across several scenes. Match Activation Method to the Item Form and tell the players when the charge is spent and what it cannot do before they commit.",
       },
       {
-        title: "Match the effect to the scene, not the vibe",
+        title: "Let the quirk be visible in play",
         detail:
-          "The same effect can appear under different vibes, sometimes with only the heading changed. Read the effect against what the party is doing right now before you decide what it means.",
+          "Choose a Harmless Sensory Tell under Quirk or Side Effect if the item should be memorable rather than costly. A chime in a silent passage creates an observable risk; let players muffle it or choose a different approach instead of springing a hidden penalty on them.",
+      },
+    ],
+    linksTitle: "Place the find, then make its effect fair",
+    links: [
+      {
+        href: "/answers/how-much-loot-and-how-many-magic-items-should-i-give-my-players",
+        label: "Place small rewards without making every search pay",
+        description:
+          "Pace finds across the campaign and make treasure fit its owner.",
+      },
+      {
+        href: "/answers/how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery",
+        label: "Use detection items without solving the entire mystery",
+        description:
+          "Decide what information the item can reveal and what still needs investigation.",
       },
     ],
   },
