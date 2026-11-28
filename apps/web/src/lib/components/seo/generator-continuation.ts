@@ -176,16 +176,16 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       ctaLabel: CTA_LABEL,
     },
     "dungeon-generator": {
-      headline: "Turn this delve into a playable site",
+      headline: "Keep the delve ready for the party's next visit",
       summary:
-        "Stage this dungeon for your local Codex vault as a Location entry, ready to open in the interactive Delve Canvas and room-by-room GM Dossier.",
+        "Save one new Location in your local Codex vault and track explored sectors, changing faction territory and the party's discoveries.",
       capabilities: [
-        "Keep sector lore and faction standoff separate from GM-only traps, treasures, and the central secret",
-        "Open the delve in the interactive Delve Canvas to rearrange rooms, loops, and hidden shortcuts",
-        "Link the site to nearby settlements, patrons, and campaign notes inside your vault",
+        "Keep the site and faction details together, with layout, central secret, traps, treasures and hooks in the GM reference; the main text is still GM prep",
+        "Link the Location yourself to nearby settlements, patrons and factions; use Build Delve Canvas instead if you want an editable map and dossier",
       ],
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
+      placement: "near-result",
     },
     "adventure-idea-generator": {
       headline: "Turn this scenario into an active thread",
@@ -345,16 +345,16 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       placement: "near-result",
     },
     tome: {
-      headline: "Shelve this book in your campaign",
+      headline: "Keep the book and its evidence together",
       summary:
-        "Save this tome to your local Codex vault so its physical details, provenance, reading hazard, and the people and places that want it stay in one reference.",
+        "Save the tome in your local Codex vault so you can record who holds it, which passages the party has read and what they learn next.",
       capabilities: [
-        "Store the physical description, provenance, and contents in one Item entry",
-        "Keep the ground truth, the deception, and the actionable clue as GM-only lore",
-        "Record the book's author, custodian, associated location, and interested factions inside the Item entry",
+        "Keep physical description, provenance, contents, risks and hooks in one Item entry, with ground truth and handling reference in GM-only lore",
+        "Link the Item to existing custodians, authors and locations yourself; extract only discovered passages before sharing with players",
       ],
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
+      placement: "near-result",
     },
     puzzle: {
       headline: "Keep the puzzle's setup and solution ready for play",
