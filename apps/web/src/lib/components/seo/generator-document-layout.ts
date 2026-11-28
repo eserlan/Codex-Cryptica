@@ -377,6 +377,19 @@ function routeTableCardSecrets(
   };
 }
 
+/** Apply Table Card secrecy routing without changing the source's section layout. */
+export function routeTableCardSecretHandoff(
+  content: string,
+  lore: string,
+  isTableCard: boolean,
+) {
+  const routed = routeTableCardSecrets(content, lore, isTableCard);
+  return {
+    content: routed.content,
+    lore: appendGmOnlySecrets(routed.lore, routed.gmOnlyBullets),
+  };
+}
+
 function appendGmOnlySecrets(lore: string, bullets: string[]): string {
   if (bullets.length === 0 || /-\s+\*\*Knowledge & Secrets\*\*/.test(lore)) {
     return lore;

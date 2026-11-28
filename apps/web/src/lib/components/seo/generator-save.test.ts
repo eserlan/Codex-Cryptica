@@ -263,6 +263,36 @@ describe("generator save payloads", () => {
     }
   });
 
+  it("routes Table Card secrets out of Holiday previews and saved Note content", () => {
+    const secret = "The midsummer rite conceals the vanished heir.";
+    const output: GeneratorOutput = {
+      ...baseOutput,
+      type: "note",
+      title: "The Lantern Calendar",
+      content:
+        "### Observance One\n- **Knowledge & Secrets**: " +
+        secret +
+        "\n\n### Observance Two\n- **Traditions**: Ring the bells.",
+      lore: "### GM Reference\nThe heir's route is still unknown.",
+      labels: ["holiday-generator", "table-card"],
+    };
+
+    const preview = getCalendarPreviewLayout(output);
+    expect(preview.content).toContain("### Observance One");
+    expect(preview.content).toContain("### Observance Two");
+    expect(preview.content).not.toContain(secret);
+    expect(preview.lore).toContain(secret);
+
+    const payload = buildGeneratorSavePayload(
+      output,
+      preview,
+      undefined,
+      "holiday",
+    );
+    expect(payload.content).not.toContain(secret);
+    expect(payload.lore).toContain(secret);
+  });
+
   it("preserves the plot twist preparation in GM notes, including the generated summary", () => {
     const output = {
       ...slugDrafts["plot-twist-generator"]!,

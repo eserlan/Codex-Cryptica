@@ -2,6 +2,7 @@ import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 import {
   getGeneratorDocumentLayout,
   getGeneratorHandoffLayout,
+  routeTableCardSecretHandoff,
 } from "./generator-document-layout";
 
 /** Calendar headings repeat by day; plot twist drafts are entirely GM preparation. */
@@ -11,7 +12,11 @@ export function getCalendarTwistHandoffLayout(
   generatorType?: string,
 ): { content: string; lore: string } {
   if (generatorType === "holiday") {
-    return { content: data.content, lore: data.lore ?? "" };
+    return routeTableCardSecretHandoff(
+      data.content,
+      data.lore ?? "",
+      data.labels?.includes("table-card") ?? false,
+    );
   }
   if (generatorType === "plot-twist-generator") {
     return {
@@ -30,7 +35,11 @@ export function getCalendarPreviewLayout(
 ) {
   // Each observance legitimately repeats its own headings.
   if (generatedData?.labels?.includes("holiday-generator")) {
-    return { content: generatedData.content, lore: generatedData.lore ?? "" };
+    return getCalendarTwistHandoffLayout(
+      generatedData,
+      { content: generatedData.content, lore: generatedData.lore ?? "" },
+      "holiday",
+    );
   }
   return getGeneratorDocumentLayout(generatedData);
 }
