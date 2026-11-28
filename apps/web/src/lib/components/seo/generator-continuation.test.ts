@@ -15,6 +15,11 @@ describe("generator-continuation", () => {
   });
 
   it("returns Wave 1 configs for star-system, npc, rpg-npc-generator, and origin-generator", () => {
+    expect(getGeneratorContinuationConfig("point-crawl")).toMatchObject({
+      headline: "Keep the chosen route network in your vault",
+      ctaLabel: "Add to my Codex",
+      placement: "near-result",
+    });
     const starSystem = getGeneratorContinuationConfig("star-system");
     expect(starSystem).toMatchObject({
       headline: "Keep this system connected",
@@ -475,7 +480,6 @@ describe("generator-continuation", () => {
 
   it("returns null for Wave 2, names, and unknown generator types", () => {
     for (const type of [
-      "point-crawl",
       "names",
       "fantasy-names",
       "unknown-generator",
@@ -556,6 +560,6 @@ describe("generator-continuation", () => {
         isBusy: false,
         variant: "default",
       }),
-    ).toBe(false);
+    ).toBe(true);
   });
 });

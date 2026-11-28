@@ -555,32 +555,43 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   "adventure-generator": ADVENTURE_GUIDE,
   "point-crawl": {
     summary:
-      "Point crawls replace empty hex-counting with meaningful travel decisions: every node is a landmark or hazard, and every route has a cost, risk, or secret shortcut.",
+      "Prepare travel as a succession of choices rather than a journey along a fixed path. Use a small network of locations with different costs, then tell the party what they can see at each junction without revealing the whole map.",
     tips: [
       {
-        title: "Make junctions ask a question",
+        title: "Match the route choices to your session",
         detail:
-          "Give each fork a clear trade-off—fast and exposed versus slow and hidden—so players can make informed choices.",
+          "Set Genre / Theme to Classic Fantasy, Crawl Scale to Wilderness, Number of Points to 8 and Interconnection Density to Balanced branching for a coastal pilgrimage. In Free-Text Premise, say the tide will return before the party reaches the shrine. Use Danger Level to set the stakes, then give the exposed causeway and sheltered cave different travel times and risks.",
       },
       {
-        title: "Use loops, not straight lines",
+        title: "Make the hidden route discoverable",
         detail:
-          "At least one alternate loop or secret path prevents dead ends and rewards scouting.",
+          "Set Secret Route Frequency to Standard (1-2 secret routes). Inspect the graph and follow the Signpost field at each junction. In the Receding Tide Road example, the causeway bells hold the sequence for the locked arch at the Lantern-Ruin Fork. Decide what the party can notice before committing to a route, and offer a second way to learn the sequence if they miss it.",
       },
       {
-        title: "Keep node prep to three lines",
+        title: "Save a network you can run from the vault",
         detail:
-          "What is visible on arrival, what hazard or inhabitant waits here, and what clue points to neighbouring nodes.",
+          "Inspect locations and use Include in Vault Save, Select All or Core Only before adding the crawl. Check that the starting point, goal and clues needed for locked routes are still selected. Add to my Codex opens the overview Note and creates one Location for each selected point, with routes between selected endpoints. Keep this full map and the overview for GM prep; share only discovered routes and sights with players.",
       },
     ],
+    linksTitle: "Make every journey a meaningful choice",
     links: [
       {
         href: "/answers/how-do-you-build-a-point-crawl-for-an-rpg",
-        label: "Building a point crawl",
+        label: "Build a navigable network of landmarks",
+        description:
+          "Place junctions, route signposts, obstacles and clues so players can make informed travel choices.",
       },
       {
         href: "/answers/point-crawl-vs-hex-crawl",
-        label: "Point crawl vs hex crawl",
+        label: "Choose the right scale of exploration",
+        description:
+          "Decide whether travel between landmarks or exploration of unknown terrain is the interesting part of play.",
+      },
+      {
+        href: "/examples/the-receding-tide-road-point-crawl",
+        label: "Walk through the Receding Tide Road example",
+        description:
+          "See how the tidal causeway, hidden routes and the Lantern-Ruin gate make an eight-point coastal expedition playable.",
       },
     ],
   },
