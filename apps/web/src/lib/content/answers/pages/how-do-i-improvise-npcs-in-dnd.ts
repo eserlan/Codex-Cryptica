@@ -166,6 +166,12 @@ export const howDoIImproviseNpcsInDnd: AnswerConfigInput = {
         "Give an improvised NPC a faction to belong to so the conversation connects to the wider campaign web.",
       href: "/generators/faction",
     },
+    {
+      title: "Fantasy Name Generator",
+      description:
+        "Pin a shortlist of distinct names and copy the ones you need for improvised fantasy characters.",
+      href: "/generators/fantasy-names",
+    },
   ],
   relatedForPages: [
     {
