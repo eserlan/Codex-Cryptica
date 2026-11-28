@@ -974,3 +974,39 @@ it("keeps the faction's secret, hook and GM-facing prose private despite preview
       expect(payload.lore).toContain(value);
   }
 });
+
+it("keeps nested and unrecognized faction headings in GM notes", async () => {
+  const { generateFactionLocal } = await import("generator-engine");
+  const draft = generateFactionLocal(
+    { theme: "Classic Fantasy", type: "Merchant Guild", scope: "Single city" },
+    () => 0.35,
+  ) as GeneratorOutput;
+  const malformedContents = [
+    "### What they control\nPublic holdings.\n### What they want\nPublic plans.\n#### Secret\nNESTED_SECRET_MARKER",
+    "### What they control\nPublic holdings.\n### What they want\nPublic plans.\n### Secret\nTOP_LEVEL_SECRET_MARKER",
+  ];
+
+  for (const content of malformedContents) {
+    const output = { ...draft, content };
+    const payload = buildGeneratorSavePayload(
+      output,
+      getGeneratorDocumentLayout(output),
+      undefined,
+      "faction",
+    );
+
+    expect(payload.content).toContain("Public holdings.");
+    expect(payload.content).not.toMatch(/(?:NESTED|TOP_LEVEL)_SECRET_MARKER/);
+    if (content.includes("NESTED")) {
+      expect(payload.content).not.toContain("Public plans.");
+      expect(payload.lore).toContain("Public plans.");
+    } else {
+      expect(payload.content).toContain("Public plans.");
+    }
+    expect(payload.lore).toContain(
+      content.includes("NESTED")
+        ? "NESTED_SECRET_MARKER"
+        : "TOP_LEVEL_SECRET_MARKER",
+    );
+  }
+});

@@ -451,19 +451,16 @@ export function usesSourceHandoff(generatorType?: string) {
 function getFactionHandoffLayout(data: GeneratorOutput) {
   // The faction's danger paragraph can repeat its explicitly labelled secret.
   // Keep GM-facing sections and source lore together, not the preview layout.
-  const gmHeadings = new Set([
-    "why they are dangerous",
-    "how to use them at the table",
-    "internal conflict",
-    "secrets & hooks",
-  ]);
+  // Only the two explicitly public sections are safe to show in the entry body.
+  // Model-added headings (including nested headings) stay in GM notes by default.
+  const publicHeadings = new Set(["what they control", "what they want"]);
   const publicSections: string[] = [];
   const gmSections: string[] = [];
   for (const section of splitMarkdownSections(data.content)) {
-    (gmHeadings.has(section.heading.toLowerCase())
-      ? gmSections
-      : publicSections
-    ).push(section.body);
+    const heading = section.heading.toLowerCase();
+    const hasNestedHeading = /^#{4,6}\s+/m.test(section.body);
+    const isPublic = publicHeadings.has(heading) && !hasNestedHeading;
+    (isPublic ? publicSections : gmSections).push(section.body);
   }
   return {
     content: publicSections.join("\n\n"),
