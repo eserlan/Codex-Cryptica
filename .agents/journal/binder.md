@@ -386,3 +386,8 @@ Critical, codebase-specific lessons for the `binder` persona sweep. Merged from 
 **Learning:** Replaced `generateId: () => string = () => crypto.randomUUID()` and `now: () => number = () => Date.now()` with explicit `IdGenerator` and `Clock` dependency objects (with defaults mapped to `systemIdGenerator` and `systemClock`). This standardizes the dependency pattern and makes instantiating mocks in test files cleaner by leveraging object shapes directly without needing positional arguments.
 
 **Action:** Standardized constructor pattern to `deps: { idGenerator?: IdGenerator; clock?: Clock } = {}` within the web application service `AdventureSessionRepository`, ensuring `Date.now()` and `crypto.randomUUID()` usage are managed via the dedicated DI interface `@codex/runtime` provides.
+
+## 2026-11-28 - Injected RNG for campaign concept context
+
+**Learning:** `campaign-generator-registry` memoizes each rolled concept in a `WeakMap` keyed by `GeneratorRunRequest` identity, so later RNG values are ignored for a reused request.
+**Action:** Pass an injected `Rng` to `contextChain` when testing a concept roll, and reuse that request only when verifying the per-request cache.
