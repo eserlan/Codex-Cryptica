@@ -70,6 +70,32 @@ describe("loadGeneratorRemixDraft", () => {
     });
   });
 
+  it("restores a text-only business share as a private Note, not a fabricated batch", async () => {
+    const targetPath = "/generators/business";
+    const share = makeShare({
+      content:
+        "# Shared business\n*The depot*\nLabels: business-generator\n\n## Secret\nThe owner forged the licence.",
+      metadata: { generatorPath: targetPath, labels: ["business-generator"] },
+    });
+    const result = await loadGeneratorRemixDraft(
+      options(vi.fn().mockResolvedValue(share), { targetPath }),
+    );
+    const draft = result!.draft;
+    expect(
+      buildGeneratorSavePayload(
+        draft,
+        getGeneratorDocumentLayout(draft),
+        undefined,
+        "business",
+      ),
+    ).toMatchObject({
+      type: "note",
+      content: "",
+      lore: "*The depot*\n\n## Secret\nThe owner forged the licence.",
+    });
+    expect(draft.business).toBeUndefined();
+  });
+
   it.each(["/generators/npc", "/tools/rpg-npc-generator"])(
     "restores %s as a private Character rather than exposing an unrecoverable share split",
     async (targetPath) => {
@@ -95,6 +121,34 @@ describe("loadGeneratorRemixDraft", () => {
       });
     },
   );
+
+  it("restores heist share text as one Event with all GM material private", async () => {
+    const targetPath = "/generators/heist";
+    const share = makeShare({
+      content:
+        "# Shared score\n*Briefing*\nLabels: heist, heist-generator\n\n### The Hidden Factor\nThe clerk is an ally.",
+      metadata: {
+        generatorPath: targetPath,
+        labels: ["heist", "heist-generator"],
+      },
+    });
+    const result = await loadGeneratorRemixDraft(
+      options(vi.fn().mockResolvedValue(share), { targetPath }),
+    );
+    const draft = result!.draft;
+    expect(
+      buildGeneratorSavePayload(
+        draft,
+        getGeneratorDocumentLayout(draft),
+        undefined,
+        "heist",
+      ),
+    ).toMatchObject({
+      type: "event",
+      content: "",
+      lore: "*Briefing*\n\n### The Hidden Factor\nThe clerk is an ally.",
+    });
+  });
 
   it("restores a BBEG share as one Character with concatenated text in GM notes", async () => {
     const share = makeShare({

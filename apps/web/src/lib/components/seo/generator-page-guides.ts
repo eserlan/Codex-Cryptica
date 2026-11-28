@@ -637,28 +637,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   creature: {
     summary:
-      "Memorable monsters behave like living creatures (or focused hazards) with a habitat, a tell before they strike, and an instinct that tells you when they flee or bargain.",
+      "Design an inhabitant of the world rather than a bag of hit points. Use its habitat, ecological role and observable behaviour to decide what it is doing when the party arrives, what warns them of danger and how they can interact without fighting.",
     tips: [
       {
-        title: "Telegraph their signature threat",
+        title: "Give the creature a reason to be in this place",
         detail:
-          "Show tracks, scorched masonry, or prey behaviour before initiative starts so players can prepare tactics.",
+          "Pair Ecological Role / Behaviour with Habitat / Environment. A Herbivore / Migratory Grazer crossing a wetland may leave a ruined footbridge and a new trail; a Territorial Guardian in caverns may block a passage to its nesting chamber. Choose what the party disturbs by taking the obvious route.",
       },
       {
-        title: "Give every creature a non-combat motive",
+        title: "Decide what the party can learn before danger",
         detail:
-          "Territorial defence, hunger, or protecting a nest creates opportunities for stealth, bribery, or retreat.",
+          "Use Threat Level to decide how urgent the warning should be, not as a numerical encounter rating. Turn one Observable Ability into a recognisable sign, such as scorched moss or a shed scale. Let players change their plan after finding that sign instead of learning the danger only when it strikes.",
       },
       {
-        title: "Pair with terrain",
+        title: "Give every encounter an end other than death",
         detail:
-          "Drop the creature into an environment that favours its movement or senses rather than a flat room.",
+          "Use Intelligence / Temperament to decide what changes the creature's behaviour. A Cunning / Pack Mind might retreat when its group is separated; a Fully Sapient / Cultured one may negotiate access to a feeding ground. Choose the boundary it will not cross and the consequence if the party honours it.",
       },
     ],
+    linksTitle: "Turn a creature into a playable encounter",
     links: [
       {
+        href: "/answers/what-makes-a-good-random-encounter",
+        label: "Give the creature an activity and a reason to be here",
+        description:
+          "Create an encounter with an existing situation, non-combat choices and regional consequences.",
+      },
+      {
         href: "/answers/how-do-i-balance-rpg-combat-encounters-without-a-tpk",
-        label: "Balancing combat encounters",
+        label: "Telegraph threat and build a way out",
+        description:
+          "Assess action economy, objectives and retreat using the rules of your game.",
       },
     ],
   },
@@ -815,22 +824,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "artifact-generator": {
     summary:
-      "Each result is a named relic with dormant, awakened and ascendant powers, an attunement ritual, a cost, factions that want it, adventure hooks and a way to destroy it. GM notes retain your campaign setting, while its vibe shapes the factions, rumours and hooks.",
+      "Build a relic that changes a campaign because people pursue it and its wielder has difficult choices to make. Treat its powers, its price and the means of ending its influence as parts of the same story.",
     tips: [
       {
-        title: "Set the curse to set the cost",
+        title: "Choose who has to live with its power",
         detail:
-          "In the offline draft, Curse / Cost / Drawback sets the Cost, Curse, Corruption, or Taboo paragraph. Choose None (Pure Burden of Custody) for a relic that is heavy to keep but has no supernatural price.",
+          "Set Power Tier / Scope to Heroic Wonder for a relic that changes a skirmish, or Regional Masterpiece when whole towns have reason to claim it. Check each of the three power stages against that reach; give the party a reason to hold back rather than always use the strongest power.",
       },
       {
-        title: "Let the status open the adventure",
+        title: "Start with a claim, not a free treasure",
         detail:
-          "In the offline draft, Current Status puts one matching hook first. A relic Sealed in Royal / High-Security Vault opens with a vault break, while one Lost in Ruined Sanctuary opens with getting into the sanctuary.",
+          "Choose Current Status as Lost in Ruined Sanctuary when several factions can race for the discovery, or Wielded by a Tyrant / Rival when the party must take it from someone. Give two pursuers incompatible demands and let the party decide whom to trust, bargain with or defy.",
       },
       {
-        title: "Use the tier to set how far it reaches",
+        title: "Make awakening and the price visible",
         detail:
-          "Power Tier / Scope changes only the Ascendant / Zenith Powers line. Heroic Wonder and Regional Masterpiece give it a smaller reach than Cataclysmic Power, and the dormant and awakened powers stay the same at every tier.",
+          "Match Curse / Cost / Drawback to a dilemma you want to play. With Strict Moral / Physical Taboo, show the vow in the relic's history before testing it; with None (Pure Burden of Custody), make its need for protection the real price. Reveal an achievable awakening requirement and a credible way to seal or destroy it.",
+      },
+    ],
+    linksTitle: "Make the relic matter beyond its first discovery",
+    links: [
+      {
+        href: "/answers/how-do-i-upgrade-a-player-characters-weapon-without-replacing-it",
+        label: "Unlock meaningful powers through deeds",
+        description:
+          "Let a relic develop with its bearer rather than simply increasing numbers.",
+      },
+      {
+        href: "/answers/how-much-loot-and-how-many-magic-items-should-i-give-my-players",
+        label: "Decide when a campaign-shaping reward belongs",
+        description:
+          "Pace major finds across the campaign and consider what happens if the party trades them.",
       },
     ],
   },
@@ -961,22 +985,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "minor-magic-item": {
     summary:
-      "Each result gives you a small item with a description, a quick reference, an effect, a quirk and a suggested use. The usage limit and the way the item is activated decide how it plays, so settle those before you read the effect.",
+      "Make a small find into a choice about when to spend it. Put a limited-use charm, draught or gadget in a place where it has a believable owner and gives the party an extra option, not an automatic answer.",
     tips: [
       {
-        title: "Set the usage limit before the effect",
+        title: "Give the item a job the party can choose",
         detail:
-          "The usage limit tells players how often the item can help them. A single-use item suits one dramatic moment, while fragile charges give a few uses before it breaks.",
+          "Set Focus / Primary Utility to Exploration & Travel when a river crossing or climb is coming up, or Infiltration & Stealth when the party needs another way past a guard. Leave the ordinary approach viable so using the item is a decision rather than a requirement.",
       },
       {
-        title: "Use the quirk as a cost",
+        title: "Choose the moment they spend it",
         detail:
-          "The quirk can be a sensory or environmental side effect, such as chalky residue or a sudden draft. Treat it as a giveaway or cost only when the generated detail fits, and set Quirk or Side Effect to 'None' when it should be clean.",
+          "Set Usage Limit / Charges to Single Use for one important decision or Fragile Charges for a tool worth saving across several scenes. Match Activation Method to the Item Form and tell the players when the charge is spent and what it cannot do before they commit.",
       },
       {
-        title: "Match the effect to the scene, not the vibe",
+        title: "Let the quirk be visible in play",
         detail:
-          "The same effect can appear under different vibes, sometimes with only the heading changed. Read the effect against what the party is doing right now before you decide what it means.",
+          "Choose a Harmless Sensory Tell under Quirk or Side Effect if the item should be memorable rather than costly. A chime in a silent passage creates an observable risk; let players muffle it or choose a different approach instead of springing a hidden penalty on them.",
+      },
+    ],
+    linksTitle: "Place the find, then make its effect fair",
+    links: [
+      {
+        href: "/answers/how-much-loot-and-how-many-magic-items-should-i-give-my-players",
+        label: "Place small rewards without making every search pay",
+        description:
+          "Pace finds across the campaign and make treasure fit its owner.",
+      },
+      {
+        href: "/answers/how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery",
+        label: "Use detection items without solving the entire mystery",
+        description:
+          "Decide what information the item can reveal and what still needs investigation.",
       },
     ],
   },
@@ -1098,94 +1137,156 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   business: {
     summary:
-      "Player-run or NPC businesses shine when they generate leads, debts, and rival pressures—not just bookkeeping spreadsheets.",
+      "Build an enterprise that matters because people depend on what it supplies, not because it has a long inventory. Turn its staff, dependencies and competitors into immediate costs and opportunities for the party, whether they are customers or owners.",
     tips: [
       {
-        title: "Tie suppliers to adventure hooks",
+        title: "Choose something the settlement cannot do without",
         detail:
-          "A delayed shipment or rival guild tariff gives the party a personal reason to investigate.",
+          "Use Business type and Location (optional) to choose a service with local stakes: a blacksmith beside a ferry crossing could repair the last working winch. Read Suppliers and Dependencies and decide what stops working first if a delivery fails.",
       },
       {
-        title: "Name two staff members",
+        title: "Put the competitor's offer on the table",
         detail:
-          "A loyal clerk and an ambitious apprentice keep the business alive while the party is out of town.",
+          "Use Legitimacy to decide whether resolving the Current Pressure means asking an inspector for a licence, bargaining with a criminal protector or exposing a rival. Give the party two ways to help the business survive, each benefiting a different named relationship.",
+      },
+      {
+        title: "Make ownership a recurring decision",
+        detail:
+          "Select Players own this business if the party wants to build an enterprise. Use its manager's goal, Recurring obligations and Upgrade paths to offer a choice before their next expedition: hire another worker to protect a contract, or fund an expansion that creates a new obligation.",
       },
     ],
+    linksTitle: "Turn trade into recurring adventure",
     links: [
       {
+        href: "/answers/how-do-i-turn-economic-pressures-into-rpg-adventure-hooks",
+        label: "Build an adventure from a broken dependency",
+        description:
+          "Trace the shortage to people, choices and consequences rather than a price list.",
+      },
+      {
         href: "/answers/how-do-i-run-a-campaign-where-the-players-own-a-business",
-        label: "Running player-owned businesses",
+        label: "Run an owned business between adventures",
+        description:
+          "Use lightweight business turns, investment choices and recurring obligations.",
       },
     ],
   },
   heist: {
     summary:
-      "A great RPG heist gives players a clear target, layered security they can scout in advance, and a complication that forces improvisation once they are inside.",
+      "Prepare a score whose objective, security and escalating response give the crew choices instead of a single intended plan. Use casing to establish what they know, the practical catch to shape how they act, and the getaway to reward or complicate those choices.",
     tips: [
       {
-        title: "Reward reconnaissance",
+        title: "Make success mean more than reaching the target",
         detail:
-          "Let every guard shift, delivery schedule, or blueprint detail be discoverable before the job begins.",
+          "Choose Heist Type according to what must change by the end of the score. Rescue means bringing someone out alive, while Information means getting knowledge the crew can use. In The Prize (optional), name an objective whose condition matters, such as a fragile royal seal or a witness who refuses to leave without their child.",
       },
       {
-        title: "Keep the exit harder than the entry",
+        title: "Make casing reveal a real alternative",
         detail:
-          "Triggering an alarm or rival crew during extraction creates tension without stalling the opening.",
+          "Use Target and Target Scale to set how much of the location needs to be negotiated or infiltrated. For each Security Ring, choose one discoverable fact that makes an alternative plausible, such as a trusted escort instead of a risky crossing. Reveal useful intel before asking the players how they enter.",
+      },
+      {
+        title: "Escalate when the fiction changes",
+        detail:
+          "Read the Alarm Track and The Getaway together. Decide what evidence would actually alert the defenders, when their response changes the exit options, and which alternative remains costly but possible. Offer a flashback when a player's idea needs a plausible prior preparation, not as a requirement.",
       },
     ],
+    linksTitle: "Build and run the score",
     links: [
       {
-        href: "/answers/how-do-i-run-a-stealth-mission-in-a-tabletop-rpg",
-        label: "Running stealth & heist missions",
+        href: "/answers/what-makes-a-good-heist-target-in-a-tabletop-rpg",
+        label: "Give the objective a practical catch and lasting stakes",
+        description:
+          "Choose why it matters, who keeps it and what makes getting it out difficult.",
+      },
+      {
+        href: "/answers/how-do-you-run-a-heist-in-a-tabletop-rpg",
+        label: "Run casing, infiltration, escalation and escape",
+        description:
+          "Move through the four beats without forcing a plan or a fixed solution.",
       },
     ],
   },
   "mystery-investigation": {
     summary:
-      "Keep tabletop mysteries moving with three independent clues per revelation so a single failed skill check never stalls the session.",
+      "Start from a fixed answer, then give players several ways to establish it. Use the draft as a case file, not a sequence of scenes they have to visit in order. Scope, Clue density and Danger / pressure guide AI-generated cases; the offline fallback does not apply those settings.",
     tips: [
       {
-        title: "Anchor clues to people and places",
+        title: "Choose the question and the size of the cast",
         detail:
-          "Every node in the mystery graph should point to at least one witness, physical trace, or ledger.",
+          "For AI-generated cases, set Mystery type to Theft, Disappearance or the event the players can actually investigate. Pair Scope set to One-shot case with Complexity / suspect count set to Lean (3 suspects) if you have one evening. Give every innocent suspect something to hide that the players can disprove.",
       },
       {
-        title: "Escalate when the trail cools",
+        title: "Make the essential inference independently testable",
         detail:
-          "If players hesitate, have the culprit try to cover their tracks—leaving a fresh lead behind.",
+          "For AI-generated cases, use Clue density set to Generous for a group new to investigation. For each conclusion the players need, check that at least two leads come from different sources: for example, an altered ledger and a witness who saw a delivery. Give a plausible way to test each rather than requiring one successful roll.",
+      },
+      {
+        title: "Advance the situation, not the solution",
+        detail:
+          "For AI-generated cases, Danger / pressure sets how urgently the case demands action. With Low, let the party follow a wrong lead without losing the case. With High, decide what changes at the next deadline and use the Next NPC Moves table in GM notes when the party stalls. Never change who did it to make a theory right.",
+      },
+      {
+        title: "Give the discovery a consequence",
+        detail:
+          "In Optional Campaign Context, name someone who needs the case solved and what they stand to lose. After drafting, decide how a supported accusation, a partial answer or an unsolved case changes that person's relationship with the party.",
       },
     ],
+    linksTitle: "From a fair clue trail to an unexpected conclusion",
     links: [
       {
+        href: "/answers/how-do-you-run-a-mystery-without-railroading",
+        label: "Run a case without prescribing the route",
+        description:
+          "Make essential information reachable from independent leads.",
+      },
+      {
         href: "/answers/how-do-i-get-a-stalled-rpg-investigation-moving-again",
-        label: "Unsticking stalled investigations",
+        label: "Move a stalled investigation forward",
+        description:
+          "Change what the suspects do without handing out the solution.",
+      },
+      {
+        href: "/answers/how-do-you-handle-players-reaching-the-wrong-conclusion-in-an-rpg-mystery",
+        label: "Let the party test a plausible but wrong conclusion",
+        description:
+          "Give theories observable consequences while keeping the truth fixed.",
       },
     ],
   },
   puzzle: {
     summary:
-      "Each draft puts an obstacle between the party and the Puzzle purpose you choose, then gives you clues, spotlight prompts, alternate solutions and what a failed attempt does. The intended solution and the escalating hints sit in the GM notes, so you can read the setup aloud and keep the answer back.",
+      "Put an obstacle between the party and a goal, then use visible clues, distinct approaches and feedback to keep everyone involved. Prepare what the characters can learn and what a failed attempt changes instead of asking them to guess a single answer.",
     tips: [
       {
-        title: "Let Puzzle style pick the obstacle",
+        title: "Make the obstacle answer a question the players can test",
         detail:
-          "Offline drafts choose the obstacle from the Puzzle style: Social gives a suspicious gatekeeper or two guards who disagree, Mechanical a locked mechanism or a panel of gears. A style you type yourself gets a plain obstacle, so describe it in your own words.",
+          "Choose Puzzle purpose and Puzzle style for the action the characters need to take. A Mechanical Sealed door might respond when they balance a counterweight; a Social Cross obstacle might require two disagreeing bridgekeepers to accept a compromise. Give a visible clue before the first check and show what changes after a partial success.",
       },
       {
-        title: "Use Complexity to set the solution length",
+        title: "Give abilities a spotlight, not a lock",
         detail:
-          "In offline drafts, Complexity sets how many linked actions the GM-only solution needs: two for Simple, three for Moderate and four for Elaborate. Pair a long chain with Failure pressure set to None if you want players to experiment without cost.",
+          "In PC capabilities to make matter, name abilities the actual party enjoys using, such as a familiar or a smith's tools. Use Participation style to decide who gets a moment to contribute. For every specialist opening, leave another character a credible way to achieve the same step at a different cost.",
       },
       {
-        title: "Name what your party can actually do",
+        title: "Choose what a wrong attempt changes",
         detail:
-          "Abilities listed in PC capabilities to make matter are treated as openings, never requirements: an offline draft names them in the spotlight section, and the AI draft is told to make them useful. Participation style then says whether one character, two or three, or the whole party leads the solve.",
+          "Pair Complexity with Failure pressure so the scene fits your session. None lets the party experiment safely; Time pressure can threaten the downstream objective while the mechanism remains solvable. Decide which alternate solution becomes attractive as the cost rises, and reveal another hint only once new attempts have stopped.",
       },
     ],
+    linksTitle: "Make the puzzle fair and keep it moving",
     links: [
       {
         href: "/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
-        label: "Designing puzzles that do not stall",
+        label: "Design alternate routes and meaningful feedback",
+        description:
+          "Replace a guessing gate with partial progress, useful information and a costlier way through.",
+      },
+      {
+        href: "/answers/how-do-you-give-hints-for-an-rpg-puzzle-without-giving-away-the-answer",
+        label: "Deliver the next hint without solving it for the party",
+        description:
+          "Step from sensory reminder to changed component to immediate goal when play stalls.",
       },
     ],
   },
