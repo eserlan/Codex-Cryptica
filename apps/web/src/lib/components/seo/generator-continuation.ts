@@ -130,7 +130,7 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
     "magic-item": {
       headline: "Keep this treasure's history and powers together",
       summary:
-        "Save one Item in your local Codex vault, with the description and history in main text and the magical properties in GM notes.",
+        "Save one Item in your local Codex vault. The description and offline history are in main text; AI history may stay in GM notes when its labels do not activate the item layout, so check or move it before sharing. Magical properties stay in GM notes.",
       capabilities: [
         "Record what the bearer has learned about the effect and its limits as it is identified",
         "Link the Item to existing owners, makers and discovery sites, and update its ownership between sessions",

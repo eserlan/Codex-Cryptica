@@ -136,7 +136,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "What is saved to Codex?",
         answer:
-          "Add to my Codex opens one Item in your browser-local vault. Its description and history are in main text; its rarity, theme and magical properties are in GM notes. Link it to existing owners, places and factions yourself. No account or MonsterLabs visit is required.",
+          "Add to my Codex opens one Item in your browser-local vault. Its description and offline history are in main text. AI history may stay in GM notes when its labels do not activate the item layout, so check or move it before sharing. Rarity, theme and magical properties are in GM notes. Link it to existing owners, places and factions yourself. No account or MonsterLabs visit is required.",
       },
     ],
     relatedLinks: [
