@@ -163,6 +163,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    "language-generator": {
+      headline: "Keep an evolving glossary for your world",
+      summary:
+        "Save the language profile as one Note in your local Codex vault, with pronunciation, naming rules, vocabulary and phrases in main text.",
+      capabilities: [
+        "Keep example names and At the Table reference in GM notes",
+        "Link the Note to the cultures and places that use it, and record new words and agreed meanings after play",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
     "ship-generator": {
       headline: "Dock this vessel in your campaign",
       summary:

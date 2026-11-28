@@ -1106,10 +1106,10 @@ export const extendedSlugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
     kind: "language",
     title: "Iofielefana",
     summary:
-      "A Lyrical & Vowel-rich Common Speech spoken in the Classic Fantasy setting.",
-    lore: '### At a Glance\n- **Genre / Setting:** Classic Fantasy\n- **Tone:** Lyrical & Vowel-rich\n- **Role:** Common Speech\n- **Name Structure:** Compound Words\n\n\n### Example Names\n- **Shisiiafea** — defender (person)\n- **Manavealeashana** — moon walker (person)\n- **Felelelemanayia** — fire seeker (lineage)\n\n### At the Table\n- Use "Mioshana vae" as a greeting meaning "friend of light."\n- Lean on the lyrical & vowel-rich sound profile when voicing speakers.',
+      "A lyrical common speech used by traders and ferry crews in the river towns.",
+    lore: '### At a Glance\n- **Genre / Setting:** Classic Fantasy\n- **Tone:** Lyrical & Vowel-rich\n- **Role:** Common Speech\n- **Name Structure:** Compound Words\n\n\n### Example Names\n- **Mioshanavae** — friend of light (person)\n- **Aeviliofi** — city of water (place)\n- **Nanaaevi** — leader of the city (title)\n\n### At the Table\n- Use "Mioshana vae" as a greeting meaning "friend of light."\n- Lean on the lyrical & vowel-rich sound profile when voicing speakers.',
     content:
-      "## Pronunciation & Phonology\n**Consonants:** l, m, n, s, v, y, f, r, sh\n\n**Vowels:** ae, ia, ea, io, ele, ana, i\n\n**Phonotactics:** CV, CVCV, VCV\n\n\n\n## Cultural Role & Usage\nCommon Speech.\n\n**Register:** Common Speech\n\n\n## Word Formation & Naming Conventions\nNo additional morphology notes.\n\nNo additional naming rules.\n\n### Demonstrated Rules\n- No structured rules.\n\n## Common Vocabulary & Word Bank\n| Word | Pronunciation | Meaning | Part of Speech |\n| --- | --- | --- | --- |\n| mioshana | MIOSHANA | friend |  |\n| elerea | ELEREA | enemy |  |\n| liofi | LIOFI | water |  |\n| vifia | VIFIA | fire |  |\n| iafia | IAFIA | shadow |  |\n| vae | VAE | light |  |\n| aevi | AEVI | city |  |\n| vio | VIO | journey |  |\n| lanavana | LANAVANA | sword-oath |  |\n| nana | NANA | leader |  |\n\n## Sample Phrases\n- **Mioshana iafia** (*Mioshana iafia*) — A friend in shadows. — friend + shadow\n- **Nana aevi** (*Nana aevi*) — The leader of the city. — leader + city\n- **Mioshana vae** (*Mioshana vae*) — Friend of light. — friend + light",
+      "## Pronunciation & Phonology\n**Consonants:** l, m, n, s, v, y, f, r, sh\n\n**Vowels:** ae, ia, ea, io, ele, ana, i\n\n**Phonotactics:** CV, CVCV, VCV\n\n\n\n## Cultural Role & Usage\nUsed for ferry fares, market agreements and greetings between speakers in the river towns.\n\n**Register:** Common Speech\n\n\n## Word Formation & Naming Conventions\n**Word formation:** Combine two known words without reversing their meanings.\n\n**Compounding:** The main word comes first, then the qualifier.\n\n**Personal names:** Name a quality or relationship, followed by a qualifier.\n\n**Place names:** Use the type of place, followed by its distinguishing feature.\n\n**Titles:** Role followed by its domain.\n\n### Demonstrated Rules\n- **Head first (morphology):** Put the head word before the qualifier; join the words when forming names.\n\n## Common Vocabulary & Word Bank\n| Word | Pronunciation | Meaning | Part of Speech |\n| --- | --- | --- | --- |\n| mioshana | MIOSHANA | friend |  |\n| elerea | ELEREA | enemy |  |\n| liofi | LIOFI | water |  |\n| vifia | VIFIA | fire |  |\n| iafia | IAFIA | shadow |  |\n| vae | VAE | light |  |\n| aevi | AEVI | city |  |\n| vio | VIO | journey |  |\n| lanavana | LANAVANA | sword-oath |  |\n| nana | NANA | leader |  |\n\n## Sample Phrases\n- **Mioshana iafia** (*Mioshana iafia*) — A friend in shadows. — friend + shadow\n- **Nana aevi** (*Nana aevi*) — The leader of the city. — leader + city\n- **Mioshana vae** (*Mioshana vae*) — Friend of light. — friend + light",
     labels: ["language", "classic-fantasy", "conlang"],
     status: "active",
     languageProfile: {
@@ -1124,22 +1124,42 @@ export const extendedSlugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
         vowels: ["ae", "ia", "ea", "io", "ele", "ana", "i"],
         phonotactics: ["CV", "CVCV", "VCV"],
       },
+      rules: [
+        {
+          id: "head-first",
+          domain: "morphology",
+          description:
+            "Put the head word before the qualifier; join the words when forming names.",
+        },
+      ],
+      morphology: {
+        wordFormation:
+          "Combine two known words without reversing their meanings.",
+        compounding: "The main word comes first, then the qualifier.",
+      },
       naming: {
+        personalNamePatterns: [
+          "Name a quality or relationship, followed by a qualifier.",
+        ],
+        placeNamePatterns: [
+          "Use the type of place, followed by its distinguishing feature.",
+        ],
+        titlePatterns: ["Role followed by its domain."],
         examples: [
           {
-            name: "Shisiiafea",
-            meaning: "defender",
+            name: "Mioshanavae",
+            meaning: "friend of light",
             use: "person",
           },
           {
-            name: "Manavealeashana",
-            meaning: "moon walker",
-            use: "person",
+            name: "Aeviliofi",
+            meaning: "city of water",
+            use: "place",
           },
           {
-            name: "Felelelemanayia",
-            meaning: "fire seeker",
-            use: "lineage",
+            name: "Nanaaevi",
+            meaning: "leader of the city",
+            use: "title",
           },
         ],
       },

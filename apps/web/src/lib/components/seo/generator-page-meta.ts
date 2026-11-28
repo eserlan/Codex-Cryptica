@@ -893,7 +893,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "RPG Name Generator",
     eyebrow: "Name Generator",
     introText:
-      "Generate names for characters, places, factions, and items in any genre. Pick a vibe and culture, steer with optional context, and copy your favourites.",
+      "Use Quick names to roll a shortlist of character, place, faction or item names. Tap to copy a name, pin favourites or copy the whole list. Pick a vibe and naming style, then choose Generate names with notes when you want more context. No account is needed.",
     canonicalPath: "/generators/names",
     ogImage: "https://assets.codexcryptica.com/screenshots/generator-names.jpg",
     ogImageAlt:
@@ -904,6 +904,30 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "scifi character names",
       "place name generator",
       "faction name tool",
+    ],
+    faqs: [
+      {
+        question: "How can I make a shortlist that is easy to remember?",
+        answer:
+          "Choose the culture and Name Type, say the names out loud, and avoid near-identical names for people in the same scene. Pin a few unused names in Quick names before selecting New names.",
+      },
+      {
+        question: "Can I generate names for a non-fantasy setting?",
+        answer:
+          "Choose a vibe to see the available styles. Some non-fantasy styles have no offline tables and fall back to generic fantasy syllables; check the Usage Suggestions. AI generation can use the chosen style and optional campaign context.",
+      },
+      {
+        question: "How do I use the names in Codex?",
+        answer:
+          "Tap a name in Quick names to copy it, use Copy all for one name per line or Copy pinned for your favourites. Open Codex and paste a selected name into the appropriate existing or new Character, Location, Faction or Item. Generate names with notes has its own Copy action; neither mode creates a batch of vault entries.",
+      },
+    ],
+    relatedLinks: [
+      {
+        href: "/generators/language-generator",
+        label: "Fictional Language Generator",
+      },
+      { href: "/generators/npc", label: "RPG NPC Generator" },
     ],
   },
   "fantasy-names": {
@@ -1103,7 +1127,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "RPG Fictional Language Generator",
     eyebrow: "Language Generator",
     introText:
-      "Create a campaign-ready language profile for your world, culture, or species. Choose fantasy, cyberpunk, gothic noir, space opera, modern conspiracy, post-apocalyptic, or pirate foundations, then customize the result.",
+      "Draft a small language profile that supports names, greetings, signs and clues in play. Choose its genre, sounds, role and naming structure, then check that recurring words and sample phrases have consistent meanings. Save your evolving glossary as one Note in your local Codex vault.",
     canonicalPath: "/generators/language-generator",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-language-generator.jpg",
@@ -1120,12 +1144,17 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "What does the fictional language generator create?",
         answer:
-          "It generates a fictional language profile with pronunciation guidance, naming structures, example names, phrases, and a starter glossary. AI generation adds richer cultural and linguistic detail; the offline fallback produces a smaller coherent profile from built-in tables.",
+          "It drafts pronunciation, cultural role, word formation, example names, a glossary and sample phrases. Start with a few words and check that the naming rules and translations agree. It is a reference for worldbuilding, not a complete language or translation service.",
       },
       {
         question: "Does it work without an account?",
         answer:
-          "Yes. Generate and copy language notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
+          "Yes. Generate and copy the language notes without an account. Add to my Codex opens one Note with pronunciation, word formation, vocabulary and phrases in main text, and example names and At the Table reference in GM notes. Connect it to existing cultures and speakers yourself.",
+      },
+      {
+        question: "How should I use the language in a session?",
+        answer:
+          "Pick two or three roots and a greeting, and reuse them in signs, titles and dialogue. Give players a way to learn their meanings; avoid requiring them to guess an invented translation to progress.",
       },
     ],
     relatedLinks: [
