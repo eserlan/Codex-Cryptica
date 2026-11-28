@@ -16,22 +16,22 @@ export interface GeneratorGuide {
 export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   nation: {
     summary:
-      "Generate a named state with a leader, two or three power blocs, a centre of power and one hidden problem, then use it as the political backdrop for a campaign.",
+      "Draft a state with a seat of authority, competing power blocs and a pressure that can undermine its rule. Turn the political backdrop into places where laws are obeyed, disputed or ignored, and let the party affect who actually governs.",
     tips: [
       {
-        title: "Set conflict level and scale first",
+        title: "Draw the limits of state power",
         detail:
-          "Conflict level changes the Society & Tensions section, from a state at peace to one in total war, so set it before anything else. Scale sets the size of the state, from a single city-state to a continent-spanning dominion.",
+          "Choose Scale to decide which journeys cross a political boundary. A City-state (single settlement) can contest a bridge or harbour; a Continent-spanning dominion must delegate to distant governors. Mark a supply route or border where officials cannot immediately enforce the capital's orders.",
       },
       {
-        title: "Use the hidden problem as the first hook",
+        title: "Separate lawful authority from practical power",
         detail:
-          "In offline drafts, the Hidden Problem in At a Glance is repeated as a Crisis entry in Entity Seeds. AI results may structure those seeds differently. Let the party uncover the problem through the state's officials or dissidents, or replace it if the campaign already has a secret.",
+          "Government style tells you who is supposed to rule. For a Corporate board, decide which director can withhold payroll or transport; for a Hereditary dynasty, choose who controls the soldiers. Give each of the Power Blocs a different means of blocking the ruler and an offer the party could accept.",
       },
       {
-        title: "Meet the factions behind the state",
+        title: "Make the hidden problem break into public life",
         detail:
-          "Power Blocs shows which factions compete for influence. Entity Seeds suggests Codex entries that can become people, groups, or places for the party to encounter from the first session.",
+          "Use Conflict level to choose how urgently the state needs help. Under Simmering tensions, a missing grain shipment may provoke a strike; during Total war, it may open a gap in the defences. Decide what evidence exposes the Hidden Problem, who benefits from suppressing it and when the next decision must be made.",
       },
     ],
     linksTitle: "Bring your nation to life",

@@ -254,6 +254,13 @@ describe("generator-continuation", () => {
     ).toBe(false);
   });
 
+  it("places the nation continuation beside the explicitly generated result", () => {
+    expect(getGeneratorContinuationConfig("nation")).toMatchObject({
+      placement: "near-result",
+      ctaLabel: "Add to my Codex",
+    });
+  });
+
   it("configures the tome, secret society, and world imports with GM-only lore and generation gates", () => {
     for (const [generatorType, entryType] of [
       ["tome", "Item entry"],

@@ -90,10 +90,10 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
     type: "faction",
     title: "Axiom Industrial Authority",
     summary:
-      "A cyberpunk megacorp-state that controls three districts and is aggressively expanding into a fourth.",
+      "A cyberpunk megacorp-state in three river districts where the corporate board faces simmering tensions.",
     content:
-      "### The State\nAxiom controls food, water, and network access across its territory. Citizens are employees. Dissent is a performance review issue.\n\n### Power Structure\nCEO-Governor Reyes holds executive authority but the board is restless.",
-    lore: "",
+      "### The State\nAxiom owns the pumping stations and the only freight bridge into the river districts. The board meets at Tide Exchange, but the eastern pumping station answers to a regional director.\n\n### Power Structure\nCEO-Governor Reyes signs executive orders; the board controls the maintenance budget, and the Transit Directorate controls bridge permits.\n\n### Society & Tensions\nWorkers face a freeze on water credits while the board continues to grant industrial allocations.\n\n### How to use it at the table\nA convoy carrying replacement valves arrives just as the bridge permits are suspended. The party must decide whose authority to recognise.",
+    lore: "### At a Glance\n- **Theme / Genre**: Cyberpunk\n- **Type**: Megacorp-State\n- **Leader / Authority**: CEO-Governor Reyes\n- **Centre of Power**: Tide Exchange\n- **Scale**: Small region (handful of towns)\n- **Conflict Level**: Simmering tensions\n- **Hidden Problem**: The eastern station's reserve pumps have failed and the board is concealing the shortage.\n- **Immediate Hook**: The convoy's bridge permits are suspended.\n\n### Power Blocs\n- **Transit Directorate**: Controls freight access and wants the right to set its own tolls.\n- **Water Workers' Assembly**: Can halt the pumping stations; demands the release of the maintenance budget.\n\n### Rumours & Hooks\n- A director is selling priority water credits to a neighbouring state.\n- A maintenance ledger shows that the reserve pumps failed weeks ago.\n\n### Entity Seeds\n- **👤 CEO-Governor Reyes (leader)**: Signs orders but needs the board to fund them.\n- **👥 Transit Directorate**: Controls access to the river districts.\n- **👥 Water Workers' Assembly**: Can strike before the next allocation.\n- **📍 Tide Exchange (centre of power)**: Headquarters and venue for the allocation vote.\n- **📅 Crisis: Concealed pump failure**: The eastern station's reserve pumps have failed.",
     labels: ["rpg-nation", "nation-generator", "imported-draft"],
     status: "draft",
   },

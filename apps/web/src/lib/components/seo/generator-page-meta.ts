@@ -660,11 +660,11 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     pageTitle:
       "Nation Generator | RPG Political Entity Creator for Any Genre | Codex Cryptica",
     metaDescription:
-      "Generate a political entity for any RPG genre — fantasy kingdoms, cyberpunk megacorp-states, sci-fi federations, post-apoc warlord territories. Works without login.",
+      "Create a named RPG state with a government, power blocs, a centre of authority and a hidden crisis. Prepare political choices in fantasy, sci-fi and other settings.",
     introTitle: "Nation Generator",
     eyebrow: "Nation Generator",
     introText:
-      "Create a campaign-ready political entity for any genre. Pick your setting and polity type — get a named state with power blocs, internal tensions, and adventure hooks.",
+      "Build the state behind the party’s next border crossing, rebellion or political bargain. Select a polity, government, scale and level of conflict to draft a ruler, power blocs, centre of authority, tensions and a crisis to bring into play.",
     canonicalPath: "/generators/nation",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-nation.jpg",
@@ -676,6 +676,39 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "polity creator",
       "worldbuilding nation",
       "federation generator",
+    ],
+    faqs: [
+      {
+        question:
+          "What is the difference between a polity type and government style?",
+        answer:
+          "Polity type describes what the state is, such as a City-State or Megacorp-State. Government style describes how authority is organised. Combine them to decide who can make a decision and which institution can obstruct it.",
+      },
+      {
+        question: "Does the generator create a map of the nation?",
+        answer:
+          "No. It drafts a political entity with a named centre of power and a scale. Use those to decide where borders, routes and regional powers lie in your own setting.",
+      },
+      {
+        question: "How can I fit the state into a current conflict?",
+        answer:
+          "Use Campaign context (optional) to identify the setting or ongoing dispute. Offline drafts refer to that context in The State; AI drafts can adapt the political situation around it.",
+      },
+      {
+        question: "What gets saved in my Codex?",
+        answer:
+          "Add to my Codex opens one new Faction entry in your local browser vault, without an account. Power Blocs, Rumours & Hooks, the Hidden Problem and Entity Seeds are stored in GM notes. Seeds are references you can develop into linked entries, not automatically created people, factions or locations.",
+      },
+    ],
+    relatedLinks: [
+      {
+        href: "/generators/council-vote",
+        label: "Prepare a contested government decision",
+      },
+      {
+        href: "/generators/faction",
+        label: "Develop an individual power bloc",
+      },
     ],
   },
   tavern: {
