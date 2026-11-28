@@ -188,6 +188,12 @@ export const howDoIPlanStoryArcsForAnRpgCampaign: AnswerConfigInput = {
         "Turn the arc's problem and stakes into a playable situation for the next session.",
       href: "/generators/adventure-generator",
     },
+    {
+      title: "Superhero Origin Generator",
+      description:
+        "Tie a hero's origin to witnesses, active threats and recurring campaign consequences.",
+      href: "/generators/origin-generator",
+    },
   ],
   relatedForPages: [
     {
