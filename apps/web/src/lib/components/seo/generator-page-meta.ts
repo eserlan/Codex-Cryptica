@@ -2235,7 +2235,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Point Crawl Generator",
     eyebrow: "Point Crawl Generator",
     introText:
-      "Generate an interconnected network of 6–15 locations with explicit travel routes, signposts, loops, hidden shortcuts, and key-before-lock gates. Inspect and rearrange the live node-and-edge graph, then save all or selected points directly into your Codex Cryptica vault.",
+      "Prepare a network of 6 to 15 locations for an expedition, a city investigation or a dungeon. Compare travel times and risks, inspect hidden shortcuts and check where the party learns how to open locked routes. Save the chosen points and an overview Note in your local Codex vault.",
     canonicalPath: "/generators/point-crawl",
     labels: ["exploration", "hexcrawl", "dungeon", "adventure"],
     ogImage: "https://assets.codexcryptica.com/og/generator-point-crawl.jpg",
@@ -2265,13 +2265,13 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
         question:
           "Can I use it for cities, wilderness, or sci-fi star systems?",
         answer:
-          "Yes. Choose from six scales — Dungeon, Settlement, City, Wilderness, Region, or Planet / System — across all 13 genres. Route travel times, terrain types, and hazards automatically adapt to your chosen scale and theme.",
+          "Yes. Choose from Dungeon, Settlement, City, Wilderness, Region or Planet / System and select a Genre / Theme, or enter your own. Set travel costs in terms the party can use to decide whether to take a detour.",
       },
       {
         question:
           "How does saving a point crawl to my Codex Cryptica vault work?",
         answer:
-          "When you click 'Save to Codex', you can save all generated points or toggle a subset on the interactive graph. Each selected point is imported as a Location entity with automatic route connections and a 'Routes & Exits' lore section, alongside a master overview Note entity that links the entire crawl together.",
+          "Before clicking Add to my Codex, use Select All, Core Only or Include in Vault Save in the location inspector. Each selected point becomes a Location with Routes & Exits in GM notes. Routes are created only between selected endpoints. One overview Note opens, with links to the saved Locations; its full map and write-up are GM prep, not a spoiler-free handout. Check the selected points include any required keys or clues.",
       },
     ],
     relatedLinks: [
