@@ -1,3 +1,4 @@
+import { businessToOutput } from "generator-engine/business-state";
 import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 import type { ValidSlug } from "./generator-page-meta";
 
@@ -972,124 +973,123 @@ export const extendedSlugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
     ],
     status: "active",
   },
-  business: {
-    type: "faction",
-    title: "The Crooked Compass",
-    summary: "Mercenary company in the district, modest and steady.",
-    content:
-      '## Identity\n**The Crooked Compass** — Mercenary company in the district, modest and steady.\nReputation: Notorious for the one job that went badly wrong.\nWhat makes it distinctive: A cellar of rare reagents bought at a bankrupt estate.\n\n## What It Does\nThe mercenary company runs a steady trade in ordinary work, with a few specialist jobs.\nWho pays: Passing travellers who want a fair price.\nWhy here: The owners grew up nearby, and the regulars have known them for years.\nMain income: Subscriptions from a handful of loyal households.\nHow it earns: It rents out what it owns and takes a fee for looking after it.\nSize: A small outfit: the owner, a few staff, and borrowed space for the overflow.\nRight now: Barely breaking even, and hiding it from customers.\n\n## Leadership\n**Dace Brandt** (owner) — Buy out the partner who wants to sell up.\nStyle: Leads by example and expects the same of everyone.\nTrait: Stubborn and proud of it.\nPressure: Health is failing, and no successor has been chosen.\n\n## Key Staff\n- **Halle Vance**, Security and muscle — Quick hands and a sharp eye for quality.\n- **Mara Marrow**, Ambitious deputy — Dependable, but drinks a little more than is wise.\n\n## Clientele\nTypical: Traders who need something fixed, moved or sold quickly.\nValuable: Outsiders with money who need a local guide.\nUndesirable: People who come back only to complain.\nExcluded: Guild inspectors on a bad day.\n\n## Suppliers and Dependencies\n- Journeymen who know the older techniques (labour). If it fails: Quality drops and the best orders go to a rival.\n- Charcoal from the eastern mines (materials). If it fails: The forge goes cold within a week and every order slips.\n\n## Competitors and Relationships\n- **The Saltmarsh Gang** — protected by. Collects a quiet fee for keeping the carts moving.\n\n## Reputation\nExclusive; you have to be recommended to get in.\nConsequence: Anyone seen leaving the back door is quickly gossiped about across the district.\n\n## Current Pressure\nTwo apprentices have left for a rival house and taken the customer list with them.\n\n## Unusual Asset\nA walled yard with a private well that never runs dry.\n\n## Secret\nThe original owner left a sealed will that names a different heir, and only one clerk knows where it is.\n\n## Opportunity\nThe city is hiring a supplier for a public works project.\n\n## Complication\nA rival has spread a rumour that the goods are watered down.\n\n## Adventure Hooks\n- The Saltmarsh Gang wants something from the business: Collects a quiet fee for keeping the carts moving.\n- Dace Brandt is hiding how bad "Two apprentices have left for a rival house and taken the customer list with them." has become and needs help before it breaks.\n- If Journeymen who know the older techniques fails, Quality drops and the best orders go to a rival.',
-    lore: "",
-    labels: ["business", "business-generator", "classic-fantasy"],
-    status: "active",
-    business: {
-      version: 1,
-      options: {
-        genre: "Classic Fantasy",
-        businessType: "Mercenary company",
-        scale: "small",
-        legitimacy: "legitimate",
-        wealth: "modest",
-        clientele: "",
-        location: "",
-        tone: "grounded",
-        campaignContext: "",
-        playersOwn: false,
-      },
-      identity: {
-        name: "The Crooked Compass",
-        type: "Mercenary company",
-        description: "Mercenary company in the district, modest and steady.",
-        reputationLine: "Notorious for the one job that went badly wrong.",
-        distinctive: "A cellar of rare reagents bought at a bankrupt estate.",
-      },
-      operations: {
-        provides:
-          "The mercenary company runs a steady trade in ordinary work, with a few specialist jobs.",
-        payers: "Passing travellers who want a fair price.",
-        whyHere:
-          "The owners grew up nearby, and the regulars have known them for years.",
-        mainIncome: "Subscriptions from a handful of loyal households.",
-        model:
-          "It rents out what it owns and takes a fee for looking after it.",
-        size: "A small outfit: the owner, a few staff, and borrowed space for the overflow.",
-        position: "Barely breaking even, and hiding it from customers.",
-      },
-      leadership: {
-        id: "lead",
-        name: "Dace Brandt",
-        role: "owner",
-        goal: "Buy out the partner who wants to sell up.",
-        style: "Leads by example and expects the same of everyone.",
-        trait: "Stubborn and proud of it.",
-        pressure: "Health is failing, and no successor has been chosen.",
-      },
-      staff: [
-        {
-          id: "staff-1",
-          name: "Halle Vance",
-          role: "Security and muscle",
-          goal: "Win a place in a better shop across the city.",
-          trait: "Quick hands and a sharp eye for quality.",
-        },
-        {
-          id: "staff-2",
-          name: "Mara Marrow",
-          role: "Ambitious deputy",
-          goal: "Pay off a private debt before the next season.",
-          trait: "Dependable, but drinks a little more than is wise.",
-        },
-      ],
-      clientele: {
-        typical: "Traders who need something fixed, moved or sold quickly.",
-        valuable: "Outsiders with money who need a local guide.",
-        undesirable: "People who come back only to complain.",
-        excluded: "Guild inspectors on a bad day.",
-      },
-      dependencies: [
-        {
-          id: "dep-1",
-          input: "Journeymen who know the older techniques",
-          kind: "labour",
-          ifItFails: "Quality drops and the best orders go to a rival.",
-        },
-        {
-          id: "dep-2",
-          input: "Charcoal from the eastern mines",
-          kind: "materials",
-          ifItFails: "The forge goes cold within a week and every order slips.",
-        },
-      ],
-      relationships: [
-        {
-          id: "rel-1",
-          name: "The Saltmarsh Gang",
-          kind: "criminal",
-          label: "protected by",
-          reason: "Collects a quiet fee for keeping the carts moving.",
-          partyKind: "organisation",
-        },
-      ],
-      reputation: {
-        perception: "Exclusive; you have to be recommended to get in.",
-        consequence:
-          "Anyone seen leaving the back door is quickly gossiped about across the district.",
-      },
-      pressure:
-        "Two apprentices have left for a rival house and taken the customer list with them.",
-      asset: "A walled yard with a private well that never runs dry.",
-      secret:
-        "The original owner left a sealed will that names a different heir, and only one clerk knows where it is.",
-      opportunity: "The city is hiring a supplier for a public works project.",
-      complication:
-        "A rival has spread a rumour that the goods are watered down.",
-      hooks: [
-        "The Saltmarsh Gang wants something from the business: Collects a quiet fee for keeping the carts moving.",
-        'Dace Brandt is hiding how bad "Two apprentices have left for a rival house and taken the customer list with them." has become and needs help before it breaks.',
-        "If Journeymen who know the older techniques fails, Quality drops and the best orders go to a rival.",
-      ],
-      fallbackSections: [],
+  business: businessToOutput({
+    version: 1,
+    options: {
+      genre: "Classic Fantasy",
+      businessType: "Blacksmith",
+      scale: "small",
+      legitimacy: "legitimate",
+      wealth: "modest",
+      clientele: "Ferry crews and carters",
+      location: "Grey Quay",
+      tone: "grounded",
+      campaignContext: "The north ferry is out of service",
+      playersOwn: false,
     },
-  },
+    identity: {
+      name: "The Crooked Compass",
+      type: "Blacksmith",
+      description:
+        "Blacksmith on Grey Quay, specialising in ferry and wagon fittings.",
+      reputationLine: "Repairs last longer than the maker's promises.",
+      distinctive:
+        "A sheltered yard large enough to fit a damaged ferry winch.",
+    },
+    operations: {
+      provides:
+        "Repairs iron fittings, chains and winches for the river crossing.",
+      payers: "Ferry crews, carters and the harbour authority.",
+      whyHere: "The north ferry berth has no workshop of its own.",
+      mainIncome: "Repair contracts and replacement fittings.",
+      model: "Takes a deposit for materials, then charges for completed work.",
+      size: "One forge, two apprentices and a sheltered fitting yard.",
+      position:
+        "The ferry repair contract will cover wages if it is completed before the next spring tide.",
+    },
+    leadership: {
+      id: "lead",
+      name: "Nessa Voss",
+      role: "owner",
+      goal: "Repair the north ferry before the spring tide.",
+      style: "Insists on inspecting every finished fitting.",
+      trait: "Keeps a spare hammer on the counter for nervous customers.",
+      pressure:
+        "Cannot pay for another charcoal delivery without the ferry deposit.",
+    },
+    staff: [
+      {
+        id: "staff-1",
+        name: "Halle Vance",
+        role: "Journeyman smith",
+        goal: "Reopen the north ferry without sacrificing the quality of the repair.",
+        trait: "Tests every link by sound.",
+      },
+      {
+        id: "staff-2",
+        name: "Mara Marrow",
+        role: "Apprentice and delivery runner",
+        goal: "Recover a missing shipment before the owner dismisses her.",
+        trait: "Knows which warehouses are unlocked after dark.",
+      },
+    ],
+    clientele: {
+      typical: "Ferry crews and carters",
+      valuable: "The harbour authority's maintenance officer",
+      undesirable: "Customers demanding a rushed repair without a deposit",
+    },
+    dependencies: [
+      {
+        id: "dep-1",
+        input: "Charcoal from the east bank",
+        kind: "materials",
+        ifItFails: "The forge goes cold before the winch is repaired.",
+      },
+      {
+        id: "dep-2",
+        input: "A river crossing permit for the delivery cart",
+        kind: "licence",
+        ifItFails: "Deliveries must travel through the rival's toll gate.",
+      },
+    ],
+    relationships: [
+      {
+        id: "rel-1",
+        name: "The Red Quay Foundry",
+        kind: "competitor",
+        label: "competes with",
+        reason: "Wants the harbour authority's repair contract.",
+        partyKind: "organisation",
+      },
+      {
+        id: "rel-2",
+        name: "East Bank Charcoal Co-operative",
+        kind: "supplier",
+        label: "supplied by",
+        reason: "Has one cart left after the north ferry closed.",
+        partyKind: "organisation",
+      },
+    ],
+    reputation: {
+      perception: "Reliable work, slow service.",
+      consequence:
+        "The harbour authority will wait one more day before looking elsewhere.",
+    },
+    pressure:
+      "The charcoal cart has not arrived and there is one day's fuel left.",
+    asset: "A spare winch axle made for the old ferry.",
+    secret:
+      "The harbour officer secretly diverted the charcoal to the rival foundry.",
+    opportunity:
+      "Recover the cart or negotiate a temporary supply from the competitor.",
+    complication:
+      "The rival offers to deliver charcoal in exchange for half the repair contract.",
+    hooks: [
+      "Mara asks the party to trace the cart before the tide turns.",
+      "The harbour authority demands proof that the repaired winch will be ready in time.",
+    ],
+    fallbackSections: [],
+  }),
   "mystery-investigation": {
     type: "note",
     title: "Smoke Over the Yard",

@@ -41,6 +41,24 @@ export async function loadGeneratorRemixDraft(
     }
 
     const parsed = parseGeneratorShareMarkdown(shared.content);
+    // The business share contains text only, not its structured batch state.
+    // Preserve that inseparable draft in GM notes instead of exposing its secret.
+    if (options.targetPath === "/generators/business") {
+      return {
+        draft: {
+          type: "note",
+          title: shared.title,
+          summary: "",
+          content: "",
+          lore: [parsed.summary ? `*${parsed.summary}*` : "", parsed.content]
+            .filter(Boolean)
+            .join("\n\n"),
+          labels: shared.metadata.labels ?? [],
+          status: "draft",
+        },
+        theme: resolveGeneratorShareTheme(shared.metadata.theme),
+      };
+    }
     // Share markdown combines the original content and lore without a reliable
     // delimiter. Character restoration must not guess which text is player-safe.
     const isPrivateCharacter = usesSourceHandoff(

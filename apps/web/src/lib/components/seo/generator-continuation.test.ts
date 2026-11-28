@@ -443,6 +443,16 @@ describe("generator-continuation", () => {
     }
   });
 
+  it("configures Business beside the successful result and explains batch versus text-only remix", () => {
+    const config = getGeneratorContinuationConfig("business");
+    expect(config).toMatchObject({
+      placement: "near-result",
+      ctaLabel: "Add to my Codex",
+    });
+    expect(config?.capabilities.join(" ")).toContain("linked Characters");
+    expect(config?.capabilities.join(" ")).toContain("one Note");
+  });
+
   it("returns null for Wave 2, names, and unknown generator types", () => {
     for (const type of [
       "point-crawl",
