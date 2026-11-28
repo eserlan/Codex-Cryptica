@@ -468,6 +468,12 @@ export function usesSourceHandoff(generatorType?: string) {
   return generatorType === "bbeg-generator" || isRpgNpcGenerator(generatorType);
 }
 
+export function usesPrivateSummaryHandoff(generatorType?: string) {
+  return (
+    generatorType === "urban-fantasy-faction" || generatorType === "social-hub"
+  );
+}
+
 function getNpcHandoffLayout(data: GeneratorOutput) {
   const lore = data.lore ?? "";
   // Table Card repeats the labelled secret in its body. Keep the original
@@ -512,10 +518,18 @@ export function getGeneratorHandoffLayout(
   if (generatorType === "urban-fantasy-faction") {
     return {
       content: "",
-      lore: [data.content, data.lore ?? ""].filter(Boolean).join("\n\n"),
+      lore: [data.summary, data.content, data.lore ?? ""]
+        .filter(Boolean)
+        .join("\n\n"),
     };
   }
-  if (generatorType === "social-hub") return getSocialHubHandoffLayout(data);
+  if (generatorType === "social-hub") {
+    const layout = getSocialHubHandoffLayout(data);
+    return {
+      ...layout,
+      lore: [data.summary, layout.lore].filter(Boolean).join("\n\n"),
+    };
+  }
   return getBaseGeneratorHandoffLayout(data, layout, generatorType);
 }
 

@@ -11,6 +11,7 @@ import type {
 import {
   deduplicateMarkdownSections,
   getGeneratorHandoffLayout,
+  usesPrivateSummaryHandoff,
   usesSourceHandoff,
 } from "./generator-document-layout";
 
@@ -146,7 +147,10 @@ function resolveSaveBodyAndLore(
   layout: GeneratorSaveLayout,
   generatorType?: string,
 ): { content: string; lore: string } {
-  const summaryPrefix = data.summary ? `*${data.summary}*` : "";
+  const summaryPrefix =
+    data.summary && !usesPrivateSummaryHandoff(generatorType)
+      ? `*${data.summary}*`
+      : "";
   if (usesPrivateBodyAndLore(generatorType)) {
     return {
       content: [summaryPrefix, layout.content].filter(Boolean).join("\n\n"),

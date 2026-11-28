@@ -52,4 +52,22 @@ describe("urban faction and social hub source boundaries", () => {
       }
     },
   );
+
+  it.each(["urban-fantasy-faction", "social-hub"] as const)(
+    "keeps a generated %s summary in GM notes",
+    (slug) => {
+      const output = {
+        ...slugDrafts[slug]!,
+        summary: "The secret operation is controlled by the mayor.",
+      };
+      const preview = getGeneratorDocumentLayout(output);
+      const source = getGeneratorHandoffLayout(output, preview, slug);
+      const saved = buildGeneratorSavePayload(output, preview, undefined, slug);
+
+      expect(source.content).not.toContain(output.summary);
+      expect(source.lore).toContain(output.summary);
+      expect(saved.content).not.toContain(output.summary);
+      expect(saved.lore).toContain(output.summary);
+    },
+  );
 });
