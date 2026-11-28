@@ -637,28 +637,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   creature: {
     summary:
-      "Memorable monsters behave like living creatures (or focused hazards) with a habitat, a tell before they strike, and an instinct that tells you when they flee or bargain.",
+      "Design an inhabitant of the world rather than a bag of hit points. Use its habitat, ecological role and observable behaviour to decide what it is doing when the party arrives, what warns them of danger and how they can interact without fighting.",
     tips: [
       {
-        title: "Telegraph their signature threat",
+        title: "Give the creature a reason to be in this place",
         detail:
-          "Show tracks, scorched masonry, or prey behaviour before initiative starts so players can prepare tactics.",
+          "Pair Ecological Role / Behaviour with Habitat / Environment. A Herbivore / Migratory Grazer crossing a wetland may leave a ruined footbridge and a new trail; a Territorial Guardian in caverns may block a passage to its nesting chamber. Choose what the party disturbs by taking the obvious route.",
       },
       {
-        title: "Give every creature a non-combat motive",
+        title: "Decide what the party can learn before danger",
         detail:
-          "Territorial defence, hunger, or protecting a nest creates opportunities for stealth, bribery, or retreat.",
+          "Use Threat Level to decide how urgent the warning should be, not as a numerical encounter rating. Turn one Observable Ability into a recognisable sign, such as scorched moss or a shed scale. Let players change their plan after finding that sign instead of learning the danger only when it strikes.",
       },
       {
-        title: "Pair with terrain",
+        title: "Give every encounter an end other than death",
         detail:
-          "Drop the creature into an environment that favours its movement or senses rather than a flat room.",
+          "Use Intelligence / Temperament to decide what changes the creature's behaviour. A Cunning / Pack Mind might retreat when its group is separated; a Fully Sapient / Cultured one may negotiate access to a feeding ground. Choose the boundary it will not cross and the consequence if the party honours it.",
       },
     ],
+    linksTitle: "Turn a creature into a playable encounter",
     links: [
       {
+        href: "/answers/what-makes-a-good-random-encounter",
+        label: "Give the creature an activity and a reason to be here",
+        description:
+          "Create an encounter with an existing situation, non-combat choices and regional consequences.",
+      },
+      {
         href: "/answers/how-do-i-balance-rpg-combat-encounters-without-a-tpk",
-        label: "Balancing combat encounters",
+        label: "Telegraph threat and build a way out",
+        description:
+          "Assess action economy, objectives and retreat using the rules of your game.",
       },
     ],
   },
@@ -1165,23 +1174,48 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "mystery-investigation": {
     summary:
-      "Keep tabletop mysteries moving with three independent clues per revelation so a single failed skill check never stalls the session.",
+      "Start from a fixed answer, then give players several ways to establish it. Use the draft as a case file, not a sequence of scenes they have to visit in order. Scope, Clue density and Danger / pressure guide AI-generated cases; the offline fallback does not apply those settings.",
     tips: [
       {
-        title: "Anchor clues to people and places",
+        title: "Choose the question and the size of the cast",
         detail:
-          "Every node in the mystery graph should point to at least one witness, physical trace, or ledger.",
+          "For AI-generated cases, set Mystery type to Theft, Disappearance or the event the players can actually investigate. Pair Scope set to One-shot case with Complexity / suspect count set to Lean (3 suspects) if you have one evening. Give every innocent suspect something to hide that the players can disprove.",
       },
       {
-        title: "Escalate when the trail cools",
+        title: "Make the essential inference independently testable",
         detail:
-          "If players hesitate, have the culprit try to cover their tracks—leaving a fresh lead behind.",
+          "For AI-generated cases, use Clue density set to Generous for a group new to investigation. For each conclusion the players need, check that at least two leads come from different sources: for example, an altered ledger and a witness who saw a delivery. Give a plausible way to test each rather than requiring one successful roll.",
+      },
+      {
+        title: "Advance the situation, not the solution",
+        detail:
+          "For AI-generated cases, Danger / pressure sets how urgently the case demands action. With Low, let the party follow a wrong lead without losing the case. With High, decide what changes at the next deadline and use the Next NPC Moves table in GM notes when the party stalls. Never change who did it to make a theory right.",
+      },
+      {
+        title: "Give the discovery a consequence",
+        detail:
+          "In Optional Campaign Context, name someone who needs the case solved and what they stand to lose. After drafting, decide how a supported accusation, a partial answer or an unsolved case changes that person's relationship with the party.",
       },
     ],
+    linksTitle: "From a fair clue trail to an unexpected conclusion",
     links: [
       {
+        href: "/answers/how-do-you-run-a-mystery-without-railroading",
+        label: "Run a case without prescribing the route",
+        description:
+          "Make essential information reachable from independent leads.",
+      },
+      {
         href: "/answers/how-do-i-get-a-stalled-rpg-investigation-moving-again",
-        label: "Unsticking stalled investigations",
+        label: "Move a stalled investigation forward",
+        description:
+          "Change what the suspects do without handing out the solution.",
+      },
+      {
+        href: "/answers/how-do-you-handle-players-reaching-the-wrong-conclusion-in-an-rpg-mystery",
+        label: "Let the party test a plausible but wrong conclusion",
+        description:
+          "Give theories observable consequences while keeping the truth fixed.",
       },
     ],
   },

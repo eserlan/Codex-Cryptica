@@ -2094,7 +2094,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Creature Generator",
     eyebrow: "Monster & Creature Generator",
     introText:
-      "Create table-ready monsters, beasts, alien fauna, undead, constructs, and mounts across any genre. Generates distinctive appearance, sensory signs, ecological roles, tactical combat behaviour, harvestable remains, and adventure hooks beyond just fighting them.",
+      "Draft a beast, construct, undead creature or alien inhabitant with a place in its ecosystem, signs the party can notice and behaviour they can respond to. Choose how dangerous and intelligent it is, then use its known abilities, hidden traits and hooks to plan an encounter.",
     canonicalPath: "/generators/creature",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-creature.jpg",
@@ -2113,18 +2113,18 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "What does the Creature Generator create?",
         answer:
-          "It produces a complete RPG creature — name, category, size, habitat, threat level, temperament, physical appearance, tracks and sensory signs, ecological role, abilities and defences, exploitable weaknesses, encounter behaviour, harvestable materials, lore and rumours, and 2–4 adventure hooks.",
+          "A creature profile with name, classification, habitat, appearance, ecological role, signs, abilities, weaknesses, encounter behaviour, harvestable materials and GM hooks. It is a narrative profile, not a system-specific combat stat block.",
       },
       {
         question: "Is this only a fantasy monster generator?",
         answer:
-          "No. While it functions as a powerful fantasy monster generator, it natively adapts to all 13 world themes — creating cyberpunk security bioweapons, sci-fi vacuum organisms, post-apocalyptic mutants, cosmic horror aberrations, and gothic undead.",
+          "No. Genre / Theme offers different settings, including cyberpunk, sci-fi, gothic horror and post-apocalyptic worlds. Choose an appropriate Creature Category / Origin and Habitat / Environment to situate it.",
       },
       {
         question:
           "Can it generate non-hostile creatures, mounts, or familiars?",
         answer:
-          "Yes. Select ecological roles like Herbivore / Migratory Grazer, Mount / Domesticated Beast, Familiar / Companion, or Scavenger, and choose appropriate threat levels from Harmless to Apex Predator.",
+          "Yes. Select roles such as Herbivore / Migratory Grazer, Mount / Domesticated Beast or Familiar / Companion and a suitable Threat Level. Decide how the creature reacts to attention, offerings or a threat to its home.",
       },
       {
         question: "How are intelligent or sapient creatures handled?",
@@ -2134,7 +2134,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Does it work without an account?",
         answer:
-          "Yes. Generate, customize, and copy creature notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault with full Markdown notes — no sign-up required.",
+          "Yes. Generate, reroll and copy the full draft without signing in. Add to my Codex opens one Creature in your local browser vault. The AI is asked to put known characteristics and field signs in the main text and hidden ecology, secret weaknesses, surprise abilities and GM hooks in GM notes; review AI-written text before sharing it. Connect it to existing habitats and NPCs yourself. Shared links contain the full draft; text-only remixes need review since they cannot recover the original public/GM split.",
       },
     ],
     relatedLinks: [
@@ -2353,7 +2353,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Mystery & Investigation Generator",
     eyebrow: "Mystery & Investigation Generator",
     introText:
-      "Build a case the players can investigate: lock in what really happened, then create suspects, locations, evidence, independent leads and outcomes that agree with that truth. The first version uses a fixed solution and keeps GM-only details separate from player-facing material.",
+      "Create a case your players can approach from more than one direction. Choose the mystery type, how many suspects to investigate, and how much pressure they face. Review the fixed truth and timeline, then check the clues against them. Keep the truth in GM notes and use the evidence to prepare what the players can discover.",
     canonicalPath: "/generators/mystery-investigation",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-mystery-investigation.png",
@@ -2370,17 +2370,27 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Does the generator choose a fixed culprit?",
         answer:
-          "Yes. This version creates one fixed truth and keeps it in a separate GM-only section so the clues and witness accounts can be checked against it.",
+          "Yes. The draft has a fixed GM-only truth. Check the motive, opportunity and timeline before play; do not replace that answer just because the players suspect someone else.",
       },
       {
         question: "Can the players solve the case without one required roll?",
         answer:
-          "The generator is designed to provide multiple independent routes to essential revelations, with clues that state what they support and what they do not prove.",
+          "The generator aims to provide independent leads that state what they support and what they do not prove. Check that a missed witness or clue cannot block an essential inference before running the case.",
       },
       {
         question: "Can I use the case in any role-playing game?",
         answer:
           "Yes. The generator is system-neutral and supports fantasy, noir, investigative horror, modern and science-fiction settings.",
+      },
+      {
+        question: "Can I give the case to my players?",
+        answer:
+          "Copy Player Handout exports the player-facing case material. Review it before sharing, since clues may describe facts the party has not yet discovered. Copy GM Case File includes the fixed truth and GM notes, so keep that copy private.",
+      },
+      {
+        question: "What happens when I add the mystery to Codex?",
+        answer:
+          "After generating, save it as one Note in your local vault with the case material and separate GM notes. The clue diagram is a preview aid when available; the Note preserves the written case, not a board of separate suspects. Link people and places yourself as you develop the case.",
       },
     ],
     relatedLinks: [
