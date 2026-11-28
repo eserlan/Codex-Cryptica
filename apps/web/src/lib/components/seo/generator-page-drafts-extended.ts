@@ -1,3 +1,4 @@
+import { businessToOutput } from "generator-engine/business-state";
 import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 import type { ValidSlug } from "./generator-page-meta";
 
@@ -169,14 +170,14 @@ export const extendedSlugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
   puzzle: {
     type: "note",
     kind: "puzzle",
-    title: "Environmental Trial: Sealed door",
+    title: "The Counterweight Gate",
     summary:
-      "A shifting chamber blocks the party's attempt to open the sealed door. Visible Classic Fantasy details reveal how to manipulate it, while a wrong approach changes the situation instead of ending the encounter.",
+      "A sealed floodgate blocks the party's way through the abandoned mill. Two hanging stone baskets hold the gate shut against the rising water.",
     content:
-      "## Player-Facing Setup\nThe party finds a shifting chamber blocking their attempt to open the sealed door. Its details make the Classic Fantasy fiction clear: it was built to test intent, not merely punish failure.\n\n## Clues\n- **Obvious clue:** Put one sensory detail in plain view that points to the pattern.\n- **Discoverable clue:** Interaction, conversation, or an appropriate check reveals why the mechanism was built.\n- **Emergency clue:** After meaningful effort, show the next safe action through a visible change in the room.\n\n## Character Spotlight Opportunities\nInvite contributions from investigation, physical action, social insight, and creative magic or equipment. Frame each as a useful angle, not a requirement: a careful observer reads the pattern, a forceful character changes its physical state at a cost, and a magical or technical character can test its energy or controls.\n\n## Alternate Solutions\n- Bypass one component while accepting a minor complication.\n- Negotiate with, trick, or repurpose the guardian mechanism.\n- Use an improvised resource or an original interpretation of the fiction to create a new route forward.\n\n## Failure & Escalation\nFailed attempts provide clear feedback without adding pressure, so the puzzle remains a safe point for experimentation.\n\n## Running the Puzzle\nDescribe the visible parts and the first clue freely. Let checks add context or reduce risk, never hide the only path behind a roll. Ask what each player does before offering a hint, then reward experiments with concrete feedback.\n\n## Scaling\nSimplify by making two actions sufficient or offering the emergency clue earlier. Increase complexity by adding a clock, a second interacting component, or a consequence that changes the next encounter.\n",
-    lore: "### At a Glance\n- **Genre:** Classic Fantasy\n- **Complexity:** Simple\n- **System:** System-neutral\n- **Participation:** Any character can contribute\n### GM-Only Solution\nThe environmental challenge responds to a pattern of three linked actions. Any credible approach that identifies, alters, bypasses, or reinterprets the pattern advances the puzzle; no class, spell, skill, or single answer is required.\n### Escalating Hints\n1. Repeat the obvious clue in a new sensory form.\n2. Point out the component that changed after the party's last action.\n3. State the puzzle's immediate fictional goal without naming a solution.",
-    labels: ["puzzle", "puzzle-generator", "environmental", "classic-fantasy"],
-    status: "active",
+      "## Player-Facing Setup\nA narrow catwalk reaches a floodgate across the millrace. A pair of baskets hangs from a beam above it: the heavy basket has sunk below its brass marker, while the empty basket swings above its marker. A carving shows both baskets level with the markers.\n\n## Clues\n- **Obvious clue:** The carved baskets are level; their actual positions do not match.\n- **Discoverable clue:** Shifting one stone into the light basket raises the other, and the gate lifts a finger's width.\n- **Emergency clue:** A loose stone falls from the heavy basket and the gate rises slightly, exposing the drain channel.\n\n## Character Spotlight Opportunities\nA careful observer compares the baskets with the carving. A strong character can steady the beam; a crafter can rig a temporary support; anyone can move stones or ask another character to observe the result.\n\n## Alternate Solutions\n- Brace the beam and raise the gate with a rope, leaving the equipment behind.\n- Divert the water into the side drain and crawl through the exposed channel instead.\n\n## Failure & Escalation\nA wrong adjustment shakes the gate and reveals which basket needs changing. No damage or additional pressure builds in this Simple version.\n\n## Running the Puzzle\nDescribe the carving and the markers before any check. When the baskets come closer to level, the gate rises further; tell the party immediately.\n\n## Scaling\nFor a harder version, have the water threaten a downstream room while the party works. For a quicker version, let the first successful adjustment open a gap large enough to cross.",
+    lore: "### At a Glance\n- **Genre:** Classic Fantasy\n- **Purpose:** Sealed door\n- **Style:** Mechanical\n- **Complexity:** Simple\n- **Failure pressure:** None\n- **System:** System-neutral\n- **Participation:** Any character can contribute\n\n### GM-Only Solution\nFirst redistribute stones until the baskets align with the brass markers. Then release the retaining pin that the beam exposes, allowing the gate to rise. Any credible way to reach the same state works.\n\n### Escalating Hints\n1. Remind the party of the level baskets carved above the gate.\n2. Point out how the brass marker moved after the last adjustment.\n3. State that the gate releases when the baskets reach their marked levels.",
+    labels: ["puzzle", "puzzle-generator", "mechanical", "classic-fantasy"],
+    status: "draft",
   },
   "dark-fantasy-faction": {
     type: "faction",
@@ -926,17 +927,17 @@ export const extendedSlugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
     kind: "creature",
     title: "Coral-Weaver",
     summary:
-      "A medium / human-sized engineered / mutated beast that acts as a environmental / supernatural hazard in mountain peaks / cliffs, known for its chameleonic refraction.",
+      "A steed-sized magical cliff dweller that uses refractive scales to guard mineral-rich nesting ledges.",
     content:
-      "### At a Glance\n- **Classification**: Engineered / Mutated Beast\n- **Size & Form**: Medium / Human-sized\n- **Habitat**: Mountain Peaks / Cliffs\n- **Threat Level**: Minor Nuisance / Scavenger\n- **Temperament / Sapience**: Cunning / Pack Mind\n- **Ecological Role**: Environmental / Supernatural Hazard\n\n### Appearance & Anatomy\nThe Coral-Weaver possesses a dense, adapted physique tailored for survival in mountain peaks / cliffs. Its outer layer displays mottled coloration suited for natural concealment, reinforced with fibrous sinew and hardened plates along its dorsal ridge. Movement is deliberate and efficient, conserving energy until an immediate need demands sudden bursts of speed.\n\n### Core Concept & Ecology\nThe Coral-Weaver functions as a environmental / supernatural hazard within mountain peaks / cliffs. It establishes seasonal territory around natural food caches and migratory choke-points, patrolling its perimeter with predictable frequency. It feeds primarily on local flora, fauna, and mineral deposits, shaping the surrounding biome through its feeding corridors.\n\n### Observable Abilities & Defences\n- **Chameleonic Refraction**: Shifts dermal chromatophores to match surface textures and ambient light, becoming virtually invisible while motionless.\n- **Adaptive Mobility**: Navigates difficult terrain within mountain peaks / cliffs without loss of momentum or balance.\n- **Sensory Acuity**: Acute olfactory and vibrational perception, detecting encroaching entities long before visual contact.\n\n### Known Weaknesses & Limitations\n- **Violent sudden vibrations or flour/powder coatings disrupt the optical alignment of its scales immediately.**\n- **Behavioural Limitation**: Reluctant to cross open, exposed areas with bright light or strong drafts unless starved.\n\n### Combat & Encounter Behaviour\nWhen threatened, the creature adopts a defensive posture, issuing low warning signals to discourage confrontation. If cornered or defending its territory, it unleashes its **Chameleonic Refraction** before maneuvering toward flanking angles. If reduced to severe injury or if its prey proves too resilient, it disengages rapidly into familiar crevices.\n\n### Harvest & Remains\nChromatophoric hide patches that retain light-bending qualities for several weeks if preserved in alcohol.\n\n### Known Lore & Signs\n- **Field Signs**: Unsettling optical mirages and shifting shadows in peripheral vision.; Oddly parallel claw scrapes along high branch burls.; Sudden cessation of all insect chirping when passing specific trees..\n- **Common Belief**: Regional hunters and scouts recognise the creature by its distinct seasonal calls and territory scrapings.",
-    lore: "### True Origin & Hidden Ecology\nThe Coral-Weaver's presence is deeply tied to subterranean ley-seams and nutrient surges. Its reproductive cycle is tied to environmental shifts, producing small clutches of dormant cocoons that remain viable for decades until specific seasonal moisture or etheric resonance triggers emergence.\n\n### Hidden Abilities & Surprises\n- **Refractive Mirage Decoy: when startled, sheds a phantom afterimage while slipping silently into shadows in the opposite direction.**\n- **Symbiotic Alarm**: Disturbed nests release airborne spore markers that agitate other nearby fauna into a defensive frenzy.\n\n### Secret Weaknesses\n- **Extreme cold temperatures freeze the lipid layer beneath its dermal chromatophores, locking it into a stark, luminescent white silhouette.**\n- **Metabolic Crash**: Expending its **Chameleonic Refraction** consecutively rapidly depletes its internal reserves, leaving it sluggish for several minutes afterward.\n\n### Tactical Notes\n- **Choke-Point Ambush**: Uses environmental shadows and acoustic echoes to split adventuring parties, striking the rearguard while creating simulated noise ahead.\n- **Lair Traps**: Pre-excavates false sinkholes and loose talus slopes around its den to collapse under heavy intruders.\n\n### Truth Behind Rumours\n- **Local Legend (Distorted)**: Legends claim it is born from the concentrated malice of lost wanderers.\n- **The Reality**: It is simply an ancient evolutionary offshoot preserved in isolated biomes, displaying heightened predator intelligence rather than supernatural cursed malice.\n\n### Adventure & Encounter Hooks\n- **The Blocked Route**: A family of Coral-Weavers has claimed a crucial trade pass as their nesting territory, halting transit until they can be peacefully relocated or driven off.\n- **The Harvester's Contract**: A local apothecary or researcher offers a substantial bounty for intact biological samples without killing the specimen.\n- **The Omens Below**: Sightings of Coral-Weavers fleeing their native deep habitats suggest a far greater seismic or supernatural disturbance is waking beneath the region.",
+      "### At a Glance\n- **Classification**: Magical Beast / Chimera\n- **Size & Form**: Large / Steed-sized\n- **Habitat**: Mountain Peaks / Cliffs\n- **Threat Level**: Dangerous / Predator\n- **Temperament / Sapience**: Cunning / Pack Mind\n- **Ecological Role**: Territorial Guardian\n\n### Appearance & Anatomy\nFour clawed feet grip the cliff face. Translucent coral-like plates along its back refract the light of the valley below.\n\n### Core Concept & Ecology\nCoral-Weavers graze on mineral crusts along exposed ledges, returning to shared nesting shelves at dusk. Their scraping opens patches where cliff herbs grow.\n\n### Observable Abilities & Defences\n- **Chameleonic Refraction**: Breaks up the creature's outline against pale rock.\n- **Adaptive Mobility**: Crosses steep ledges with ease, carrying stones to its nest.\n- **Sensory Acuity**: Taps the cliff with its claws to detect approaching movement.\n\n### Known Weaknesses & Limitations\n- Drifting dust outlines the refractive scales.\n- The creatures rarely leave a nesting shelf unattended.\n\n### Combat & Encounter Behaviour\nA pair beats its tails against stone when intruders approach. If the party moves away from the shelf, they stop pursuing. A creature isolated from the others attempts to retreat.\n\n### Harvest & Remains\nShed plates can be polished into refractive lenses without harming the animal.\n\n### Known Lore & Signs\n- **Field Signs**: Paired claw marks, coral-coloured scale fragments and a moving patch of distorted light.\n- **Common Belief**: Shepherds say a healthy weaving colony means the cliffs will remain stable.",
+    lore: "### True Origin & Hidden Ecology\nThe plates grow around mineral-eating symbionts. Nesting shelves stay warm because a vein of geothermal water flows behind them.\n\n### Hidden Abilities & Surprises\n- **Refractive Mirage Decoy**: A startled adult leaves an afterimage while climbing to another ledge.\n- A juvenile's distress call draws nearby adults to the shelf.\n\n### Secret Weaknesses\n- Cold rain temporarily disables the optical scales.\n- Exhausted creatures need to return to a warm shelf before they can cloak again.\n\n### Tactical Notes\nA pair tries to guide intruders away from the nest, not pursue them down the trail.\n\n### Truth Behind Rumours\nThe colony does not prevent landslides. It abandons unstable cliffs before a collapse, which is why shepherds watch its migrations.\n\n### Adventure & Encounter Hooks\n- A newly abandoned nesting shelf overlooks the only mountain road.\n- A lensmaker wants the party to collect naturally shed plates.\n- Highway workers intend to blast a ledge while a colony is raising its young.",
     labels: [
       "creature",
       "monster-generator",
-      "engineered-mutated-beast",
+      "magical-beast-chimera",
       "classic-fantasy",
     ],
-    status: "active",
+    status: "draft",
   },
   encounter: {
     type: "event",
@@ -959,145 +960,138 @@ export const extendedSlugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
     type: "event",
     title: "The Thormar Lift",
     summary:
-      "Assassination: one night to reach a mark who is only ever alone inside this building and leave without being placed there.",
+      "A one-night score to recover a fragile enchanted charter from the Thormar Guild Vault before the morning audit.",
     content:
-      "### The Score\nAssassination at the Kaelrin Guild Vault, a small-scale guild vault: one night to reach a mark who is only ever alone inside this building and leave without being placed there.\n\n### The Target\nA mark who is only ever alone inside this building. Killing them is the job; not being the obvious answer afterwards is the rest of it.\n- **Where**: On the secured floor, during a nightly inspection nobody else attends.\n- **Window**: The mark is alone until an attendant returns thirty minutes after entry.\n- **Protection**: An escort everywhere else in the building, and a standing order that they are never alone in public.\n- **Methods**: Contaminate the mark's private drink, arrange a fatal failure of their balcony rail, or confront them while the attendant is away; the chosen method must respect the catch.\n- **Once it is done**: Escape still matters; witnesses or active tracing can expose the crew before the scheduled check.\n- **The catch**: Precise — one specific thing must happen and nothing beside it.\n- **Pressure**: Observe the routine, isolate the intended target, then prepare the tools: each stage takes five minutes and advances a three-step work clock. At three steps an attendant visits the work area; a convincing cover story explains the crew. Harming anything outside the agreed target fails the job.\n\n### Casing the Target\n- **Entry vector**: A service route staff use daily stays open throughout this shift; its covered alcove is out of sight of the outer patrol.\n- **Known obstacle**: The credential check between the public floor and the secured floor is watched, not merely locked.\n- **The objective**: They are alone only at the end of the nightly inspection, and escorted every other hour of the day.",
-    lore: "### GM Quick Reference\n- **Objective**: Assassination — one night to reach a mark who is only ever alone inside this building and leave without being placed there.\n- **Primary obstacle**: Three layers — patrols outside, a watched credential check, and the inner sanctum.\n- **Hidden factor**: A relief guard now rests in the service alcove; their lantern is visible before entry.\n- **Point of no return**: The kill begins the escape; discovery depends on the method and inspection timing.\n- **Pressure**: Three five-minute preparations; an attendant then visits the work area.\n- **Default complication**: The target expected the crew and deliberately let them in.\n- **Escape problem**: The service entrance is blocked five minutes after an alarm, leaving time to race back.\n\n### The Hidden Factor\nA relief guard rests in the service alcove this shift, although the crew's briefing called it empty. Their lantern is visible from outside: wait for them to leave on an errand, draw them away, or enter openly with a credible delivery.\n\n### Security Rings\n- **Perimeter**: Patrols circle the Kaelrin Guild Vault. Pass by timing a gap between rounds, by arriving with expected staff, or by crossing the unwatched yard wall.\n- **Access**: A veteran keeper checks credentials at the secured floor. Pass by borrowing a credential, by arranging a staff escort, or by posing as a worker called to fix the door.\n- **Inner Sanctum**: A watched door protects the target — their routine, their escort, and the rooms they are ever alone in. Borrow the key, arrange an escorted visit, or remove the hinge pins while the keeper is away; the objective's catch still applies.\n\n### Alarm Track\n- **0 — Quiet**: Routine holds. Patrols on schedule, staff bored, nobody looking for anyone.\n- **1 — Suspicion**: One guard breaks routine to check what bothered them. Patrol timings stop being predictable.\n- **2 — Alert**: A witness reports an intrusion or the scheduled check finds unexplained evidence. Exits are watched and reinforcements called; they reach the service entrance in five minutes.\n- **3 — Lockdown**: Five minutes after Alert, reinforcements block the service entrance and bar the public doors. The drains remain open; a forged evacuation order or distracting the entrance guards can still get people out.\n- **4 — Lethal Response**: Whatever the target keeps for this is loose and hunting to kill. It covers the exits — but it can be drawn off, bargained with, or given something it wants more than the crew.\n\n### Complications\n- **Likely (default)**: The target expected the crew and deliberately let them in.\n- **Alternative**: A scheduled inspection has put twice the usual staff on site tonight.\n- **Alternative**: A rival crew has started its own run on the same target tonight.\n\n### When the Target Is Killed\nThe target dies, but discovery is separate. The attendant returning thirty minutes after entry raises Alert on finding a suspicious death; a convincing natural cause avoids an immediate search for intruders. On discovery, raise **2 — Alert**. Reinforcements take five minutes to reach the service entrance; only then is it blocked.\n\n### The Getaway\nThe entry route remains usable until reinforcements reach it, five minutes after an alarm; a covert crew can leave before discovery.\n- **Race back**: Retrace the service route in three minutes, plus any delay imposed by the catch; after it is blocked, lure the guards away or negotiate passage.\n- **Public departure**: Walk out with the departing staff before Lockdown; afterwards, a forged evacuation order can persuade the door guards, at the cost of a face-to-face challenge.\n- **Drain route**: The yard drain reaches beyond the wall in fifteen minutes; its narrow bend only admits cargo that fits intact or can safely be dismantled, and injured passengers need support. Otherwise use a full-width exit.\n**Pursuit**: Guards follow only if a witness identifies the crew's exit or an active trace reveals their location; breaking that trail lets the crew escape unseen.\n\n### Flashback Opportunities\nOffer these; never assume the players used them.\n- An inside contact who owes someone in the crew a favour\n- Knowledge of how the security system fails, learned from whoever installed it\n- A debt called in with a local fixer for a single, no-questions favour\n- Equipment cached somewhere inside during a legitimate visit\n- A rehearsed distraction that will pull staff to the wrong part of the building",
-    labels: [
-      "heist",
-      "heist-generator",
-      "Assassination",
-      "Guild Vault",
-      "Classic Fantasy",
-    ],
-    status: "active",
+      "### The Score\nThe River Guild hires the party to retrieve its confiscated charter from the Thormar Guild Vault before the morning audit. The document must be recovered intact.\n\n### The Prize\nA vellum charter embossed with the seal that grants the guild access to the north ferry.\n- **Where**: In a warded glass case on the secured floor.\n- **Window**: The display is inspected at dawn.\n- **Protection**: A seal keyed to the vaultkeeper and an enchanted glass enclosure.\n- **Methods**: Arrange a legitimate transfer, persuade the vaultkeeper to release it, or suppress the ward with an accepted counterseal.\n- **Once it is done**: The charter must reach the guild's advocate at the ferry.\n- **The catch**: Fragile. The seal crumbles if the charter is folded or exposed to rain.\n- **Pressure**: Each damaged corner makes the guild's claim harder to prove.\n\n### Casing the Target\n- **Entry vector**: Petitioners may visit the outer records hall before the audit.\n- **Known obstacle**: The secured floor is restricted to named witnesses and staff.\n- **The objective**: The charter is displayed for the audit, not held in the usual archive.",
+    lore: "### GM Quick Reference\n- **Objective**: Recover the charter intact and bring it to the advocate.\n- **Primary obstacle**: Access to the display requires the vaultkeeper's authority or a counterseal.\n- **Hidden factor**: The clerk ordered to inspect the charter is the advocate's estranged sister.\n- **Point of no return**: Removing the charter changes the timing of the audit.\n- **Pressure**: The guild's hearing begins at dawn.\n- **Default complication**: The senior auditor arrives early.\n- **Escape problem**: Once the empty case is reported, the outer hall closes.\n\n### The Hidden Factor\nThe clerk wants the guild's claim heard but cannot publicly defy her superior. The advocate's name may persuade her to delay the inspection.\n\n### Security Rings\n- **Perimeter**: The public petition hall admits witnesses or guild representatives.\n- **Access**: The secured floor admits a named witness, a records escort or a claimant summoned by the audit.\n- **Inner Vault**: The vaultkeeper can authorise release or accept a valid counterseal.\n\n### Alarm Track\n- **0: Quiet**: Petitioners come and go normally.\n- **1: Suspicion**: The clerk starts checking names against the witness list.\n- **2: Alert**: An empty case is reported; the captain calls the gate guards.\n- **3: Lockdown**: The outer hall closes when the guards arrive.\n- **4: Lethal Response**: The guild summons its bound guardian.\n\n### Complications\n- **Likely (default)**: The senior auditor arrives early.\n- **Alternative**: A rival claimant arrives with a forged copy of the charter.\n- **Alternative**: The clerk refuses to delay the audit without a guarantee of protection.\n\n### When the Prize Is Taken\nRemoval does not start an alarm by itself. The next inspection reveals an empty case unless the clerk has delayed it. Raise Alert when the absence is reported.\n\n### The Getaway\nThe petition hall remains open until the gate guards arrive. A hearing in the public chamber can establish the charter as evidence before the doors close; alternatively, the advocate can arrange an escorted departure. After Lockdown, the party can appeal to the captain for safe passage while the claimant dispute is heard.\n\n### Flashback Opportunities\n- Establish an invitation to the audit.\n- Arrange a waterproof document case with the advocate.\n- Agree a signal with the clerk.",
+    labels: ["heist", "heist-generator", "imported-draft"],
+    status: "draft",
   },
-  business: {
-    type: "faction",
-    title: "The Crooked Compass",
-    summary: "Mercenary company in the district, modest and steady.",
-    content:
-      '## Identity\n**The Crooked Compass** — Mercenary company in the district, modest and steady.\nReputation: Notorious for the one job that went badly wrong.\nWhat makes it distinctive: A cellar of rare reagents bought at a bankrupt estate.\n\n## What It Does\nThe mercenary company runs a steady trade in ordinary work, with a few specialist jobs.\nWho pays: Passing travellers who want a fair price.\nWhy here: The owners grew up nearby, and the regulars have known them for years.\nMain income: Subscriptions from a handful of loyal households.\nHow it earns: It rents out what it owns and takes a fee for looking after it.\nSize: A small outfit: the owner, a few staff, and borrowed space for the overflow.\nRight now: Barely breaking even, and hiding it from customers.\n\n## Leadership\n**Dace Brandt** (owner) — Buy out the partner who wants to sell up.\nStyle: Leads by example and expects the same of everyone.\nTrait: Stubborn and proud of it.\nPressure: Health is failing, and no successor has been chosen.\n\n## Key Staff\n- **Halle Vance**, Security and muscle — Quick hands and a sharp eye for quality.\n- **Mara Marrow**, Ambitious deputy — Dependable, but drinks a little more than is wise.\n\n## Clientele\nTypical: Traders who need something fixed, moved or sold quickly.\nValuable: Outsiders with money who need a local guide.\nUndesirable: People who come back only to complain.\nExcluded: Guild inspectors on a bad day.\n\n## Suppliers and Dependencies\n- Journeymen who know the older techniques (labour). If it fails: Quality drops and the best orders go to a rival.\n- Charcoal from the eastern mines (materials). If it fails: The forge goes cold within a week and every order slips.\n\n## Competitors and Relationships\n- **The Saltmarsh Gang** — protected by. Collects a quiet fee for keeping the carts moving.\n\n## Reputation\nExclusive; you have to be recommended to get in.\nConsequence: Anyone seen leaving the back door is quickly gossiped about across the district.\n\n## Current Pressure\nTwo apprentices have left for a rival house and taken the customer list with them.\n\n## Unusual Asset\nA walled yard with a private well that never runs dry.\n\n## Secret\nThe original owner left a sealed will that names a different heir, and only one clerk knows where it is.\n\n## Opportunity\nThe city is hiring a supplier for a public works project.\n\n## Complication\nA rival has spread a rumour that the goods are watered down.\n\n## Adventure Hooks\n- The Saltmarsh Gang wants something from the business: Collects a quiet fee for keeping the carts moving.\n- Dace Brandt is hiding how bad "Two apprentices have left for a rival house and taken the customer list with them." has become and needs help before it breaks.\n- If Journeymen who know the older techniques fails, Quality drops and the best orders go to a rival.',
-    lore: "",
-    labels: ["business", "business-generator", "classic-fantasy"],
-    status: "active",
-    business: {
-      version: 1,
-      options: {
-        genre: "Classic Fantasy",
-        businessType: "Mercenary company",
-        scale: "small",
-        legitimacy: "legitimate",
-        wealth: "modest",
-        clientele: "",
-        location: "",
-        tone: "grounded",
-        campaignContext: "",
-        playersOwn: false,
-      },
-      identity: {
-        name: "The Crooked Compass",
-        type: "Mercenary company",
-        description: "Mercenary company in the district, modest and steady.",
-        reputationLine: "Notorious for the one job that went badly wrong.",
-        distinctive: "A cellar of rare reagents bought at a bankrupt estate.",
-      },
-      operations: {
-        provides:
-          "The mercenary company runs a steady trade in ordinary work, with a few specialist jobs.",
-        payers: "Passing travellers who want a fair price.",
-        whyHere:
-          "The owners grew up nearby, and the regulars have known them for years.",
-        mainIncome: "Subscriptions from a handful of loyal households.",
-        model:
-          "It rents out what it owns and takes a fee for looking after it.",
-        size: "A small outfit: the owner, a few staff, and borrowed space for the overflow.",
-        position: "Barely breaking even, and hiding it from customers.",
-      },
-      leadership: {
-        id: "lead",
-        name: "Dace Brandt",
-        role: "owner",
-        goal: "Buy out the partner who wants to sell up.",
-        style: "Leads by example and expects the same of everyone.",
-        trait: "Stubborn and proud of it.",
-        pressure: "Health is failing, and no successor has been chosen.",
-      },
-      staff: [
-        {
-          id: "staff-1",
-          name: "Halle Vance",
-          role: "Security and muscle",
-          goal: "Win a place in a better shop across the city.",
-          trait: "Quick hands and a sharp eye for quality.",
-        },
-        {
-          id: "staff-2",
-          name: "Mara Marrow",
-          role: "Ambitious deputy",
-          goal: "Pay off a private debt before the next season.",
-          trait: "Dependable, but drinks a little more than is wise.",
-        },
-      ],
-      clientele: {
-        typical: "Traders who need something fixed, moved or sold quickly.",
-        valuable: "Outsiders with money who need a local guide.",
-        undesirable: "People who come back only to complain.",
-        excluded: "Guild inspectors on a bad day.",
-      },
-      dependencies: [
-        {
-          id: "dep-1",
-          input: "Journeymen who know the older techniques",
-          kind: "labour",
-          ifItFails: "Quality drops and the best orders go to a rival.",
-        },
-        {
-          id: "dep-2",
-          input: "Charcoal from the eastern mines",
-          kind: "materials",
-          ifItFails: "The forge goes cold within a week and every order slips.",
-        },
-      ],
-      relationships: [
-        {
-          id: "rel-1",
-          name: "The Saltmarsh Gang",
-          kind: "criminal",
-          label: "protected by",
-          reason: "Collects a quiet fee for keeping the carts moving.",
-          partyKind: "organisation",
-        },
-      ],
-      reputation: {
-        perception: "Exclusive; you have to be recommended to get in.",
-        consequence:
-          "Anyone seen leaving the back door is quickly gossiped about across the district.",
-      },
-      pressure:
-        "Two apprentices have left for a rival house and taken the customer list with them.",
-      asset: "A walled yard with a private well that never runs dry.",
-      secret:
-        "The original owner left a sealed will that names a different heir, and only one clerk knows where it is.",
-      opportunity: "The city is hiring a supplier for a public works project.",
-      complication:
-        "A rival has spread a rumour that the goods are watered down.",
-      hooks: [
-        "The Saltmarsh Gang wants something from the business: Collects a quiet fee for keeping the carts moving.",
-        'Dace Brandt is hiding how bad "Two apprentices have left for a rival house and taken the customer list with them." has become and needs help before it breaks.',
-        "If Journeymen who know the older techniques fails, Quality drops and the best orders go to a rival.",
-      ],
-      fallbackSections: [],
+  business: businessToOutput({
+    version: 1,
+    options: {
+      genre: "Classic Fantasy",
+      businessType: "Blacksmith",
+      scale: "small",
+      legitimacy: "legitimate",
+      wealth: "modest",
+      clientele: "Ferry crews and carters",
+      location: "Grey Quay",
+      tone: "grounded",
+      campaignContext: "The north ferry is out of service",
+      playersOwn: false,
     },
-  },
+    identity: {
+      name: "The Crooked Compass",
+      type: "Blacksmith",
+      description:
+        "Blacksmith on Grey Quay, specialising in ferry and wagon fittings.",
+      reputationLine: "Repairs last longer than the maker's promises.",
+      distinctive:
+        "A sheltered yard large enough to fit a damaged ferry winch.",
+    },
+    operations: {
+      provides:
+        "Repairs iron fittings, chains and winches for the river crossing.",
+      payers: "Ferry crews, carters and the harbour authority.",
+      whyHere: "The north ferry berth has no workshop of its own.",
+      mainIncome: "Repair contracts and replacement fittings.",
+      model: "Takes a deposit for materials, then charges for completed work.",
+      size: "One forge, two apprentices and a sheltered fitting yard.",
+      position:
+        "The ferry repair contract will cover wages if it is completed before the next spring tide.",
+    },
+    leadership: {
+      id: "lead",
+      name: "Nessa Voss",
+      role: "owner",
+      goal: "Repair the north ferry before the spring tide.",
+      style: "Insists on inspecting every finished fitting.",
+      trait: "Keeps a spare hammer on the counter for nervous customers.",
+      pressure:
+        "Cannot pay for another charcoal delivery without the ferry deposit.",
+    },
+    staff: [
+      {
+        id: "staff-1",
+        name: "Halle Vance",
+        role: "Journeyman smith",
+        goal: "Reopen the north ferry without sacrificing the quality of the repair.",
+        trait: "Tests every link by sound.",
+      },
+      {
+        id: "staff-2",
+        name: "Mara Marrow",
+        role: "Apprentice and delivery runner",
+        goal: "Recover a missing shipment before the owner dismisses her.",
+        trait: "Knows which warehouses are unlocked after dark.",
+      },
+    ],
+    clientele: {
+      typical: "Ferry crews and carters",
+      valuable: "The harbour authority's maintenance officer",
+      undesirable: "Customers demanding a rushed repair without a deposit",
+    },
+    dependencies: [
+      {
+        id: "dep-1",
+        input: "Charcoal from the east bank",
+        kind: "materials",
+        ifItFails: "The forge goes cold before the winch is repaired.",
+      },
+      {
+        id: "dep-2",
+        input: "A river crossing permit for the delivery cart",
+        kind: "licence",
+        ifItFails: "Deliveries must travel through the rival's toll gate.",
+      },
+    ],
+    relationships: [
+      {
+        id: "rel-1",
+        name: "The Red Quay Foundry",
+        kind: "competitor",
+        label: "competes with",
+        reason: "Wants the harbour authority's repair contract.",
+        partyKind: "organisation",
+      },
+      {
+        id: "rel-2",
+        name: "East Bank Charcoal Co-operative",
+        kind: "supplier",
+        label: "supplied by",
+        reason: "Has one cart left after the north ferry closed.",
+        partyKind: "organisation",
+      },
+    ],
+    reputation: {
+      perception: "Reliable work, slow service.",
+      consequence:
+        "The harbour authority will wait one more day before looking elsewhere.",
+    },
+    pressure:
+      "The charcoal cart has not arrived and there is one day's fuel left.",
+    asset: "A spare winch axle made for the old ferry.",
+    secret:
+      "The harbour officer secretly diverted the charcoal to the rival foundry.",
+    opportunity:
+      "Recover the cart or negotiate a temporary supply from the competitor.",
+    complication:
+      "The rival offers to deliver charcoal in exchange for half the repair contract.",
+    hooks: [
+      "Mara asks the party to trace the cart before the tide turns.",
+      "The harbour authority demands proof that the repaired winch will be ready in time.",
+    ],
+    fallbackSections: [],
+  }),
   "mystery-investigation": {
     type: "note",
-    title: "Smoke Over the Yard",
+    title: "The Missing Toll Apprentice",
     summary:
-      "Eerie classic fantasy case about a disappearance with evidence the players can test.",
+      "A guild apprentice disappears before a river toll inspection, leaving a false departure and a trail through the storehouse.",
     content:
-      "## Opening Hook\nDisappearance at The private archive has left a question the authorities cannot answer. The party is asked to establish what happened before the next public deadline.\n\n## Central Question\nWhat happened, and which account survives the evidence?\n\n## People to Question\n- **Branon — records clerk:** Conceal a damaging truth before it becomes public. Their account can be tested: A witness can confirm part of the account, but not the critical interval.\n- **Vaelthas — healer:** Protect a personal interest that creates a plausible alternative lead. Their account can be tested: Their account is partly corroborated and can be tested against the timeline.\n- **Thormar — courier:** Protect a personal interest that creates a plausible alternative lead. Their account can be tested: Their account is partly corroborated and can be tested against the timeline.\n- **Morgmar — watch officer:** Protect a personal interest that creates a plausible alternative lead. Their account can be tested: Their account is partly corroborated and can be tested against the timeline.\n\n## Places to Investigate\n- **The public hall:** Search for activity records, overlooked traces, and people whose accounts can be checked.\n- **The private archive:** Search for activity records, overlooked traces, and people whose accounts can be checked.\n- **The riverside storehouse:** Search for activity records, overlooked traces, and people whose accounts can be checked.\n\n## Evidence\n- **Lead 1:** A fresh scrape on the archive latch supports recent access, but does not identify who opened it; compare the tool marks and access log.\n- **Lead 2:** A witness recalls the shutters banging early, supporting a shifted timeline, but not proving who caused it; check the latch mechanism and other witnesses.\n- **Lead 3:** A delivery seal was replaced with the wrong wax, supporting interference with the evidence chain, but not proving the contents changed; find the matching seal at the storehouse.\n- **Lead 4:** A receipt was copied in a different ink, supporting a later alteration, but not proving who made it; compare the ink with the archive supplies.\n- **Lead 5:** The courier route was changed that evening, supporting an opportunity window, but not proving a meeting occurred; ask who authorised the change.\n- **Lead 6:** A damp footprint ends at a dry threshold, supporting a staged trail, but not proving who staged it; compare the tread with the storehouse floor.\n\n## Pressure and Outcomes\nEach delay changes who controls the evidence and who is willing to speak. The case can end with a supported accusation, a partial account, a mistaken conclusion the party can test, or a legitimately unsolved mystery with lasting consequences.",
-    lore: "## GM-Only Fixed Truth\nBranon is responsible. Their motive is to conceal an earlier act that would expose their role in the disappearance. They used routine access and a manipulated timeline; the physical traces above are genuine and independently testable.\n\n## Timeline\n1. The evidence was moved before the public account was given.\n2. The culprit created a plausible access window.\n3. The party discovers conflicting but testable accounts.\n\n## If the Investigation Stalls: Next NPC Moves\n| Actor | Trigger | Next Move | Observable Consequence | Testable Lead |\n|---|---|---|---|---|\n| Branon | Investigation stalls or goes unopposed before the deadline | Quietly moves or conceals a corroborating record | A clerk notices a recently disturbed shelf and fresh ink near the archive | Compare the ink and shelf dust against the storehouse delivery log |\n| Vaelthas | Questioned under pressure or offered protection | Shares a guarded detail about the altered schedule | Witnesses see them speaking with the watch or handing over a receipt | Cross-check the receipt time against the courier route change |\n| Thormar | Investigation stalls without direct contact | Keeps to their routine and watches quietly without escalating | No overt change; their daily rounds continue on schedule | None |\n\n## Running the Case\nKeep the truth fixed. Do not make a clue false to force suspense. If the party loses a critical lead, use the unsolved outcome and its consequences rather than adding an unearned rescue.",
+      "## Opening Hook\nAt first light the river guild's apprentice, Lissa, has vanished from the locked toll archive. The guild wants her found before the noon inspection.\n\n## Central Question\nWhere is Lissa, and who falsified the record of her departure?\n\n## People to Question\n- **Branon, records clerk:** Claims he was checking the flood register. A watchman saw him enter but did not see him leave.\n- **Vaelthas, healer:** Bought sleeping draughts the previous evening; says they were for a sick sailor.\n- **Thormar, courier:** Changed the delivery route at Branon's request and fears losing his licence.\n- **Morgmar, watch officer:** Logged Lissa's departure but admits he copied a note left at the gate instead of seeing her.\n\n## Places to Investigate\n- **Toll archive:** A scraped latch, fresh ink and the flood register.\n- **River gate:** The watch log and a fish seller who saw a guild handcart at dawn.\n- **Riverside storehouse:** A delivery ledger, spare wax seals and a locked loft above the waterline.\n\n## Evidence\n- **Scraped latch:** A file was used from inside the archive. Compare the marks with tools in the clerk's desk; this does not identify who held the file.\n- **False departure:** The copied gate note uses the same uncommon ink as a fresh register entry. This supports a forged departure, not the identity of the forger.\n- **Handcart:** The fish seller saw Branon hauling a covered cart towards the storehouse just before dawn. This establishes his route but not its contents.\n- **Delivery ledger:** A cart was signed into the storehouse in Branon's hand. Compare it with his signed archive entries.\n- **Loft:** A voice answers a knock from above the waterline. Lissa can describe the forced journey if the party reaches her.\n- **Draughts:** The sailor's empty bottles and a witness corroborate the healer's explanation.\n\n## Pressure and Outcomes\nAt noon the inspector orders the storehouse emptied. Recover Lissa and substantiate the forged record to make an accusation stick. If the party only finds Lissa, the guild still disputes who is responsible; if they miss the deadline, track where the goods and witnesses were sent.",
+    lore: "## GM-Only Fixed Truth\nBranon has been diverting river tolls. Lissa discovered the altered register, so Branon used his archive key to lock her in the storehouse loft until the inspection passed. He forged her departure and filed the latch to suggest a break-in. The healer's purchase is unrelated.\n\n## Timeline\n1. At dusk Lissa asks Branon about the missing tolls.\n2. Before dawn Branon moves her in the cart and leaves a forged gate note.\n3. At noon the inspector starts clearing the storehouse.\n\n## If the Investigation Stalls: Next NPC Moves\n| Actor | Trigger | Next Move | Observable Consequence | Testable Lead |\n|---|---|---|---|---|\n| Branon | The archive search is announced | Tries to replace the original flood register | A runner carries a damp register to the storehouse | Compare the old and new balances |\n| Thormar | Offered protection | Admits who changed his route | Produces the signed delivery instruction | Compare the signature with the storehouse record |\n| Morgmar | The forged note is challenged | Asks the fish seller to identify the cart | The seller revisits the gate | Check the cart's route against the ledger |\n\n## Running the Case\nThe cart witness and storehouse record independently establish Branon's route. The forged note and altered register establish a cover-up. Lissa's account confirms the abduction. Allow the party to stop at any defensible conclusion and leave unresolved questions for later.",
     labels: ["mystery", "investigation", "mystery-generator"],
     status: "draft",
   },
