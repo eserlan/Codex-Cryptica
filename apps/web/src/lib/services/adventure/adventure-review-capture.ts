@@ -5,7 +5,6 @@ import type {
 import {
   dialogueLoopPacing,
   findDuplicateActiveCharacterPresence,
-  formatWorldElapsedMinutes,
   investigativeProgressPacing,
   isQuietTurn,
   measureStateBudget,
@@ -17,150 +16,10 @@ import {
   worldEntryDiscoveryMetrics,
 } from "@codex/adventure-engine";
 
-/**
- * On-demand, local-only GM review snapshot. Both formats include hidden state
- * deliberately; neither format is suitable for player-facing sharing.
- */
-export function adventureReviewJson(session: AdventureSession): string {
-  const { packageProgress: _packageProgress, ...exportedSession } = session;
-  return JSON.stringify(exportedSession, null, 2);
-}
-
-function quote(text: string): string {
-  return text
-    .split(/\r?\n/)
-    .map((line) => "> " + line)
-    .join("\n");
-}
-
-function addJsonSection(lines: string[], heading: string, data: unknown): void {
-  lines.push(
-    "## " + heading,
-    "",
-    "\x60\x60\x60json",
-    JSON.stringify(data, null, 2),
-    "\x60\x60\x60",
-    "",
-  );
-}
-
-/**
- * Readable counterpart to the full JSON. Includes every committed player turn
- * and the private scenario/clock/patch ledger needed to diagnose slow starts,
- * missing revelations, continuity and hidden-world progression.
- */
-export function adventureReviewMarkdown(session: AdventureSession): string {
-  const scenarios = session.scenarioCollection?.items ?? [];
-  const lines = [
-    "# Adventure play review: " + session.title,
-    "",
-    "> GM-only review copy. Contains hidden truths, unheard rumours and private",
-    "> world state. Do not share with players.",
-    "",
-    "## Session",
-    "",
-    "- Session ID: " + session.id,
-    "- Status: " + session.status,
-    "- Revision: " + session.revision,
-    "- Turns committed: " + session.turns.length,
-    "- Scenarios: " + scenarios.length,
-    "- Unheard scenarios: " +
-      scenarios.filter((item) => item.knowledge === "unheard").length,
-    "- Heard scenarios: " +
-      scenarios.filter((item) => item.knowledge === "heard").length,
-    "- Dismissed discoveries: " +
-      (session.dismissedProvisionalFactIds?.length ?? 0),
-    "- Elapsed fictional time: " +
-      formatWorldElapsedMinutes(session.worldTime?.elapsedMinutes ?? 0),
-    "- Last played: " + session.lastPlayedAt,
-    "",
-    "### Premise",
-    "",
-    quote(session.premise),
-    "",
-    "## Player transcript",
-    "",
-  ];
-
-  if (session.turns.length === 0) {
-    lines.push("No committed turns yet.", "");
-  }
-  for (const turn of session.turns) {
-    lines.push(
-      "### Turn " + (turn.sequence + 1) + " (" + turn.id + ")",
-      "",
-      "**Player action**",
-      "",
-      quote(turn.playerAction),
-      "",
-      "**Oracle narration**",
-      "",
-      quote(turn.narration),
-      "",
-    );
-    if (turn.timeAdvance) {
-      lines.push(
-        "- Fictional time advanced: " +
-          formatWorldElapsedMinutes(turn.timeAdvance.minutes) +
-          " (" +
-          turn.timeAdvance.cause +
-          ")",
-      );
-    }
-    if (turn.suggestedActions?.length) {
-      lines.push("- Suggested actions: " + turn.suggestedActions.join(" | "));
-    }
-    lines.push("- Committed at: " + turn.committedAt, "");
-  }
-
-  addJsonSection(lines, "World entry and player character", {
-    worldEntry: session.worldEntry,
-    playerCharacter: session.playerCharacter,
-  });
-  addJsonSection(lines, "Current player-visible state", session.visibleState);
-  addJsonSection(
-    lines,
-    "Scenario state (GM-only, including unheard seeds and truths)",
-    session.scenarioCollection ?? null,
-  );
-  addJsonSection(lines, "Hidden state (GM-only)", session.hiddenState);
-  addJsonSection(
-    lines,
-    "World time and private event ledger (GM-only)",
-    session.worldTime ?? null,
-  );
-  addJsonSection(
-    lines,
-    "Provisional entities and facts",
-    session.provisionalFacts,
-  );
-  addJsonSection(
-    lines,
-    "Dismissed discovery IDs",
-    session.dismissedProvisionalFactIds ?? [],
-  );
-  addJsonSection(lines, "Source record references", session.sourceRecords);
-  addJsonSection(
-    lines,
-    "Committed state-change ledger (GM-only)",
-    session.turns.map((turn) => ({
-      turnId: turn.id,
-      sequence: turn.sequence,
-      visiblePatch: turn.visiblePatch,
-      hiddenPatch: turn.hiddenPatch,
-      revealedSecretIds: turn.revealedSecretIds,
-      sourceRecordIds: turn.sourceRecordIds,
-      provisionalFactIds: turn.provisionalFactIds,
-      rollOutcome: turn.rollOutcome,
-      resolvedRoll: turn.resolvedRoll,
-      timeAdvance: turn.timeAdvance,
-    })),
-  );
-  addJsonSection(lines, "Pending roll", session.pendingRoll);
-  return lines.join("\n").trimEnd() + "\n";
-}
-
-export const DEFAULT_DIAGNOSTIC_RECENT_TURNS = 20;
+export {
+  adventureReviewJson,
+  adventureReviewMarkdown,
+} from "./adventure-review-formats";
 
 /** #5110 TurnProgressKind values that count as observable advancement. */
 const MEANINGFUL_PROGRESS_CATEGORIES = new Set([
@@ -694,10 +553,7 @@ function resolveDiagnosticCutoff(
   session: AdventureSession,
   options: AdventureDiagnosticOptions,
 ): number {
-  const recent = Math.max(
-    0,
-    options.recentTurns ?? DEFAULT_DIAGNOSTIC_RECENT_TURNS,
-  );
+  const recent = Math.max(0, options.recentTurns ?? 20);
   return Math.max(0, session.turns.length - recent);
 }
 
@@ -867,18 +723,6 @@ function diffDiagnosticState(
   return changes;
 }
 
-/** Capture a baseline snapshot of the session for future delta copies. */
-export function createDiagnosticBaseline(
-  session: AdventureSession,
-): DiagnosticBaseline {
-  return {
-    sessionId: session.id,
-    revision: session.revision,
-    turnCount: session.turns.length,
-    state: structuredClone(diagnosticState(session)),
-  };
-}
-
 /**
  * Delta counterpart to `adventureDiagnosticJson`. Emits only turns added and
  * state fields changed since `baseline`, keeping repeated AI-chat pastes small.
@@ -990,7 +834,12 @@ export function saveDiagnosticBaseline(
   try {
     storage.setItem(
       baselineKey(session.id),
-      JSON.stringify(createDiagnosticBaseline(session)),
+      JSON.stringify({
+        sessionId: session.id,
+        revision: session.revision,
+        turnCount: session.turns.length,
+        state: structuredClone(diagnosticState(session)),
+      }),
     );
   } catch {
     // Ignore storage quota / privacy-mode errors; clipboard copy still succeeds.
