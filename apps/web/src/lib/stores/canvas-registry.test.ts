@@ -197,6 +197,47 @@ describe("CanvasRegistryStore", () => {
     );
   });
 
+  it("coalesces initial registry readers before importing a generated canvas", async () => {
+    let finishRead!: (canvases: Record<string, never>) => void;
+    vi.mocked(vaultIO.loadCanvasesFromDisk).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishRead = resolve;
+        }),
+    );
+    const first = canvasRegistry.loadFromVault("test-vault");
+    const second = canvasRegistry.loadFromVault("test-vault");
+    expect(first).toBe(second);
+    const imported = canvasRegistry.importCanvas({
+      id: "generated",
+      title: "Generated delve",
+      nodes: [],
+      edges: [],
+    });
+    await vi.waitFor(() => expect(finishRead).toBeDefined());
+    expect(canvasRegistry.allCanvases).toHaveLength(0);
+    finishRead({});
+    await Promise.all([first, second, imported]);
+    expect(vaultIO.loadCanvasesFromDisk).toHaveBeenCalledTimes(1);
+    expect(canvasRegistry.canvases.generated?.name).toBe("Generated delve");
+  });
+
+  it("ignores a stale disk read after the registry is cleared", async () => {
+    let finishRead!: (canvases: Record<string, never>) => void;
+    vi.mocked(vaultIO.loadCanvasesFromDisk).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishRead = resolve;
+        }),
+    );
+    const pending = canvasRegistry.loadFromVault("test-vault");
+    await vi.waitFor(() => expect(finishRead).toBeDefined());
+    canvasRegistry.clear();
+    finishRead({});
+    await pending;
+    expect(canvasRegistry.isLoaded).toBe(false);
+  });
+
   describe("addEntities", () => {
     beforeEach(async () => {
       await canvasRegistry.create("Test Canvas");
