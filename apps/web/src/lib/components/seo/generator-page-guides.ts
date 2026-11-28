@@ -374,28 +374,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "language-generator": {
     summary:
-      "A tabletop conlang only needs enough phonology, naming patterns, and 8–12 everyday words to make place names, inscriptions, and NPC titles sound cohesive at the table.",
+      "Build just enough of a fictional language to let players recognise repeated words, read a sign and distinguish one register of speech from another. Treat the glossary as a growing record of meanings your table can rely on, not a complete language you have to learn before play.",
     tips: [
       {
-        title: "Match sound to culture",
+        title: "Decide who speaks it and when",
         detail:
-          "Pair clipped consonants with military or bureaucratic tongues and vowel-rich structures with coastal, liturgical, or courtly speech.",
+          "Try Genre Classic Fantasy, Tone & Sounds Lyrical & Vowel-rich and Linguistic Role Common Speech. In World context (optional), name the trading towns and speakers that use it. Choose the sound pattern for ease of recognition, not as a shorthand for a people's personality or morality.",
       },
       {
-        title: "Reuse roots across the map",
+        title: "Build an inscription players can decipher",
         detail:
-          "Take two or three generated root words for river, gate, or stone and combine them into local landmarks so players can decode names by ear.",
+          "Select Compound Words in Name Structure and check Common Vocabulary & Word Bank against Word Formation & Naming Conventions. In Iofielefana, aevi means city and liofi means water, so Aeviliofi can name a river city if the head word comes first. Repeat the same roots on a ferry sign and on a map; give the party a translation to discover through context.",
       },
       {
-        title: "Keep idioms playable",
+        title: "Keep meanings consistent across sessions",
         detail:
-          "Drop one untranslated greeting or oath into NPC dialogue rather than full sentences—players remember a single recurring phrase.",
+          "Pick a greeting from Sample Phrases and speak it the same way each time. Save one Note with the sound rules, glossary and phrases in main text, and the example names and At the Table cues in GM notes. Link it to the cultures and locations that use it, then add new terms only when you establish what they mean.",
       },
     ],
+    linksTitle: "Build a vocabulary your table can remember",
     links: [
       {
+        href: "/answers/how-do-you-create-a-fictional-language-for-an-rpg",
+        label: "Make a small, consistent fictional language",
+        description:
+          "Choose reusable roots, a few grammar patterns and a practical vocabulary for scenes.",
+      },
+      {
         href: "/answers/how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
-        label: "Building distinct cultures",
+        label: "Give speakers varied cultures and identities",
+        description:
+          "Separate shared institutions and customs from the personality of an individual speaker.",
       },
     ],
   },
@@ -1460,22 +1469,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   names: {
     summary:
-      "Each run rolls ten names in one culture's style, for a person, place, faction or item, and adds a short usage note for the GM. Use it when you need a batch of names during prep or at the table and want to keep the few that fit.",
+      "Start in Quick names when you need a name immediately: tap a name to copy it, pin favourites, or use Copy all for a plain list. With favourites pinned, Copy pinned copies just those names. Choose Generate names with notes for more context. Keep the names you can say aloud and give the people or places their own histories later.",
     tips: [
       {
-        title: "Pick the Name Type first",
+        title: "Pick names for the situation rather than the whole world",
         detail:
-          "Name Type sets the shape. In the Classic Fantasy cultures, Person gives a first name and a surname, such as Kaelra Thornfist. Place gives settlement-style names like Kaelhaven, Faction gives groups like The Thorned Wardens, and Item gives named objects like Elmar's Blade.",
+          "Name Type sets the shape: Person for someone the party can address, Place for a landmark, Faction for a group or Item for a named possession. Choose three names from a Person batch, say them aloud and avoid similar opening syllables for people appearing in the same scene. Pin an unused pair before selecting New names so you can return to them.",
       },
       {
-        title: "Choose a vibe before Culture / Style",
+        title: "Give a region recognisable patterns",
         detail:
-          "On the offline roll, Choose a vibe only changes the Culture / Style list. Cultures under Cyberpunk / Corporate, Vampire / Gothic Noir, Sci-Fi / Space Opera, Modern Conspiracy and Post-Apocalyptic have no offline tables, so their batches use fantasy syllables and the Usage Suggestions say so.",
+          "Choose a vibe before Culture / Style, then repeat a few name stems across related places or family names. Do not assign moral character by sound. On the offline roll, Cyberpunk / Corporate, Vampire / Gothic Noir, Sci-Fi / Space Opera, Modern Conspiracy and Post-Apocalyptic cultures without local tables use generic fantasy syllables; review the Usage Suggestions and any Offline Tables notice.",
       },
       {
-        title: "Use campaign context with AI on",
+        title: "Copy the shortlist into the right campaign records",
         detail:
-          "Text in Add campaign context steers the AI batch, for example a reclusive mage or harsh and guttural. Local results ignore it and add a note whenever context is present, including after an AI failure. AI generation is needed to use this context; retry if AI is already enabled.",
+          "Use Ask AI for a quick tailored list, or Add campaign context with AI enabled in Generate names with notes. Offline results ignore that context, including after an AI failure; retry if AI is already enabled. Paste a chosen name into the Character, Location, Faction or Item you intend to use; no batch import creates records for you.",
+      },
+    ],
+    linksTitle: "Turn a name into something players can remember",
+    links: [
+      {
+        href: "/answers/how-do-you-improvise-npcs-on-the-spot",
+        label: "Give an improvised NPC a name and a motive",
+        description:
+          "Prepare a small pool of names and establish what each person wants when they first appear.",
+      },
+      {
+        href: "/answers/how-do-you-create-a-fictional-language-for-an-rpg",
+        label: "Use a shared pattern for the names of a region",
+        description:
+          "Build a handful of consistent roots and reuse them in people, places and titles.",
       },
     ],
   },
