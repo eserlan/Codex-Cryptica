@@ -2171,7 +2171,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Business Generator",
     eyebrow: "Business Generator",
     introText:
-      "Create one specific business the party can visit, work for, compete with, investigate or own. Get its people, what it depends on, who it competes with, the pressure it is under and the hooks that bring the party in. Save it to your vault, with its people and its rivals linked on the graph.",
+      "Create a business the party can depend on, compete with or own. Draft the people who keep it running, the suppliers it cannot do without, its competitors and a pressure that could interrupt trade. Bring the enterprise and its staff into your Codex, then connect the outside parties that matter to your campaign.",
     canonicalPath: "/generators/business",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-business.png",
@@ -2204,6 +2204,11 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
           "Yes. Turn on Players own this business and the leader becomes a manager the party employs. You also get starting strengths, liabilities, upgrade paths, recurring obligations and what success attracts. Obligations are named, never priced.",
       },
       {
+        question: "What gets created in my Codex?",
+        answer:
+          "For a generated business, Add to my Codex imports one Faction plus linked Characters for its leader and staff into this browser's local vault. Other suppliers, competitors and outside parties remain named references in the business text. The labelled Secret is stored in GM notes. Shared links contain the complete draft. A text-only remix saves that combined text in GM notes of a Note rather than recreating the business and its connections.",
+      },
+      {
         question: "Does it work without AI?",
         answer:
           "Yes. Every business can be generated from the built-in tables with AI off. With AI on, the business is written in three stages, and any stage that fails falls back to the tables.",
@@ -2217,14 +2222,6 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         href: "/generators/social-hub",
         label: "Social Hub Generator",
-      },
-      {
-        href: "/answers/how-do-i-run-a-campaign-where-the-players-own-a-business",
-        label: "Running a campaign where the players own a business",
-      },
-      {
-        href: "/answers/how-do-i-turn-economic-pressures-into-rpg-adventure-hooks",
-        label: "Turning economic pressure into adventure hooks",
       },
     ],
   },
