@@ -1165,22 +1165,22 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "mystery-investigation": {
     summary:
-      "Start from a fixed answer, then give players several ways to establish it. Use the draft as a case file, not a sequence of scenes they have to visit in order.",
+      "Start from a fixed answer, then give players several ways to establish it. Use the draft as a case file, not a sequence of scenes they have to visit in order. Scope, Clue density and Danger / pressure guide AI-generated cases; the offline fallback does not apply those settings.",
     tips: [
       {
         title: "Choose the question and the size of the cast",
         detail:
-          "Set Mystery type to Theft, Disappearance or the event the players can actually investigate. Pair Scope set to One-shot case with Complexity / suspect count set to Lean (3 suspects) if you have one evening. Give every innocent suspect something to hide that the players can disprove.",
+          "For AI-generated cases, set Mystery type to Theft, Disappearance or the event the players can actually investigate. Pair Scope set to One-shot case with Complexity / suspect count set to Lean (3 suspects) if you have one evening. Give every innocent suspect something to hide that the players can disprove.",
       },
       {
         title: "Make the essential inference independently testable",
         detail:
-          "Use Clue density set to Generous for a group new to investigation. For each conclusion the players need, check that at least two leads come from different sources: for example, an altered ledger and a witness who saw a delivery. Give a plausible way to test each rather than requiring one successful roll.",
+          "For AI-generated cases, use Clue density set to Generous for a group new to investigation. For each conclusion the players need, check that at least two leads come from different sources: for example, an altered ledger and a witness who saw a delivery. Give a plausible way to test each rather than requiring one successful roll.",
       },
       {
         title: "Advance the situation, not the solution",
         detail:
-          "Danger / pressure sets how urgently the case demands action. With Low, let the party follow a wrong lead without losing the case. With High, decide what changes at the next deadline and use the Next NPC Moves table in GM notes when the party stalls. Never change who did it to make a theory right.",
+          "For AI-generated cases, Danger / pressure sets how urgently the case demands action. With Low, let the party follow a wrong lead without losing the case. With High, decide what changes at the next deadline and use the Next NPC Moves table in GM notes when the party stalls. Never change who did it to make a theory right.",
       },
       {
         title: "Give the discovery a consequence",
