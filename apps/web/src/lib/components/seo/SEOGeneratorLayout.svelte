@@ -1,6 +1,7 @@
 <!-- This layout keeps route-level slots and their recovery contracts together; SEOGeneratorLayout tests cover them. -->
 <!-- fallow-ignore-file complexity -->
 <script lang="ts">
+  import { getCalendarPreviewLayout } from "./generator-calendar-twist-handoff";
   import { onMount, untrack } from "svelte";
   import type { Snippet } from "svelte";
   import { browser } from "$app/env";
@@ -9,7 +10,6 @@
   import type { OneShotProgressStep } from "generator-engine/one-shot-staged";
   import type { MarkdownSectionForCopy } from "#lib/components/seo/markdown-sections.js";
   import { splitMarkdownForCopy } from "#lib/components/seo/markdown-sections.js";
-  import { getGeneratorDocumentLayout } from "#lib/components/seo/generator-document-layout.js";
   import {
     GENERATOR_CANVAS_CLASS,
     getGeneratorColumnClasses,
@@ -331,7 +331,7 @@
   }
 
   const documentLayout = $derived(
-    getGeneratorDocumentLayout(session.generatedData),
+    getCalendarPreviewLayout(session.generatedData),
   );
   const documentSections = $derived(
     variant === "names" ? [] : splitMarkdownForCopy(documentLayout.content),

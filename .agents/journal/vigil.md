@@ -12,3 +12,8 @@
 
 **Learning:** `codex_skip_landing` and an idle vault can leave the front page covering the graph, which suspends Cytoscape rendering.
 **Action:** Graph E2Es should wait for `waitForVaultReady`, call `dismissFrontPage`, then wait for the graph canvas before seeding entities.
+
+## 2026-11-28 - Count expanded mobile hit areas
+
+**Learning:** A mobile E2E scan based only on button bounds misses larger `::after` hit areas used to preserve compact layouts.
+**Action:** Include computed pseudo-element extents when checking touch targets; use `touch-target` on controls without an expanded hit area.

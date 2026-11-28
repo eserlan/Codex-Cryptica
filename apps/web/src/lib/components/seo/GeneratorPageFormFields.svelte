@@ -245,6 +245,7 @@
     "vampire-clan",
     "nomad-clan",
     "dark-fantasy-faction",
+    "urban-fantasy-faction",
   ]);
   const identitySlugs = new Set([
     "names",

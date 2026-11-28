@@ -367,6 +367,12 @@ export const howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes:
     },
     relatedTools: [
       {
+        title: "Fictional Language Generator",
+        description:
+          "Establish shared words, naming patterns and speech registers without assigning traits to all speakers.",
+        href: "/generators/language-generator",
+      },
+      {
         title: "Settlement generator",
         description:
           "Create towns and cities where cultural customs become visible in streets, markets, and public buildings.",
@@ -389,6 +395,12 @@ export const howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes:
         description:
           "Generate inhabitants who embody a culture's ideals, strains, and disagreements rather than a single type.",
         href: "/generators/npc",
+      },
+      {
+        title: "Urban Fantasy Faction Generator",
+        description:
+          "Show how competing groups share civic institutions while pursuing different goals.",
+        href: "/generators/urban-fantasy-faction",
       },
     ],
     relatedForPages: [

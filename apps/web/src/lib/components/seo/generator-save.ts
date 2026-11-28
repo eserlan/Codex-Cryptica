@@ -1,3 +1,4 @@
+import { getCalendarTwistHandoffLayout } from "./generator-calendar-twist-handoff";
 import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 import { isPublishedBfrdDoomGuidance } from "generator-engine/tov-mechanics-parser";
 import {
@@ -11,6 +12,8 @@ import type {
 import {
   deduplicateMarkdownSections,
   getGeneratorHandoffLayout,
+  getInhabitedPlaceHandoffLayout,
+  usesPrivateSummaryHandoff,
   usesSourceHandoff,
 } from "./generator-document-layout";
 
@@ -41,6 +44,13 @@ export interface HubSaveDraft {
   labels: string[];
   status: SessionEntity["status"];
   references?: string[];
+}
+
+export class InvalidGeneratorOutputError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidGeneratorOutputError";
+  }
 }
 
 function formatTovMagicItemMarkdown(item: TovMagicItemMechanics): string {
@@ -146,7 +156,17 @@ function resolveSaveBodyAndLore(
   layout: GeneratorSaveLayout,
   generatorType?: string,
 ): { content: string; lore: string } {
-  const summaryPrefix = data.summary ? `*${data.summary}*` : "";
+  const summaryPrefix =
+    data.summary && !usesPrivateSummaryHandoff(generatorType)
+      ? `*${data.summary}*`
+      : "";
+  if (generatorType === "tavern" || generatorType === "kingdom") {
+    return {
+      content: layout.content,
+      lore: [summaryPrefix, layout.lore].filter(Boolean).join("\n\n"),
+    };
+  }
+
   if (usesPrivateBodyAndLore(generatorType)) {
     return {
       content: [summaryPrefix, layout.content].filter(Boolean).join("\n\n"),
@@ -177,15 +197,72 @@ function resolveSaveBodyAndLore(
   return { content, lore };
 }
 
+/** Single Deity mode has the same GM-reference boundary on both routes. */
+function singleDeitySaveLayout(
+  data: GeneratorOutput,
+  layout: GeneratorSaveLayout,
+  generatorType?: string,
+): GeneratorSaveLayout {
+  if (
+    data.type !== "character" ||
+    (generatorType !== "god-generator" &&
+      generatorType !== "pantheon-generator")
+  ) {
+    return layout;
+  }
+
+  const requiredSections = [
+    "Deity Description",
+    "Divine Portfolio",
+    "Worship & Cults",
+  ];
+  const missingSections = requiredSections.filter(
+    (section) => !new RegExp(`^### ${section}\\s*$`, "m").test(data.content),
+  );
+  if (missingSections.length > 0) {
+    throw new InvalidGeneratorOutputError(
+      `This deity draft is missing required public sections (${missingSections.join(", ")}). Generate it again or copy the draft manually.`,
+    );
+  }
+
+  return { content: data.content, lore: data.lore ?? "" };
+}
+
 /** The preview's reading layout is not always the vault's secrecy boundary. */
 function vaultSaveLayout(
   data: GeneratorOutput,
   layout: GeneratorSaveLayout,
   generatorType?: string,
 ): GeneratorSaveLayout {
+  if (generatorType === "dark-fantasy-faction") {
+    const requiredSections = ["What they control", "What they want"];
+    const missingSections = requiredSections.filter(
+      (section) =>
+        !new RegExp(`^#{2,3}\\s+${section}\\s*$`, "im").test(data.content),
+    );
+    if (missingSections.length > 0) {
+      throw new InvalidGeneratorOutputError(
+        `This faction draft is missing required public sections (${missingSections.join(", ")}). Generate it again or copy the draft manually.`,
+      );
+    }
+  }
+
+  // These item generators intentionally put the full effect and campaign
+  // reference in source lore. The preview may promote it for reading, but an
+  // explicit save must not expose hidden costs, rumours or destruction terms.
+  if (
+    generatorType === "minor-magic-item" ||
+    generatorType === "artifact-generator"
+  ) {
+    return { content: data.content, lore: data.lore ?? "" };
+  }
   return generatorType === "quest"
     ? { content: data.content, lore: data.lore ?? "" }
-    : getGeneratorHandoffLayout(data, layout, generatorType);
+    : getGeneratorHandoffLayout(
+        data,
+        singleDeitySaveLayout(data, layout, generatorType),
+        generatorType,
+      );
 }
 
 export function buildGeneratorSavePayload(
@@ -197,9 +274,13 @@ export function buildGeneratorSavePayload(
   const isAdventure =
     !usesPrivateBodyAndLore(generatorType) &&
     (data.kind === "adventure" || data.labels.includes("adventure"));
-  const { content, lore: initialLore } = resolveSaveBodyAndLore(
+  const { content, lore: initialLore } = resolveCalendarTwistSaveBodyAndLore(
     data,
-    vaultSaveLayout(data, layout, generatorType),
+    vaultSaveLayout(
+      data,
+      getInhabitedPlaceHandoffLayout(data, layout, generatorType),
+      generatorType,
+    ),
     generatorType,
   );
   let lore = initialLore;
@@ -216,7 +297,9 @@ export function buildGeneratorSavePayload(
     content,
     lore,
     labels: data.labels,
-    status: data.status,
+    // An explicit public Mystery save is the acceptance action; preserving its
+    // preview draft status hides the case from the normal vault table.
+    status: generatorType === "mystery-investigation" ? "active" : data.status,
     systemId: data.systemId ?? data.mechanics?.systemId,
     ...(mapImageDataUrl ? { mapImageDataUrl } : {}),
     ...(metadata ? { metadata } : {}),
@@ -246,4 +329,23 @@ export function buildHubSaveDrafts(
       ...(record && record.usedEntityIds.length > 0 ? { references } : {}),
     };
   });
+}
+
+function resolveCalendarTwistSaveBodyAndLore(
+  data: GeneratorOutput,
+  layout: GeneratorSaveLayout,
+  generatorType?: string,
+): GeneratorSaveLayout {
+  if (generatorType === "plot-twist-generator")
+    return getCalendarTwistHandoffLayout(data, layout, generatorType);
+  if (generatorType === "holiday") {
+    const calendar = getCalendarTwistHandoffLayout(data, layout, generatorType);
+    return {
+      content: [data.summary ? `*${data.summary}*` : "", calendar.content]
+        .filter(Boolean)
+        .join("\n\n"),
+      lore: calendar.lore,
+    };
+  }
+  return resolveSaveBodyAndLore(data, layout, generatorType);
 }

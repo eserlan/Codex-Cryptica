@@ -116,6 +116,12 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
   },
   relatedTools: [
     {
+      title: "Vampire Clan Generator",
+      description:
+        "Draft a vampire clan with a mortal facade, feeding network, hidden agenda and concrete weakness.",
+      href: "/generators/vampire-clan",
+    },
+    {
       title: "Faction generator",
       description:
         "Free, no login. Produces a goal, an obstacle and a method you can edit into shape.",

@@ -1,7 +1,108 @@
 import { describe, expect, it } from "vitest";
-import { getGeneratorDocumentLayout } from "./generator-document-layout";
+import {
+  getGeneratorDocumentLayout,
+  routeTableCardSecretHandoff,
+} from "./generator-document-layout";
 
 describe("getGeneratorDocumentLayout", () => {
+  it("routes indented Table Card secret bullets out of content", () => {
+    const secret = "The captain sank the relief ship.";
+    const routed = routeTableCardSecretHandoff(
+      `### Observance\n  - **Knowledge & Secrets**: ${secret}`,
+      "### GM Reference",
+      true,
+    );
+
+    expect(routed.content).not.toContain(secret);
+    expect(routed.lore).toContain(secret);
+  });
+
+  it("keeps peer public bullets outside a Table Card secret block", () => {
+    const secret = "The hidden history.";
+    const publicDetail = "Traditions: ring the bells";
+    const routed = routeTableCardSecretHandoff(
+      `### Observance\n- **Knowledge & Secrets**: ${secret}\n  - **Evidence**: a sealed ledger\n- ${publicDetail}`,
+      "",
+      true,
+    );
+
+    expect(routed.content).toContain(publicDetail);
+    expect(routed.content).not.toContain(secret);
+    expect(routed.lore).toContain(secret);
+    expect(routed.lore).toContain("**Evidence**: a sealed ledger");
+  });
+
+  it.each([
+    ["```text", "~~~", "```"],
+    ["~~~md", "```", "~~~~"],
+    ["````md", "```", "````"],
+  ])(
+    "preserves an entire fenced secret (%s)",
+    (openFence, innerFence, closeFence) => {
+      const secret = [
+        "- **Knowledge & Secrets**: The hidden history.",
+        openFence,
+        "- Witness: the prince is alive.",
+        "### Concealed evidence",
+        innerFence,
+        "- Ledger: the heir is missing.",
+        closeFence,
+        "The watch is compromised.",
+      ].join("\n");
+      const routed = routeTableCardSecretHandoff(
+        `### Observance\n${secret}\n- Public tradition: Bells.\n\n### Next observance\nPublic feast.`,
+        "",
+        true,
+      );
+      expect(routed.content).toBe(
+        "### Observance\n- Public tradition: Bells.\n\n### Next observance\nPublic feast.",
+      );
+      expect(routed.lore).toContain(secret);
+    },
+  );
+
+  it("fails closed for an unterminated fence in a labelled secret", () => {
+    const secret =
+      "- **Knowledge & Secrets**: Hidden history.\n```text\n- The secret continues.\n### Not a public section\nStill secret.";
+    const routed = routeTableCardSecretHandoff(
+      `### Observance\n${secret}`,
+      "",
+      true,
+    );
+    expect(routed.content).toBe("### Observance");
+    expect(routed.lore).toContain(secret);
+  });
+
+  it("preserves public fenced examples without interpreting literal secret markers", () => {
+    const publicExample =
+      "### Public example\n```md\n- **Knowledge & Secrets**: Example label.\n### Sample heading\n```\n- Public tradition: Bells.";
+    const routed = routeTableCardSecretHandoff(publicExample, "", true);
+    expect(routed.content).toBe(publicExample);
+    expect(routed.lore).toBe("");
+  });
+
+  it("routes headingless secret content without dropping public details", () => {
+    const routed = routeTableCardSecretHandoff(
+      "- **Knowledge & Secrets**: Hidden history.\n- Public tradition: Bells.",
+      "",
+      true,
+    );
+    expect(routed.content).toBe("- Public tradition: Bells.");
+    expect(routed.lore).toContain("Hidden history.");
+  });
+
+  it("appends a moved secret when lore only mentions its label inline", () => {
+    const secret = "The inscription names the missing heir.";
+    const routed = routeTableCardSecretHandoff(
+      `### Observance\n- **Knowledge & Secrets**: ${secret}`,
+      "### GM Reference\nThe inscription uses - **Knowledge & Secrets** as a label.",
+      true,
+    );
+
+    expect(routed.content).not.toContain(secret);
+    expect(routed.lore).toContain(secret);
+  });
+
   it("keeps Table Card knowledge and secrets out of player-visible content", () => {
     const secret = "The ledger is a forgery; she conceals the stolen signet.";
     const layout = getGeneratorDocumentLayout({

@@ -140,6 +140,28 @@ describe("useGeneratorRefinement", () => {
     );
   });
 
+  it("keeps a refined Plot Twist summary in GM notes rather than the Session Hub body", async () => {
+    const { refinement } = setup({ generatorType: "plot-twist-generator" });
+    refinement.openForCurrentOutput();
+    const secret = "The clerk paid the smugglers.";
+    await refinement.accept({
+      type: "note",
+      title: "The reversal",
+      summary: secret,
+      content: "### The Reveal\nThe clerk is responsible.",
+      lore: "old lore",
+      labels: ["plot-twist-generator"],
+      status: "draft",
+    });
+    expect(hub.addEntity).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: expect.not.stringContaining(secret),
+        summary: undefined,
+        lore: expect.stringContaining(secret),
+      }),
+    );
+  });
+
   it("passes the original BBEG public fields and private plan to refinement, not the reading layout", async () => {
     const { refinement, applyRefinedOutput } = setup({
       generatorType: "bbeg-generator",
