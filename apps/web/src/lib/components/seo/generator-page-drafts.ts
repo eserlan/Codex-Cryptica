@@ -68,11 +68,11 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
     type: "faction",
     title: "The Iron Syndicate",
     summary:
-      "A powerful merchants' guild that controls the city's trade routes.",
+      "A merchant guild whose seals determine which cargo may pass the city gates.",
     content:
-      "### Operations\nThey maintain a private army to secure their investments and lobby local lords.\n\n### Secret agenda\nThey seek to overthrow the local duke to install a puppet senate.",
-    lore: "",
-    labels: ["rpg-faction", "Guild", "Mercantile"],
+      "### What they control\nThe Syndicate licenses river barges and maintains a guarded bonded warehouse.\n\n### What they want\nSecure exclusive rights to the northern grain route before winter.\n\n### Why they are dangerous\nThe treasurer has forged toll receipts to discredit the independent ferrymen.\n\n### How to use them at the table\nOffer the party passage through a closed checkpoint if they deliver a sealed contract to the ferrymen's council.",
+    lore: "### At a Glance\n- **Theme / Genre**: Classic Fantasy\n- **📍 Base**: The Weighhouse on Grey Quay\n- **Resource**: Licences and bonded storage\n- **Symbol**: An iron key stamped into wax\n- **Secret**: The treasurer has forged toll receipts to discredit the independent ferrymen.\n- **Immediate Hook**: The treasurer offers a licence in exchange for a delivery before the council vote.\n\n### Notable NPCs\n- **👤 Treasurer Nessa Voss**: Needs the council vote to pass.\n- **👤 Quaymaster Iven Reed**: Wants safe passage for smaller crews.\n\n### Internal Conflict\nThe quaymaster suspects the receipts are forged but cannot expose the guild without losing his own licence.\n\n### Rival Faction\n- **👥 The Free Ferrymen**: Will offer the party an alternative route if they disclose the contract.",
+    labels: ["rpg-faction", "faction-generator", "imported-draft"],
     status: "draft",
   },
   kingdom: {

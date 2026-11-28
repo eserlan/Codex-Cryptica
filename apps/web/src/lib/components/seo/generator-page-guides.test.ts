@@ -1002,3 +1002,20 @@ describe("RPG Item editorial guide", () => {
     expect(guide.links?.every(({ description }) => description)).toBe(true);
   });
 });
+
+it("teaches faction resource bargaining, territorial limits and an independent move with a design-to-play learning path", () => {
+  const guide = SLUG_GUIDES.faction!;
+  const tips = guide.tips.map((tip) => tip.detail).join(" ");
+  for (const phrase of [
+    "Choose what they are",
+    "Choose their scale",
+    "Add campaign context",
+    "Immediate Hook",
+  ])
+    expect(tips).toContain(phrase);
+  expect(guide.links?.map((link) => link.href)).toEqual([
+    "/answers/how-do-you-create-a-fantasy-faction",
+    "/answers/how-do-i-run-political-intrigue-and-faction-play",
+    "/answers/how-do-you-track-faction-turns-between-rpg-sessions",
+  ]);
+});

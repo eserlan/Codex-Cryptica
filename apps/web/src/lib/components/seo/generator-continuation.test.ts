@@ -519,3 +519,32 @@ describe("generator-continuation", () => {
     ).toBe(false);
   });
 });
+
+it("places the faction continuation next to successful results, never examples", () => {
+  const config = getGeneratorContinuationConfig("faction");
+  expect(config).toMatchObject({
+    placement: "near-result",
+    ctaLabel: "Add to my Codex",
+  });
+  expect(config?.summary).toContain("one new Faction");
+  const input = {
+    generatorType: "faction",
+    userGenerationSucceeded: true,
+    isExampleDraft: false,
+    isBusy: false,
+    variant: "default" as const,
+  };
+  expect(shouldShowGeneratorContinuation(input)).toBe(true);
+  expect(
+    shouldShowGeneratorContinuation({ ...input, isExampleDraft: true }),
+  ).toBe(false);
+  expect(shouldShowGeneratorContinuation({ ...input, isBusy: true })).toBe(
+    false,
+  );
+  expect(
+    shouldShowGeneratorContinuation({
+      ...input,
+      userGenerationSucceeded: false,
+    }),
+  ).toBe(false);
+});

@@ -436,8 +436,39 @@ function isRpgNpcGenerator(generatorType?: string) {
   return generatorType === "npc" || generatorType === "rpg-npc-generator";
 }
 
+export function getSourceHandoffEntityType(generatorType?: string) {
+  if (generatorType === "faction" || generatorType === "faction-generator")
+    return "faction";
+  if (generatorType === "bbeg-generator" || isRpgNpcGenerator(generatorType))
+    return "character";
+  return undefined;
+}
+
 export function usesSourceHandoff(generatorType?: string) {
-  return generatorType === "bbeg-generator" || isRpgNpcGenerator(generatorType);
+  return getSourceHandoffEntityType(generatorType) !== undefined;
+}
+
+function getFactionHandoffLayout(data: GeneratorOutput) {
+  // The faction's danger paragraph can repeat its explicitly labelled secret.
+  // Keep GM-facing sections and source lore together, not the preview layout.
+  const gmHeadings = new Set([
+    "why they are dangerous",
+    "how to use them at the table",
+    "internal conflict",
+    "secrets & hooks",
+  ]);
+  const publicSections: string[] = [];
+  const gmSections: string[] = [];
+  for (const section of splitMarkdownSections(data.content)) {
+    (gmHeadings.has(section.heading.toLowerCase())
+      ? gmSections
+      : publicSections
+    ).push(section.body);
+  }
+  return {
+    content: publicSections.join("\n\n"),
+    lore: [...gmSections, data.lore ?? ""].filter(Boolean).join("\n\n"),
+  };
 }
 
 function getNpcHandoffLayout(data: GeneratorOutput) {
@@ -469,6 +500,8 @@ export function getGeneratorHandoffLayout(
   generatorType?: string,
 ): { content: string; lore: string } {
   if (isRpgNpcGenerator(generatorType)) return getNpcHandoffLayout(data);
+  if (getSourceHandoffEntityType(generatorType) === "faction")
+    return getFactionHandoffLayout(data);
   return generatorType === "bbeg-generator"
     ? { content: data.content, lore: data.lore ?? "" }
     : layout;

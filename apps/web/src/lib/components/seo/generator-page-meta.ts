@@ -239,11 +239,11 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     pageTitle:
       "RPG Faction Generator | Fantasy Guilds, Cyberpunk Megacorps & Vampire Courts | Codex Cryptica",
     metaDescription:
-      "Generate detailed RPG factions. Perfect as a fantasy guild generator, cyberpunk megacorp creator, or gothic vampire court generator. Save drafts to your vault.",
+      "Create RPG factions with competing goals, resources, representatives and a rival. Prepare bargains and off-screen moves for your campaign.",
     introTitle: "RPG Faction Generator",
     eyebrow: "Faction Generator",
     introText:
-      "Forge campaign-ready organizations across any genre. Use it as a fantasy guild generator, cyberpunk megacorp creator, or gothic vampire court generator with distinct agendas, conflicts, and NPCs.",
+      "Build an organisation the party can bargain with, oppose or depend on. Choose its genre, type, reach and morality to draft a power with an agenda, resources, named representatives, a rival and a reason to act now.",
     canonicalPath: "/generators/faction",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-faction.jpg",
@@ -258,28 +258,28 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     ],
     faqs: [
       {
-        question: "What does the faction generator create?",
+        question: "How do I introduce a faction without a lore lecture?",
         answer:
-          "It generates a complete RPG faction across any genre — fantasy guilds, cyberpunk megacorps, gothic vampire courts, and more. Each result includes a name, agenda, internal conflict, rival faction, notable NPCs, and a ready-to-use GM hook.",
+          "Start with one named representative offering something the party needs. Use the resource and Immediate Hook to set the price, then let the rival's response reveal what accepting the offer means.",
       },
       {
         question: "Can I use it without an account?",
         answer:
-          "Yes. Generate and copy faction notes on this page without logging in. When you're ready, save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
+          "Yes. Generate, reroll and copy the complete draft without signing in. Adding the draft to your Codex saves it in a vault in this browser.",
       },
       {
         question: "Can I aim the faction at my current campaign?",
         answer:
-          "Yes. Add optional campaign context, such as a location, villain, ongoing conflict, or political tension. Offline drafts keep it in the GM notes and add a line to What they control, and the AI draft is built around it.",
+          "Use Add campaign context to name a place, a conflict or an existing rival. Offline drafts keep your input in GM notes and add a broad setting reference; AI drafts can incorporate those details into the faction itself.",
       },
       {
-        question: "How does saving a generated faction work?",
+        question: "What happens when I add a faction to my Codex?",
         answer:
-          "Clicking 'Save to Codex' stores the faction draft in your browser's local storage. Open Codex Cryptica and it imports automatically as a Faction entity, ready to link to NPCs, locations, and campaign notes.",
+          "After generating, Add to my Codex opens one new Faction entry. Its secret, internal conflict, immediate hook and GM reference records are kept in GM notes, together with Why they are dangerous and How to use them at the table. NPC and rival names are references, not automatically created entities or links. Review the entry before sharing it; imported remixes keep the combined share text in GM notes.",
       },
     ],
     relatedLinks: [
-      { href: "/tools/dnd-npc-generator", label: "D&D NPC Generator" },
+      { href: "/generators/faction-roster", label: "Develop a faction roster" },
       { href: "/solutions/worldbuilding-tool", label: "Worldbuilding tool" },
     ],
   },

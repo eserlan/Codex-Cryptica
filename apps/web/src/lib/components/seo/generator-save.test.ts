@@ -934,3 +934,43 @@ describe("generator save payloads", () => {
     );
   });
 });
+
+it("keeps the faction's secret, hook and GM-facing prose private despite preview promotion and untrusted labels", async () => {
+  const { generateFactionLocal } = await import("generator-engine");
+  const draft = generateFactionLocal(
+    {
+      theme: "Classic Fantasy",
+      type: "Merchant Guild",
+      scope: "Single city",
+      campaignContext: "An embargo on Grey Quay",
+    },
+    () => 0.35,
+  ) as GeneratorOutput;
+  const secret = draft.lore.match(/- \*\*Secret\*\*: ([^\n]+)/)?.[1];
+  expect(secret).toBeTruthy();
+  expect(draft.content).toContain(secret!);
+  for (const output of [draft, { ...draft, labels: ["npc-generator"] }]) {
+    const payload = buildGeneratorSavePayload(
+      output,
+      getGeneratorDocumentLayout(output),
+      undefined,
+      "faction",
+    );
+    expect(payload.type).toBe("faction");
+    expect(payload.content).toContain("What they control");
+    expect(payload.content).toContain("What they want");
+    expect(payload.content).not.toContain(secret!);
+    expect(payload.content).not.toContain("How to use them at the table");
+    for (const value of [
+      secret!,
+      "Immediate Hook",
+      "Internal Conflict",
+      "Notable NPCs",
+      "Rival Faction",
+      "An embargo on Grey Quay",
+      "Why they are dangerous",
+      "How to use them at the table",
+    ])
+      expect(payload.lore).toContain(value);
+  }
+});
