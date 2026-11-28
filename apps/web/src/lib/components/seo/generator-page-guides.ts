@@ -1159,28 +1159,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   puzzle: {
     summary:
-      "Each draft puts an obstacle between the party and the Puzzle purpose you choose, then gives you clues, spotlight prompts, alternate solutions and what a failed attempt does. The intended solution and the escalating hints sit in the GM notes, so you can read the setup aloud and keep the answer back.",
+      "Put an obstacle between the party and a goal, then use visible clues, distinct approaches and feedback to keep everyone involved. Prepare what the characters can learn and what a failed attempt changes instead of asking them to guess a single answer.",
     tips: [
       {
-        title: "Let Puzzle style pick the obstacle",
+        title: "Make the obstacle answer a question the players can test",
         detail:
-          "Offline drafts choose the obstacle from the Puzzle style: Social gives a suspicious gatekeeper or two guards who disagree, Mechanical a locked mechanism or a panel of gears. A style you type yourself gets a plain obstacle, so describe it in your own words.",
+          "Choose Puzzle purpose and Puzzle style for the action the characters need to take. A Mechanical Sealed door might respond when they balance a counterweight; a Social Cross obstacle might require two disagreeing bridgekeepers to accept a compromise. Give a visible clue before the first check and show what changes after a partial success.",
       },
       {
-        title: "Use Complexity to set the solution length",
+        title: "Give abilities a spotlight, not a lock",
         detail:
-          "In offline drafts, Complexity sets how many linked actions the GM-only solution needs: two for Simple, three for Moderate and four for Elaborate. Pair a long chain with Failure pressure set to None if you want players to experiment without cost.",
+          "In PC capabilities to make matter, name abilities the actual party enjoys using, such as a familiar or a smith's tools. Use Participation style to decide who gets a moment to contribute. For every specialist opening, leave another character a credible way to achieve the same step at a different cost.",
       },
       {
-        title: "Name what your party can actually do",
+        title: "Choose what a wrong attempt changes",
         detail:
-          "Abilities listed in PC capabilities to make matter are treated as openings, never requirements: an offline draft names them in the spotlight section, and the AI draft is told to make them useful. Participation style then says whether one character, two or three, or the whole party leads the solve.",
+          "Pair Complexity with Failure pressure so the scene fits your session. None lets the party experiment safely; Time pressure can threaten the downstream objective while the mechanism remains solvable. Decide which alternate solution becomes attractive as the cost rises, and reveal another hint only once new attempts have stopped.",
       },
     ],
+    linksTitle: "Make the puzzle fair and keep it moving",
     links: [
       {
         href: "/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
-        label: "Designing puzzles that do not stall",
+        label: "Design alternate routes and meaningful feedback",
+        description:
+          "Replace a guessing gate with partial progress, useful information and a costlier way through.",
+      },
+      {
+        href: "/answers/how-do-you-give-hints-for-an-rpg-puzzle-without-giving-away-the-answer",
+        label: "Deliver the next hint without solving it for the party",
+        description:
+          "Step from sensory reminder to changed component to immediate goal when play stalls.",
       },
     ],
   },

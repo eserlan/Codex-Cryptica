@@ -457,6 +457,16 @@ describe("generator-continuation", () => {
     }
   });
 
+  it("offers a near-result Puzzle continuation for its Note and GM solution", () => {
+    const config = getGeneratorContinuationConfig("puzzle");
+    expect(config).toMatchObject({
+      placement: "near-result",
+      ctaLabel: "Add to my Codex",
+    });
+    expect(config?.summary).toContain("one Note");
+    expect(config?.capabilities.join(" ")).toContain("GM-Only Solution");
+  });
+
   it("gates visibility strictly on explicit completed generation for Wave 1 non-names generators", () => {
     expect(
       shouldShowGeneratorContinuation({

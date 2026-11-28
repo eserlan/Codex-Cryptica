@@ -53,6 +53,16 @@ const LAYOUT_RULES: LayoutRule[] = [
   },
   {
     label: "puzzle-generator",
+    unrecognizedLoreToRail: true,
+    documentSections: new Set([
+      "Player-Facing Setup",
+      "Clues",
+      "Character Spotlight Opportunities",
+      "Alternate Solutions",
+      "Failure & Escalation",
+      "Running the Puzzle",
+      "Scaling",
+    ]),
     railSections: new Set([
       "At a Glance",
       "GM-Only Solution",

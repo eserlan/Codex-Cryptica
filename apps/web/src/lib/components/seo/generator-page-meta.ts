@@ -345,7 +345,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "RPG Puzzle Generator",
     eyebrow: "RPG Puzzle Generator",
     introText:
-      "Build thematic encounter puzzles that give every player a way to contribute. Get layered clues, alternate solutions, and consequences that keep your adventure moving.",
+      "Build a playable obstacle with a purpose, clue ladder, alternative approaches and ways for the whole party to contribute. Decide what a failed attempt costs and what success changes in the next scene.",
     canonicalPath: "/generators/puzzle",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-puzzle.png",
@@ -375,9 +375,14 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
           "Failure pressure decides. With None, a failed attempt only gives feedback. Otherwise it adds a complication, a clock, danger or a fight, and the party still has a way forward.",
       },
       {
-        question: "What makes this the best RPG puzzle generator to try?",
+        question: "How can solving the puzzle affect the next encounter?",
         answer:
-          "Look for three things in any puzzle generator: layered clues instead of a single answer, multiple viable solutions rather than one intended path, and a fail-forward consequence instead of a dead stop. This generator is built around all three, plus a GM reference rail that keeps the solution space visible during play.",
+          "Use Optional downstream consequence to name a meaningful change, such as reinforcements being delayed or a guardian losing its shield. Let the method the party chooses determine whether it earns that benefit.",
+      },
+      {
+        question: "What gets saved in my Codex?",
+        answer:
+          "Add to my Codex saves the generated encounter as one Note in your local browser vault. The setup, clues and alternate approaches remain in the main text; the GM-Only Solution and Escalating Hints are in GM notes. A shared link includes the complete draft, including its solution; text-only remixes should be reviewed before sharing as the combined text is not separated automatically.",
       },
     ],
     relatedLinks: [
