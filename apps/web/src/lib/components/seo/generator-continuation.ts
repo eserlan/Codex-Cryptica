@@ -164,6 +164,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       ctaLabel: CTA_LABEL,
       placement: "near-result",
     },
+    "magic-item": {
+      headline: "Keep this treasure's history and powers together",
+      summary:
+        "Save one Item in your local Codex vault. The description and offline history are in main text; AI history may stay in GM notes when its labels do not activate the item layout, so check or move it before sharing. Only sections headed GM Reference Information or Magical Properties stay in GM reference; AI headings can vary, so check the rendered Item before sharing it.",
+      capabilities: [
+        "Record what the bearer has learned about the effect and its limits as it is identified",
+        "Link the Item to existing owners, makers and discovery sites, and update its ownership between sessions",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
     "nomad-clan": {
       headline: "Keep this clan on the road",
       summary:

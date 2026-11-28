@@ -120,7 +120,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Magic Item Generator",
     eyebrow: "Magic Item Generator",
     introText:
-      "Create a magic item with a description, magical properties, and lore. Works without login.",
+      "Create a magical weapon, ring, amulet or other lasting treasure with a distinctive appearance, property and history. Choose Item Type and Rarity, then decide how the effect works in your own rules and what the party can learn about it. Save one Item in your local Codex vault or copy the draft without an account.",
     canonicalPath: "/generators/magic-item",
     labels: ["fantasy"],
     ogImage:
@@ -133,6 +133,38 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "dnd magic items",
       "fantasy weapon creator",
       "rpg artifact tool",
+    ],
+    faqs: [
+      {
+        question: "How is this different from the Minor Magic Item Generator?",
+        answer:
+          "Use this for a magical possession whose effect and history can matter across sessions. Choose the Minor Magic Item Generator for a limited-use charm, potion or temporary trick, and the Artifact Generator for a relic with larger campaign consequences.",
+      },
+      {
+        question: "Does Rarity set game balance or D&D statistics?",
+        answer:
+          "Rarity expresses the intended scarcity of the item. Check Magical Properties against your rules, then decide activation, range, duration and limits before play. Create D&D Magic Item is a separate MonsterLabs action, opened only if you choose it and confirm the handoff.",
+      },
+      {
+        question: "Can I use campaign context and keep secrets private?",
+        answer:
+          "Add campaign context can supply an existing owner or discovery site. Offline drafts display it in Campaign Context in the main document; review this and AI-written prose before sharing. Copy includes the full draft, including the GM reference.",
+      },
+      {
+        question: "What is saved to Codex?",
+        answer:
+          "Add to my Codex opens one Item in your browser-local vault. Its description and offline history are in main text. AI history may stay in GM notes when its labels do not activate the item layout, so check or move it before sharing. Only sections headed GM Reference Information or Magical Properties stay in GM reference; AI headings can vary, so a differently headed power may appear in main text. Check the rendered Item before sharing it. Link it to existing owners, places and factions yourself. No account or MonsterLabs visit is required.",
+      },
+    ],
+    relatedLinks: [
+      {
+        href: "/generators/minor-magic-item",
+        label: "Minor Magic Item Generator",
+      },
+      {
+        href: "/generators/artifact-generator",
+        label: "Artifact & Relic Generator",
+      },
     ],
   },
   "minor-magic-item": {

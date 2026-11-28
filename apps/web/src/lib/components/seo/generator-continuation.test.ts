@@ -61,6 +61,15 @@ describe("generator-continuation", () => {
       localFirstNotice: "No account needed; stored locally in this browser.",
     });
 
+    const magicItem = getGeneratorContinuationConfig("magic-item");
+    expect(magicItem).toMatchObject({
+      placement: "near-result",
+      ctaLabel: "Add to my Codex",
+    });
+    expect(magicItem?.summary).toContain(
+      "Only sections headed GM Reference Information or Magical Properties stay in GM reference; AI headings can vary",
+    );
+
     const newsSheet = getGeneratorContinuationConfig("news-sheet-generator");
     expect(newsSheet).toMatchObject({
       headline: "Keep this issue in your campaign archive",
