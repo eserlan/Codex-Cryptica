@@ -224,16 +224,16 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       ctaLabel: CTA_LABEL,
     },
     "plot-twist-generator": {
-      headline: "Keep this reversal tied to your plot",
+      headline: "Keep the reversal ready, not revealed",
       summary:
-        "Stage this plot twist for your local Codex vault so its reveal, foreshadowing clues, and new player choices stay connected to your campaign.",
+        "Save one new Note in your local Codex vault with the complete twist and clues in GM notes. Record which evidence the players find and how their choices change the consequences.",
       capabilities: [
-        "Store the reveal, overturned assumption, foreshadowing clues, and player choices in one Note entry",
-        "Keep GM-only timing notes and honoured constraints beside the complication",
-        "Link the reversal to the factions, NPCs, and quests it affects inside your vault",
+        "Keep the reveal, clue schedule and all draft preparation in GM notes; rename a spoiler-revealing title before sharing",
+        "Link the Note to existing NPCs, quests and locations yourself and update it after the party acts",
       ],
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
+      placement: "near-result",
     },
     "council-vote": {
       headline: "Bring this vote to your table",
@@ -248,16 +248,16 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       ctaLabel: CTA_LABEL,
     },
     holiday: {
-      headline: "Keep this observance in your calendar",
+      headline: "Keep this tradition on your campaign's schedule",
       summary:
-        "Save this observance or calendar to your local Codex vault so its origin, traditions, and tensions stay connected to the people and places that keep it.",
+        "Save one new Note in your local Codex vault, containing the observance or full calendar. Use its timing to plan what changes when the party arrives.",
       capabilities: [
-        "Store the observance, its origin, and its traditions in one Note entry",
-        "Keep hidden history in GM-only lore; remove table hooks from the Note content before sharing it",
-        "Link the observance to the factions, places, and people who keep it inside your vault",
+        "Keep origins, traditions and every observance together; add dated timeline Events yourself if needed",
+        "Hidden history stays in GM notes; edit At the table tensions before sharing, and link the Note to your existing places, people or factions",
       ],
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
+      placement: "near-result",
     },
     "bbeg-generator": {
       headline: "Keep the villain's next move ready for play",

@@ -1,3 +1,4 @@
+import { getCalendarTwistHandoffLayout } from "./generator-calendar-twist-handoff";
 import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 import { isPublishedBfrdDoomGuidance } from "generator-engine/tov-mechanics-parser";
 import {
@@ -193,7 +194,7 @@ export function buildGeneratorSavePayload(
   const isAdventure =
     !usesSourceHandoff(generatorType) &&
     (data.kind === "adventure" || data.labels.includes("adventure"));
-  const { content, lore: initialLore } = resolveSaveBodyAndLore(
+  const { content, lore: initialLore } = resolveCalendarTwistSaveBodyAndLore(
     data,
     vaultSaveLayout(data, layout, generatorType),
     generatorType,
@@ -242,4 +243,23 @@ export function buildHubSaveDrafts(
       ...(record && record.usedEntityIds.length > 0 ? { references } : {}),
     };
   });
+}
+
+function resolveCalendarTwistSaveBodyAndLore(
+  data: GeneratorOutput,
+  layout: GeneratorSaveLayout,
+  generatorType?: string,
+): GeneratorSaveLayout {
+  if (generatorType === "plot-twist-generator")
+    return getCalendarTwistHandoffLayout(data, layout, generatorType);
+  if (generatorType === "holiday") {
+    const calendar = getCalendarTwistHandoffLayout(data, layout, generatorType);
+    return {
+      content: [data.summary ? `*${data.summary}*` : "", calendar.content]
+        .filter(Boolean)
+        .join("\n\n"),
+      lore: calendar.lore,
+    };
+  }
+  return resolveSaveBodyAndLore(data, layout, generatorType);
 }

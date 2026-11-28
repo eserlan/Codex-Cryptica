@@ -1,13 +1,11 @@
+import { getCalendarTwistHandoffLayout as getGeneratorHandoffLayout } from "../generator-calendar-twist-handoff";
 import { tick } from "svelte";
 import { browser } from "$app/env";
 import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 import { onlineStatus } from "#lib/stores/online.svelte.js";
 import { sessionHubStore } from "#lib/stores/session-hub.svelte.js";
 import { trackEvent } from "#lib/services/analytics/zaraz-analytics.js";
-import {
-  getGeneratorHandoffLayout,
-  type getGeneratorDocumentLayout,
-} from "#lib/components/seo/generator-document-layout.js";
+import { type getGeneratorDocumentLayout } from "#lib/components/seo/generator-document-layout.js";
 import type { getContextSelection } from "generator-engine/session-hub-helpers";
 import { recordGeneratedEntity } from "./record-generated-entity";
 

@@ -1,3 +1,4 @@
+import { getCalendarPreviewLayout } from "./generator-calendar-twist-handoff";
 import { describe, expect, it } from "vitest";
 import { GuestExporter } from "@codex/vault-engine";
 import type { Entity } from "schema";
@@ -232,6 +233,55 @@ describe("generator save payloads", () => {
     expect(payload.lore.match(/second manifest in her boot/g)).toHaveLength(1);
     expect(payload.content).toContain("Table Delivery");
     expect(payload.lore).toContain("Faction Connection");
+  });
+
+  it("preserves every observance's repeated headings in preview and Vault handoff", () => {
+    const output = generateHolidayLocal(
+      {
+        setSize: "A calendar of 6 observances",
+        includeControversial: true,
+      },
+      () => 0.21,
+    ) as GeneratorOutput;
+    const layout = getCalendarPreviewLayout(output);
+    expect(layout.content.match(/^### Origin$/gm)).toHaveLength(6);
+    expect(layout.content.match(/^### Traditions$/gm)).toHaveLength(6);
+    const payload = buildGeneratorSavePayload(
+      output,
+      layout,
+      undefined,
+      "holiday",
+    );
+    expect(payload.content).toContain(output.content);
+    expect(payload.content.match(/^### At the table$/gm)).toHaveLength(6);
+    for (const day of output.observances ?? []) {
+      expect(payload.content).toContain(day.traditions);
+      if (day.hiddenTruth) {
+        expect(payload.content).not.toContain(day.hiddenTruth);
+        expect(payload.lore).toContain(day.hiddenTruth);
+      }
+    }
+  });
+
+  it("preserves the plot twist preparation in GM notes, including the generated summary", () => {
+    const output = {
+      ...slugDrafts["plot-twist-generator"]!,
+      summary: "The clerk paid the smugglers.",
+      labels: ["adventure", "npc-generator", "imported-draft"],
+    };
+    const layout = getGeneratorDocumentLayout(output);
+    const payload = buildGeneratorSavePayload(
+      output,
+      layout,
+      undefined,
+      "plot-twist-generator",
+    );
+    expect(payload.type).toBe("note");
+    expect(payload.content).not.toContain("The Reveal");
+    expect(payload.content).not.toContain(output.summary);
+    expect(payload.lore).toContain(output.summary);
+    expect(payload.lore).toContain(output.content);
+    expect(payload.lore).toContain(output.lore);
   });
 
   it("keeps controversial holiday history out of saved content and guest exports", () => {
