@@ -947,32 +947,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "urban-fantasy-faction": {
     summary:
-      "Each offline draft is a named city faction with a faction type, a mode, an operating scope, a moral posture, a goal, a base, a secret, two named NPCs, a rival and an immediate hook. AI results may vary the NPC count and phrase the secret and internal conflict independently. Use it when a hidden-world group needs a place in a modern city, then decide which parts the party can see.",
+      "Put a hidden-world group behind an ordinary city service. A clinic, transit authority or market can give the party a reason to meet its members before they recognise the supernatural stakes. Establish who depends on that service and what changes if the faction loses control.",
     tips: [
       {
-        title: "Set the operating scope to size the threat",
+        title: "Let the city itself provide leverage",
         detail:
-          "Operating scope appears in the summary and in What they control, as in across the neighbourhood or across the transit network. A neighbourhood faction suits one investigation, while a regional network fits a conflict that crosses several districts.",
+          "Choose Paranormal investigation in Urban fantasy mode, Fae Market in Faction type and Transit Network in Operating scope for the Open Door Committee example. Give them access to station records rather than magical authority over the whole city. Decide who can deny a permit, close an entrance or provide a second route.",
       },
       {
-        title: "Use campaign context for a place or problem",
+        title: "Make a disagreement visible through civic life",
         detail:
-          "Text in Add campaign context becomes one sentence in What they control, starting The faction's choices are shaped by. Write a specific place or problem, such as a flooded tunnel, because the sentence uses your words as written and a mood reads less clearly.",
+          "Set Moral posture to Pragmatic brokers. An investigator wants accurate safety reports while another member fears exposing protected residents. Use Add campaign context to name a specific clinic or transport line. Put the version of the report the party can request in a public office and the proof of alteration with the investigator.",
       },
       {
-        title: "Check the conflict against the moral posture",
+        title: "Keep the hidden network behind the screen",
         detail:
-          "In offline drafts, the Moral posture changes the wording of Why they are dangerous and Internal Conflict, but the conflict comes from a fixed list and the Secret line repeats it. AI results may phrase the secret and internal conflict differently, so decide which details the players learn or discover as clues.",
+          "Start with the power outage from Immediate Hook and offer a choice between speaking to patients, checking the meter logs or bargaining with a rival. Add to my Codex saves a Faction; its model-produced summary, supernatural operation, internal conflict, contacts and secret stay in GM notes. Decide what the party learns before moving any of it into public-facing records.",
       },
     ],
+    linksTitle: "Make hidden factions matter through ordinary institutions",
     links: [
       {
         href: "/answers/how-do-i-run-political-intrigue-and-faction-play",
-        label: "Running faction play",
+        label: "Run competing groups with independent goals",
+        description:
+          "Use leverage, relationships and escalating consequences to give players genuine political choices.",
       },
       {
-        href: "/generators/faction",
-        label: "Classic fantasy faction generator",
+        href: "/answers/how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
+        label: "Design groups around shared practices, not stereotypes",
+        description:
+          "Show differences in institutions and resources while giving individual members distinct motives.",
       },
     ],
   },
@@ -1397,32 +1402,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "social-hub": {
     summary:
-      "Use this when the party needs a place to meet people in any genre, from a Western saloon to a cyberpunk hacker café. Each draft names the venue, its operator and its regulars, then gives you one hidden problem with an opening hook and rumours to feed in over later visits.",
+      "Build a meeting place that the party will want to revisit for its services and people, not just for a single hook. Use the recurring regulars as sources of changing information, and decide how the venue responds when the characters take sides.",
     tips: [
       {
-        title: "Set Genre / Setting before anything else",
+        title: "Give the group a reason to use the venue",
         detail:
-          "The Venue type and Primary clientele lists change with Genre / Setting, so a Lancer table is offered a mech bay canteen and off-duty pilots rather than a mead hall. The genre also shapes the names and the signature drink or service.",
+          "Choose Cyberpunk in Genre / Setting and Noodle Bar in Venue type for Reyes' Noodle Hole. Set Primary clientele to the people passing through the nearby transit station. Give the operator a reason to tolerate both couriers and security workers, so the party can choose whom to approach.",
       },
       {
-        title: "Use Atmosphere and Wealth level to dress the room",
+        title: "Let the room's mood change the conversation",
         detail:
-          "Atmosphere colours how the operator treats strangers, and Wealth level runs from watered drinks at Destitute to someone on the door turning people away at Wealthy. If none of the six choices fits, type your own and the draft keeps your wording.",
+          "Use Atmosphere and Wealth level to decide whether a stranger can talk openly at the counter or needs to buy a private booth. Introduce an ordinary service first, such as the owner's cheap broth, then use The People to pick a regular who remembers the party's previous visit.",
       },
       {
-        title: "Hold the hidden problem back",
+        title: "Give the trouble two possible witnesses",
         detail:
-          "Lead with the Immediate Hook and save the rumours for return visits, so the Hidden Problem, such as a debt coming due or a fugitive on the staff, surfaces slowly. In offline drafts, an Entity Seed names the person, faction or place behind it, and text from Campaign context (optional) gets its own GM notes section.",
+          "Name a nearby station or known contact in Campaign context (optional). Use Immediate Hook to introduce the missing surveillance footage, then give the party a courier who saw it and a security worker who wants it suppressed. Add to my Codex saves one Location; the place and people remain in main text while hidden trouble, rumours and entity seeds stay in GM notes. Update the regulars' reactions after the party intervenes.",
       },
     ],
+    linksTitle: "Make return visits change the campaign",
     links: [
       {
         href: "/answers/how-do-you-generate-useful-rpg-rumours",
-        label: "Writing useful rumours",
+        label: "Give the regulars useful leads",
+        description:
+          "Connect overheard gossip to concrete people and places the party can investigate.",
       },
       {
         href: "/answers/how-do-you-make-npcs-memorable-without-lots-of-prep",
-        label: "Memorable NPCs with little prep",
+        label: "Make recurring patrons easy to recognise",
+        description:
+          "Use a distinct desire and visible habit, then let their response change as relationships develop.",
       },
     ],
   },

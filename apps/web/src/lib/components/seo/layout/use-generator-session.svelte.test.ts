@@ -131,6 +131,32 @@ describe("useGeneratorSession", () => {
     );
   });
 
+  it("keeps Urban Faction summaries with GM notes in the Session Hub", async () => {
+    const secret = "The mayor secretly controls the faction.";
+    const faction = {
+      ...output,
+      type: "faction" as const,
+      summary: secret,
+      content: "### Secret\nThe mayor controls the faction.",
+      lore: "### Rival Faction\nThe city watch is closing in.",
+    };
+    const ctx = setup({
+      generate: vi.fn(async () => faction),
+      generatorType: "urban-fantasy-faction",
+    });
+    cleanup = ctx.cleanup;
+
+    await ctx.session.handleGenerate();
+
+    expect(hub.addEntity).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: "",
+        summary: undefined,
+        lore: expect.stringContaining(secret),
+      }),
+    );
+  });
+
   it("generates with AI by default, records the result and tracks the run", async () => {
     const ctx = setup();
     cleanup = ctx.cleanup;

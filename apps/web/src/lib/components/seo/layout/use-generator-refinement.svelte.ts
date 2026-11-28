@@ -8,6 +8,7 @@ import { buildLoreMergePlan } from "#lib/utils/lore-sections.js";
 import { trackEvent } from "#lib/services/analytics/zaraz-analytics.js";
 import {
   getGeneratorHandoffLayout,
+  usesPrivateSummaryHandoff,
   usesSourceHandoff,
   type getGeneratorDocumentLayout,
 } from "#lib/components/seo/generator-document-layout.js";
@@ -166,7 +167,12 @@ export function useGeneratorRefinement(deps: {
     const derivedId = recordGeneratedEntity(
       sessionHubStore,
       $state.snapshot(deps.getContextSelection()),
-      accepted,
+      {
+        ...accepted,
+        summary: usesPrivateSummaryHandoff(deps.getGeneratorType())
+          ? undefined
+          : accepted.summary,
+      },
       {
         ...(fromId ? { derivedFromEntityId: fromId } : {}),
         derivation: "refine",

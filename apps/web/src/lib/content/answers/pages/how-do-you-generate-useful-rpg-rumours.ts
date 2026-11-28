@@ -146,6 +146,12 @@ export const howDoYouGenerateUsefulRpgRumours: AnswerConfigInput = {
   },
   relatedTools: [
     {
+      title: "Social Hub Generator",
+      description:
+        "Place your rumour sources at a venue the party can revisit.",
+      href: "/generators/social-hub",
+    },
+    {
       title: "Rumour Generator",
       description:
         "Generate six local rumours with concrete leads, named sources, and separate GM truth notes.",
