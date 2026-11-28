@@ -40,6 +40,23 @@ export async function loadGeneratorRemixDraft(
       return null;
     }
 
+    if (options.targetPath === "/generators/heist") {
+      const score = parseGeneratorShareMarkdown(shared.content);
+      return {
+        draft: {
+          type: "event",
+          title: shared.title,
+          summary: "",
+          content: "",
+          lore: [score.summary ? `*${score.summary}*` : "", score.content]
+            .filter(Boolean)
+            .join("\n\n"),
+          labels: shared.metadata.labels ?? [],
+          status: "draft",
+        },
+        theme: resolveGeneratorShareTheme(shared.metadata.theme),
+      };
+    }
     const parsed = parseGeneratorShareMarkdown(shared.content);
     // The business share contains text only, not its structured batch state.
     // Preserve that inseparable draft in GM notes instead of exposing its secret.

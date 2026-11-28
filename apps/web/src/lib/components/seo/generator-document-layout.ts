@@ -468,6 +468,8 @@ export function getGeneratorHandoffLayout(
   layout: { content: string; lore: string },
   generatorType?: string,
 ): { content: string; lore: string } {
+  if (generatorType === "heist")
+    return { content: data.content, lore: data.lore ?? "" };
   if (isRpgNpcGenerator(generatorType)) return getNpcHandoffLayout(data);
   return generatorType === "bbeg-generator"
     ? { content: data.content, lore: data.lore ?? "" }

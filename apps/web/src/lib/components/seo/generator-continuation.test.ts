@@ -5,6 +5,15 @@ import {
 } from "./generator-continuation";
 
 describe("generator-continuation", () => {
+  it("offers the heist continuation next to completed results", () => {
+    const config = getGeneratorContinuationConfig("heist");
+    expect(config).toMatchObject({
+      placement: "near-result",
+      ctaLabel: "Add to my Codex",
+    });
+    expect(config?.summary).toContain("one Event");
+  });
+
   it("returns Wave 1 configs for star-system, npc, rpg-npc-generator, and origin-generator", () => {
     const starSystem = getGeneratorContinuationConfig("star-system");
     expect(starSystem).toMatchObject({
