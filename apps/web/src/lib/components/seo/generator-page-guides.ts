@@ -637,28 +637,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   creature: {
     summary:
-      "Memorable monsters behave like living creatures (or focused hazards) with a habitat, a tell before they strike, and an instinct that tells you when they flee or bargain.",
+      "Design an inhabitant of the world rather than a bag of hit points. Use its habitat, ecological role and observable behaviour to decide what it is doing when the party arrives, what warns them of danger and how they can interact without fighting.",
     tips: [
       {
-        title: "Telegraph their signature threat",
+        title: "Give the creature a reason to be in this place",
         detail:
-          "Show tracks, scorched masonry, or prey behaviour before initiative starts so players can prepare tactics.",
+          "Pair Ecological Role / Behaviour with Habitat / Environment. A Herbivore / Migratory Grazer crossing a wetland may leave a ruined footbridge and a new trail; a Territorial Guardian in caverns may block a passage to its nesting chamber. Choose what the party disturbs by taking the obvious route.",
       },
       {
-        title: "Give every creature a non-combat motive",
+        title: "Decide what the party can learn before danger",
         detail:
-          "Territorial defence, hunger, or protecting a nest creates opportunities for stealth, bribery, or retreat.",
+          "Use Threat Level to decide how urgent the warning should be, not as a numerical encounter rating. Turn one Observable Ability into a recognisable sign, such as scorched moss or a shed scale. Let players change their plan after finding that sign instead of learning the danger only when it strikes.",
       },
       {
-        title: "Pair with terrain",
+        title: "Give every encounter an end other than death",
         detail:
-          "Drop the creature into an environment that favours its movement or senses rather than a flat room.",
+          "Use Intelligence / Temperament to decide what changes the creature's behaviour. A Cunning / Pack Mind might retreat when its group is separated; a Fully Sapient / Cultured one may negotiate access to a feeding ground. Choose the boundary it will not cross and the consequence if the party honours it.",
       },
     ],
+    linksTitle: "Turn a creature into a playable encounter",
     links: [
       {
+        href: "/answers/what-makes-a-good-random-encounter",
+        label: "Give the creature an activity and a reason to be here",
+        description:
+          "Create an encounter with an existing situation, non-combat choices and regional consequences.",
+      },
+      {
         href: "/answers/how-do-i-balance-rpg-combat-encounters-without-a-tpk",
-        label: "Balancing combat encounters",
+        label: "Telegraph threat and build a way out",
+        description:
+          "Assess action economy, objectives and retreat using the rules of your game.",
       },
     ],
   },

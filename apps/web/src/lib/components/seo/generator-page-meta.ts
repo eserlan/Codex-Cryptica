@@ -2061,7 +2061,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Creature Generator",
     eyebrow: "Monster & Creature Generator",
     introText:
-      "Create table-ready monsters, beasts, alien fauna, undead, constructs, and mounts across any genre. Generates distinctive appearance, sensory signs, ecological roles, tactical combat behaviour, harvestable remains, and adventure hooks beyond just fighting them.",
+      "Draft a beast, construct, undead creature or alien inhabitant with a place in its ecosystem, signs the party can notice and behaviour they can respond to. Choose how dangerous and intelligent it is, then use its known abilities, hidden traits and hooks to plan an encounter.",
     canonicalPath: "/generators/creature",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-creature.jpg",
@@ -2080,18 +2080,18 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "What does the Creature Generator create?",
         answer:
-          "It produces a complete RPG creature — name, category, size, habitat, threat level, temperament, physical appearance, tracks and sensory signs, ecological role, abilities and defences, exploitable weaknesses, encounter behaviour, harvestable materials, lore and rumours, and 2–4 adventure hooks.",
+          "A creature profile with name, classification, habitat, appearance, ecological role, signs, abilities, weaknesses, encounter behaviour, harvestable materials and GM hooks. It is a narrative profile, not a system-specific combat stat block.",
       },
       {
         question: "Is this only a fantasy monster generator?",
         answer:
-          "No. While it functions as a powerful fantasy monster generator, it natively adapts to all 13 world themes — creating cyberpunk security bioweapons, sci-fi vacuum organisms, post-apocalyptic mutants, cosmic horror aberrations, and gothic undead.",
+          "No. Genre / Theme offers different settings, including cyberpunk, sci-fi, gothic horror and post-apocalyptic worlds. Choose an appropriate Creature Category / Origin and Habitat / Environment to situate it.",
       },
       {
         question:
           "Can it generate non-hostile creatures, mounts, or familiars?",
         answer:
-          "Yes. Select ecological roles like Herbivore / Migratory Grazer, Mount / Domesticated Beast, Familiar / Companion, or Scavenger, and choose appropriate threat levels from Harmless to Apex Predator.",
+          "Yes. Select roles such as Herbivore / Migratory Grazer, Mount / Domesticated Beast or Familiar / Companion and a suitable Threat Level. Decide how the creature reacts to attention, offerings or a threat to its home.",
       },
       {
         question: "How are intelligent or sapient creatures handled?",
@@ -2101,7 +2101,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Does it work without an account?",
         answer:
-          "Yes. Generate, customize, and copy creature notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault with full Markdown notes — no sign-up required.",
+          "Yes. Generate, reroll and copy the full draft without signing in. Add to my Codex opens one Creature in your local browser vault. The AI is asked to put known characteristics and field signs in the main text and hidden ecology, secret weaknesses, surprise abilities and GM hooks in GM notes; review AI-written text before sharing it. Connect it to existing habitats and NPCs yourself. Shared links contain the full draft; text-only remixes need review since they cannot recover the original public/GM split.",
       },
     ],
     relatedLinks: [

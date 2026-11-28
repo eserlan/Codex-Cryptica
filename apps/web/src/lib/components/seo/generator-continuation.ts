@@ -404,6 +404,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    creature: {
+      headline: "Keep this inhabitant in your campaign's ecology",
+      summary:
+        "Save this generated creature as one Creature entry in your local Codex vault, so you can revisit its signs, behaviour and encounters.",
+      capabilities: [
+        "The AI is asked to keep hidden ecology, surprises and secret weaknesses in GM notes; review AI text before sharing",
+        "Link the Creature to habitats, hunters or campaign events and update its behaviour as play changes the region",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
     world: {
       headline: "Keep this world connected",
       summary:
