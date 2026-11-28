@@ -91,11 +91,11 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
     type: "faction",
     title: "The Iron Syndicate",
     summary:
-      "A powerful merchants' guild that controls the city's trade routes.",
+      "A merchant guild whose seals determine which cargo may pass the city gates.",
     content:
-      "### Operations\nThey maintain a private army to secure their investments and lobby local lords.\n\n### Secret agenda\nThey seek to overthrow the local duke to install a puppet senate.",
-    lore: "",
-    labels: ["rpg-faction", "Guild", "Mercantile"],
+      "### What they control\nThe Syndicate licenses river barges and maintains a guarded bonded warehouse.\n\n### What they want\nSecure exclusive rights to the northern grain route before winter.\n\n### Why they are dangerous\nThe treasurer has forged toll receipts to discredit the independent ferrymen.\n\n### How to use them at the table\nOffer the party passage through a closed checkpoint if they deliver a sealed contract to the ferrymen's council.",
+    lore: "### At a Glance\n- **Theme / Genre**: Classic Fantasy\n- **📍 Base**: The Weighhouse on Grey Quay\n- **Resource**: Licences and bonded storage\n- **Symbol**: An iron key stamped into wax\n- **Secret**: The treasurer has forged toll receipts to discredit the independent ferrymen.\n- **Immediate Hook**: The treasurer offers a licence in exchange for a delivery before the council vote.\n\n### Notable NPCs\n- **👤 Treasurer Nessa Voss**: Needs the council vote to pass.\n- **👤 Quaymaster Iven Reed**: Wants safe passage for smaller crews.\n\n### Internal Conflict\nThe quaymaster suspects the receipts are forged but cannot expose the guild without losing his own licence.\n\n### Rival Faction\n- **👥 The Free Ferrymen**: Will offer the party an alternative route if they disclose the contract.",
+    labels: ["rpg-faction", "faction-generator", "imported-draft"],
     status: "draft",
   },
   kingdom: {
@@ -155,14 +155,14 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
   },
   "vampire-clan": {
     type: "faction",
-    title: "House of Thorn",
+    title: "House of the Glass Lantern",
     summary:
-      "An aristocratic bloodline that controls the city's banking houses from behind a veil of old money and older secrets.",
+      "A vampire court that uses charitable salons to build influence across the city.",
     content:
-      "### Heritage\nAristocratic lineage feeding on the upper-class elite. The clan operates through mortal proxies in finance, law, and the clergy.\n\n### Clan Weakness\nSilver and consecrated ground erode their power - they avoid both with practised care.",
-    lore: "",
+      "### Overview\nHouse of the Glass Lantern is an aristocratic vampire court whose daytime assets are managed by a patron of the city's hospitals.\n\n### Public Facade\nTheir candlelit salons host artists, physicians and creditors. Invitations admit the wealthy after sundown and earn guests introductions to powerful patrons.\n\n### Table Use\nThe party needs a physician to examine a poisoned witness. The clan offers access in return for the return of a stolen salon guest list.",
+    lore: "### GM Reference Information\n- **Faction Type**: Vampire Clan (Aristocratic Court)\n- **Bloodline**: Sanguine Nobles (Charismatic Mind-Benders)\n- **Scope**: Old city's hospital quarter\n- **Moral Posture**: Pragmatic and power-driven\n- **Feeding Habit**: High-Society Salons (Elite & Consent-based)\n- **Clan Weakness**: Mirror & Reflection Absence (Exposes their nature)\n- **Entity Type**: Faction\n\n### Dark Agenda\nSecure control of the hospital trust by placing the sire's mortal steward on its board.\n\n### Internal Conflict\nThe younger vampires want the salons to remain voluntary; the sire demands access to vulnerable patients.\n\n### Notable NPCs\n- **Sire Morcant**: Insists the trust is the clan's only protection from discovery.\n- **Steward Ivara**: Can open hospital doors but secretly keeps a record of consent.\n\n### Rival Faction\n- **The Lantern Watch**: An investigator's guild that suspects the hospital's finances conceal something worse.\n\n### Adventure Hook\nA guest whose reflection vanished from a polished silver tray asks the party to retrieve the guest list before Morcant identifies those who witnessed it.",
     labels: ["rpg-faction", "vampire-clan", "imported-draft"],
-    status: "draft",
+    status: "active",
   },
   "nomad-clan": {
     type: "faction",

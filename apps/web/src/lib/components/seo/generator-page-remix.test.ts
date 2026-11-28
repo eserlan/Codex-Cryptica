@@ -289,3 +289,28 @@ describe("successive remix route loads", () => {
     expect(state.onLoaded).not.toHaveBeenCalled();
   });
 });
+
+it("restores a faction share as one Faction without guessing its public/GM split", async () => {
+  const targetPath = "/generators/faction";
+  const share = makeShare({
+    content:
+      "# Shared guild\n*Secret summary*\nLabels: faction-generator\n\n### Secrets & Hooks\nThe charter is forged.",
+    metadata: { generatorPath: targetPath, labels: ["faction-generator"] },
+  });
+  const result = await loadGeneratorRemixDraft(
+    options(vi.fn().mockResolvedValue(share), { targetPath }),
+  );
+  const draft = result!.draft;
+  expect(
+    buildGeneratorSavePayload(
+      draft,
+      getGeneratorDocumentLayout(draft),
+      undefined,
+      "faction",
+    ),
+  ).toMatchObject({
+    type: "faction",
+    content: "",
+    lore: "*Secret summary*\n\n### Secrets & Hooks\nThe charter is forged.",
+  });
+});

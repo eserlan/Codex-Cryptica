@@ -321,6 +321,41 @@ describe("generator save payloads", () => {
     expect(payload.lore).toContain(secret);
   });
 
+  it("keeps fenced Holiday secrets private in preview and saved Note", () => {
+    const secret = [
+      "- **Knowledge & Secrets**: The hidden history.",
+      "```text",
+      "- Witness: the missing heir is alive.",
+      "### Secret evidence",
+      "A forged ledger.",
+      "```",
+      "The watch is compromised.",
+    ].join("\n");
+    const output: GeneratorOutput = {
+      ...baseOutput,
+      type: "note",
+      content: `### Observance One\n${secret}\n- Public tradition: Bells.\n\n### Observance Two\nPublic feast.`,
+      lore: "### GM Reference\nPrevious notes.",
+      labels: ["holiday-generator", "table-card"],
+    };
+    const preview = getCalendarPreviewLayout(output);
+    const payload = buildGeneratorSavePayload(
+      output,
+      preview,
+      undefined,
+      "holiday",
+    );
+    for (const result of [preview, payload]) {
+      expect(result.content).toContain("Public tradition: Bells.");
+      expect(result.content).toContain("Public feast.");
+      expect(result.content).not.toContain("missing heir");
+      expect(result.content).not.toContain("Secret evidence");
+      expect(result.content).not.toContain("forged ledger");
+      expect(result.content).not.toContain("watch is compromised");
+      expect(result.lore).toContain(secret);
+    }
+  });
+
   it("preserves the plot twist preparation in GM notes, including the generated summary", () => {
     const output = {
       ...slugDrafts["plot-twist-generator"]!,
@@ -1139,4 +1174,92 @@ describe("generator save payloads", () => {
       "- **Doom Guidance:** Spend 2 Doom to summon a Shadow Minion. *(Homebrew)*",
     );
   });
+});
+
+it("keeps the faction's secret, hook and GM-facing prose private despite preview promotion and untrusted labels", async () => {
+  const { generateFactionLocal } = await import("generator-engine");
+  const draft = generateFactionLocal(
+    {
+      theme: "Classic Fantasy",
+      type: "Merchant Guild",
+      scope: "Single city",
+      campaignContext: "An embargo on Grey Quay",
+    },
+    () => 0.35,
+  ) as GeneratorOutput;
+  const secret = draft.lore.match(/- \*\*Secret\*\*: ([^\n]+)/)?.[1];
+  expect(secret).toBeTruthy();
+  expect(draft.content).toContain(secret!);
+  for (const output of [draft, { ...draft, labels: ["npc-generator"] }]) {
+    const payload = buildGeneratorSavePayload(
+      output,
+      getGeneratorDocumentLayout(output),
+      undefined,
+      "faction",
+    );
+    expect(payload.type).toBe("faction");
+    expect(payload.content).toContain("What they control");
+    expect(payload.content).toContain("What they want");
+    expect(payload.content).not.toContain(secret!);
+    expect(payload.content).not.toContain("How to use them at the table");
+    for (const value of [
+      secret!,
+      "Immediate Hook",
+      "Internal Conflict",
+      "Notable NPCs",
+      "Rival Faction",
+      "An embargo on Grey Quay",
+      "Why they are dangerous",
+      "How to use them at the table",
+    ])
+      expect(payload.lore).toContain(value);
+  }
+});
+
+it("keeps nested and unrecognized faction headings in GM notes", async () => {
+  const { generateFactionLocal } = await import("generator-engine");
+  const draft = generateFactionLocal(
+    { theme: "Classic Fantasy", type: "Merchant Guild", scope: "Single city" },
+    () => 0.35,
+  ) as GeneratorOutput;
+  const malformedContents = [
+    "### What they control\nPublic holdings.\n### What they want\nPublic plans.\n#### Secret\nNESTED_SECRET_MARKER",
+    "### What they control\nPublic holdings.\n### What they want\nPublic plans.\n### Secret\nTOP_LEVEL_SECRET_MARKER",
+    "### What they control\nPublic holdings.\n### What they want\nPublic plans.\n# Secret\nLEVEL_ONE_SECRET_MARKER",
+    "### What they control\nPublic holdings.\n### What they want\nPublic plans.\nSecret\n======\nSETEXT_SECRET_MARKER",
+  ];
+
+  for (const content of malformedContents) {
+    const output = { ...draft, content };
+    const payload = buildGeneratorSavePayload(
+      output,
+      getGeneratorDocumentLayout(output),
+      undefined,
+      "faction",
+    );
+
+    expect(payload.content).toContain("Public holdings.");
+    expect(payload.content).not.toMatch(
+      /(?:NESTED|TOP_LEVEL|LEVEL_ONE|SETEXT)_SECRET_MARKER/,
+    );
+    if (
+      content.includes("NESTED") ||
+      content.includes("LEVEL_ONE") ||
+      content.includes("SETEXT")
+    ) {
+      expect(payload.content).not.toContain("Public plans.");
+      expect(payload.lore).toContain("Public plans.");
+    } else {
+      expect(payload.content).toContain("Public plans.");
+    }
+    expect(payload.lore).toContain(
+      content.includes("NESTED")
+        ? "NESTED_SECRET_MARKER"
+        : content.includes("LEVEL_ONE")
+          ? "LEVEL_ONE_SECRET_MARKER"
+          : content.includes("SETEXT")
+            ? "SETEXT_SECRET_MARKER"
+            : "TOP_LEVEL_SECRET_MARKER",
+    );
+  }
 });

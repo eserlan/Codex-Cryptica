@@ -288,11 +288,11 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     pageTitle:
       "RPG Faction Generator | Fantasy Guilds, Cyberpunk Megacorps & Vampire Courts | Codex Cryptica",
     metaDescription:
-      "Generate detailed RPG factions. Perfect as a fantasy guild generator, cyberpunk megacorp creator, or gothic vampire court generator. Save drafts to your vault.",
+      "Create RPG factions with competing goals, resources, representatives and a rival. Prepare bargains and off-screen moves for your campaign.",
     introTitle: "RPG Faction Generator",
     eyebrow: "Faction Generator",
     introText:
-      "Forge campaign-ready organizations across any genre. Use it as a fantasy guild generator, cyberpunk megacorp creator, or gothic vampire court generator with distinct agendas, conflicts, and NPCs.",
+      "Build an organisation the party can bargain with, oppose or depend on. Choose its genre, type, reach and morality to draft a power with an agenda, resources, named representatives, a rival and a reason to act now.",
     canonicalPath: "/generators/faction",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-faction.jpg",
@@ -307,28 +307,28 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     ],
     faqs: [
       {
-        question: "What does the faction generator create?",
+        question: "How do I introduce a faction without a lore lecture?",
         answer:
-          "It generates a complete RPG faction across any genre — fantasy guilds, cyberpunk megacorps, gothic vampire courts, and more. Each result includes a name, agenda, internal conflict, rival faction, notable NPCs, and a ready-to-use GM hook.",
+          "Start with one named representative offering something the party needs. Use the resource and Immediate Hook to set the price, then let the rival's response reveal what accepting the offer means.",
       },
       {
         question: "Can I use it without an account?",
         answer:
-          "Yes. Generate and copy faction notes on this page without logging in. When you're ready, save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
+          "Yes. Generate, reroll and copy the complete draft without signing in. Adding the draft to your Codex saves it in a vault in this browser.",
       },
       {
         question: "Can I aim the faction at my current campaign?",
         answer:
-          "Yes. Add optional campaign context, such as a location, villain, ongoing conflict, or political tension. Offline drafts keep it in the GM notes and add a line to What they control, and the AI draft is built around it.",
+          "Use Add campaign context to name a place, a conflict or an existing rival. Offline drafts keep your input in GM notes and add a broad setting reference; AI drafts can incorporate those details into the faction itself.",
       },
       {
-        question: "How does saving a generated faction work?",
+        question: "What happens when I add a faction to my Codex?",
         answer:
-          "Clicking 'Save to Codex' stores the faction draft in your browser's local storage. Open Codex Cryptica and it imports automatically as a Faction entity, ready to link to NPCs, locations, and campaign notes.",
+          "After generating, Add to my Codex opens one new Faction entry. Its secret, internal conflict, immediate hook and GM reference records are kept in GM notes, together with Why they are dangerous and How to use them at the table. NPC and rival names are references, not automatically created entities or links. Review the entry before sharing it; imported remixes keep the combined share text in GM notes.",
       },
     ],
     relatedLinks: [
-      { href: "/tools/dnd-npc-generator", label: "D&D NPC Generator" },
+      { href: "/generators/faction-roster", label: "Develop a faction roster" },
       { href: "/solutions/worldbuilding-tool", label: "Worldbuilding tool" },
     ],
   },
@@ -852,7 +852,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Vampire Clan Generator",
     eyebrow: "Vampire Clan Generator",
     introText:
-      "Create undead factions with bloodlines, feeding habits, dark agendas, and table-ready hooks. Works without login, then imports into your local Codex vault.",
+      "Create a vampire court, coven or brood whose feeding habits shape the people and places it touches. Choose its nature, bloodline, feeding pattern and weakness, then work out which mortal face the players meet first and what the clan wants from them. No account needed.",
     canonicalPath: "/generators/vampire-clan",
     labels: ["vampire"],
     ogImage:
@@ -865,6 +865,36 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "occult coven creator",
       "gothic horror faction",
       "vampire faction",
+    ],
+    faqs: [
+      {
+        question: "What does a vampire clan draft include?",
+        answer:
+          "It gives you a named Faction, an overview and public facade, its bloodline, feeding habit and weakness, a dark agenda, internal conflict, notable NPCs, a rival and an adventure hook. Use those references to decide what the party encounters first.",
+      },
+      {
+        question: "Can the clan be an ally rather than a villain?",
+        answer:
+          "Yes. Give the clan a goal the party can temporarily share and a cost they can refuse. Choose a feeding habit and weakness that make negotiation, investigation or sanctuary viable rather than forcing a fight.",
+      },
+      {
+        question: "Does this include rules for a particular vampire RPG?",
+        answer:
+          "No. It is a system-neutral faction draft, not a stat block or official bloodline rules. Adapt the clan's powers and weakness to the system you run.",
+      },
+      {
+        question: "What happens when I add the clan to Codex?",
+        answer:
+          "The generated clan becomes one Faction in your local vault. The overview and public facade remain in the main text; the clan's GM reference, secret agenda, conflict, NPCs, rival and hook stay in GM notes. Review the overview and facade before sharing, and create or link individual members yourself.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/faction", label: "Faction Generator" },
+      {
+        href: "/generators/dark-fantasy-faction",
+        label: "Dark Fantasy Faction Generator",
+      },
+      { href: "/generators/secret-society", label: "Secret Society Generator" },
     ],
   },
   "nomad-clan": {
@@ -925,7 +955,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Dark Fantasy Faction Generator",
     eyebrow: "Dark Fantasy Faction Generator",
     introText:
-      "Create fallen orders, cursed noble houses, plague cults, witch-hunters, corpse guilds, and desperate powers with agendas, secrets, NPCs, and table-ready hooks. Works without login, then imports into your local Codex vault.",
+      "Create a fallen order, plague cult, cursed house or other power that the people need despite what it does. Choose the crisis, faction type, territory and moral posture, then use its resources and internal conflict to decide what the party can bargain for, expose or change. No account needed.",
     canonicalPath: "/generators/dark-fantasy-faction",
     labels: ["fantasy"],
     ogImage:
@@ -965,7 +995,12 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Can I aim the faction at my current campaign?",
         answer:
-          "Yes. Add optional campaign context and the generator will fit the faction to your table rather than producing a generic result.",
+          "Name a place, crisis or existing faction in Add campaign context. The draft records that context; review the result and connect its resources and internal conflict to that place before play.",
+      },
+      {
+        question: "What happens when I add the faction to Codex?",
+        answer:
+          "Save one new Faction in your local vault. What they control and want remain in the main text; the danger, table guidance, secrets, people, conflict and rival stay in GM notes. Link individual people or places as you develop them.",
       },
     ],
     relatedLinks: [
