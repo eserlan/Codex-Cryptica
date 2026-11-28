@@ -43,6 +43,13 @@ export interface HubSaveDraft {
   references?: string[];
 }
 
+export class InvalidGeneratorOutputError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidGeneratorOutputError";
+  }
+}
+
 function formatTovMagicItemMarkdown(item: TovMagicItemMechanics): string {
   const parts: string[] = ["### Game Statistics (Tales of the Valiant)"];
   parts.push(`- **Rarity & Category:** ${item.rarity} ${item.category}`);
@@ -183,11 +190,29 @@ function singleDeitySaveLayout(
   layout: GeneratorSaveLayout,
   generatorType?: string,
 ): GeneratorSaveLayout {
-  return data.type === "character" &&
-    (generatorType === "god-generator" ||
-      generatorType === "pantheon-generator")
-    ? { content: data.content, lore: data.lore ?? "" }
-    : layout;
+  if (
+    data.type !== "character" ||
+    (generatorType !== "god-generator" &&
+      generatorType !== "pantheon-generator")
+  ) {
+    return layout;
+  }
+
+  const requiredSections = [
+    "Deity Description",
+    "Divine Portfolio",
+    "Worship & Cults",
+  ];
+  const missingSections = requiredSections.filter(
+    (section) => !new RegExp(`^### ${section}\\s*$`, "m").test(data.content),
+  );
+  if (missingSections.length > 0) {
+    throw new InvalidGeneratorOutputError(
+      `This deity draft is missing required public sections (${missingSections.join(", ")}). Generate it again or copy the draft manually.`,
+    );
+  }
+
+  return { content: data.content, lore: data.lore ?? "" };
 }
 
 /** The preview's reading layout is not always the vault's secrecy boundary. */

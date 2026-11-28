@@ -12,6 +12,7 @@ import {
   saveGeneratorOutput,
   saveSessionHubEntities,
 } from "#lib/components/seo/generator-save-flow.js";
+import { InvalidGeneratorOutputError } from "#lib/components/seo/generator-save.js";
 import type { getGeneratorDocumentLayout } from "#lib/components/seo/generator-document-layout.js";
 
 type DocumentLayout = ReturnType<typeof getGeneratorDocumentLayout>;
@@ -117,10 +118,12 @@ export function useGeneratorSave(deps: {
         selectedNodeIds,
       );
       continueToCodex(redirectQuery);
-    } catch {
+    } catch (error) {
       isSaving = false;
       const message =
-        "Storage access is blocked. Please copy the Markdown below instead.";
+        error instanceof InvalidGeneratorOutputError
+          ? error.message
+          : "Storage access is blocked. Please copy the Markdown below instead.";
       saveError = message;
       deps.setError(message);
     }

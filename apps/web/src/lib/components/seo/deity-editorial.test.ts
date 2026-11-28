@@ -48,6 +48,26 @@ describe("God and deity editorial and vault contract", () => {
     expect(payload.content).not.toContain("Hidden Problem");
     expect(payload.lore).toContain("Hidden Problem");
   });
+  it.each(["god-generator", "pantheon-generator"])(
+    "refuses to save a sparse single-deity result on %s while its public sections remain in GM lore",
+    (slug) => {
+      const draft = slugDrafts["god-generator"]!;
+      const sparseDraft = {
+        ...draft,
+        content: "",
+        lore: `${draft.content}\n\n${draft.lore}`,
+      };
+
+      expect(() =>
+        buildGeneratorSavePayload(
+          sparseDraft,
+          getGeneratorDocumentLayout(sparseDraft),
+          undefined,
+          slug,
+        ),
+      ).toThrow("missing required public sections");
+    },
+  );
   it("shows a contextual continuation only after explicit generation", () => {
     expect(getGeneratorContinuationConfig("god-generator")).toMatchObject({
       placement: "near-result",
