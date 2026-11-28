@@ -119,6 +119,22 @@ describe("public-artifact generator", () => {
     expect(parsed.lore).toContain("### Artifact Powers & Manifestations");
   });
 
+  it("rejects a blank description even when lore contains a Description section", () => {
+    const resolved = resolveArtifact({});
+    for (const content of [undefined, ""]) {
+      expect(() =>
+        parseArtifactResponse(
+          JSON.stringify({
+            title: "The Solar Sovereign Crown",
+            content,
+            lore: "### Description\nA golden crown with a sun-bright edge.",
+          }),
+          resolved,
+        ),
+      ).toThrow("Artifact response is missing its description.");
+    }
+  });
+
   it("recovers missing Quick Reference and Powers sections in parseArtifactResponse", () => {
     const resolved = resolveArtifact({
       genre: "Sci-Fi / Space Opera",

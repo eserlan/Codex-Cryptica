@@ -702,6 +702,9 @@ export function parseArtifactResponse(
   resolved: ResolvedArtifact,
 ): PublicGeneratorOutput {
   const data = parseFencedJson(text);
+  if (typeof data.content !== "string" || !data.content.trim()) {
+    throw new Error("Artifact response is missing its description.");
+  }
   const causality = getGenreCausality(resolved.genre);
   const powersHeading =
     causality === "technological"
@@ -743,7 +746,7 @@ export function parseArtifactResponse(
     type: "item",
     title: data.title || resolved.suggestedName,
     summary: data.summary || "",
-    content: data.content || "",
+    content: data.content,
     lore,
     labels: Array.isArray(data.labels)
       ? data.labels
