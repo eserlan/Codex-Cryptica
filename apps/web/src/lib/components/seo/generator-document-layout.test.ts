@@ -183,6 +183,24 @@ The dockside cells want to stop paying tribute to the founding families, and the
     expect(layout.lore).not.toContain("**Immediate Hook**");
   });
 
+  it("keeps unrecognised puzzle lore headings private as well as the standard solution and hints", () => {
+    const data = {
+      type: "note",
+      title: "The gate",
+      content: "## Player-Facing Setup\nA closed door.",
+      lore: "### GM-Only Solution\nThe key is in the basin.\n\n### Additional answer\nThe basin moves.\n\n### Escalating Hints\nListen for the drain.",
+      labels: ["puzzle-generator"],
+      status: "draft",
+    } as const;
+    const layout = getGeneratorDocumentLayout({
+      ...data,
+      labels: [...data.labels],
+    });
+    expect(layout.content).toBe(data.content);
+    expect(layout.lore).toContain("The basin moves.");
+    expect(layout.lore).toContain("The key is in the basin.");
+  });
+
   it("moves quest twist, reward, and complication into the main document", () => {
     const layout = getGeneratorDocumentLayout({
       type: "event",

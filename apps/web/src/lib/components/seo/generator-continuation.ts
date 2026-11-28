@@ -333,6 +333,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    heist: {
+      headline: "Keep the score ready for changing plans",
+      summary:
+        "Save this score as one Event in your local Codex vault, so you can revisit the objective, alarm state and consequences after play.",
+      capabilities: [
+        "Keep the hidden factor, security plan, alarm track and escape options in GM notes",
+        "Link the Event to the target, patron and prizes already in your vault",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
     tome: {
       headline: "Shelve this book in your campaign",
       summary:
@@ -344,6 +356,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       ],
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
+    },
+    puzzle: {
+      headline: "Keep the puzzle's setup and solution ready for play",
+      summary:
+        "Save the generated encounter as one Note in your local Codex vault, so you can prepare its place in the adventure and record how the party solves it.",
+      capabilities: [
+        "Keep the labelled GM-Only Solution and Escalating Hints in GM notes",
+        "Link the Note to the place it blocks and the encounter or objective it changes",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
     },
     "alien-race": {
       headline: "Give this species a place in your world",

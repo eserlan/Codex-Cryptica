@@ -53,6 +53,16 @@ const LAYOUT_RULES: LayoutRule[] = [
   },
   {
     label: "puzzle-generator",
+    unrecognizedLoreToRail: true,
+    documentSections: new Set([
+      "Player-Facing Setup",
+      "Clues",
+      "Character Spotlight Opportunities",
+      "Alternate Solutions",
+      "Failure & Escalation",
+      "Running the Puzzle",
+      "Scaling",
+    ]),
     railSections: new Set([
       "At a Glance",
       "GM-Only Solution",
@@ -469,6 +479,8 @@ export function getGeneratorHandoffLayout(
   layout: { content: string; lore: string },
   generatorType?: string,
 ): { content: string; lore: string } {
+  if (generatorType === "heist")
+    return { content: data.content, lore: data.lore ?? "" };
   if (isRpgNpcGenerator(generatorType)) return getNpcHandoffLayout(data);
   return generatorType === "bbeg-generator"
     ? { content: data.content, lore: data.lore ?? "" }

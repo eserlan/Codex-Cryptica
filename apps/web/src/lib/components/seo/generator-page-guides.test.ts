@@ -54,6 +54,25 @@ function guide(summary: string, detail = "A short tip."): GeneratorGuide {
   return { summary, tips: [{ title: "Tip", detail }] };
 }
 
+describe("Heist editorial guide", () => {
+  it("teaches success conditions, casing and conditional escalation", () => {
+    const guide = SLUG_GUIDES.heist!;
+    const text = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const phrase of [
+      "Heist Type",
+      "The Prize (optional)",
+      "Target Scale",
+      "Alarm Track",
+      "The Getaway",
+    ])
+      expect(text).toContain(phrase);
+    expect(guide.links?.map((link) => link.href)).toEqual([
+      "/answers/what-makes-a-good-heist-target-in-a-tabletop-rpg",
+      "/answers/how-do-you-run-a-heist-in-a-tabletop-rpg",
+    ]);
+  });
+});
+
 describe("RPG NPC guide", () => {
   it("teaches role and moral stance choices, prep style and witness boundaries", () => {
     const guide = getGeneratorGuide("npc", "RPG NPC Generator");
@@ -905,6 +924,26 @@ describe("BBEG editorial guide", () => {
       "/answers/how-do-you-track-faction-turns-between-rpg-sessions",
     ]);
     expect(guide.links?.every(({ description }) => description)).toBe(true);
+  });
+});
+
+describe("Puzzle editorial guide", () => {
+  it("teaches feedback, spotlight and consequences using the real form controls", () => {
+    const guide = SLUG_GUIDES.puzzle!;
+    const text = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const phrase of [
+      "Puzzle purpose",
+      "Puzzle style",
+      "PC capabilities to make matter",
+      "Participation style",
+      "Complexity",
+      "Failure pressure",
+    ])
+      expect(text).toContain(phrase);
+    expect(guide.links?.map((link) => link.href)).toEqual([
+      "/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
+      "/answers/how-do-you-give-hints-for-an-rpg-puzzle-without-giving-away-the-answer",
+    ]);
   });
 });
 
