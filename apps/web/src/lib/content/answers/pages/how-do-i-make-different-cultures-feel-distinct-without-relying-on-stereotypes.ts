@@ -367,6 +367,12 @@ export const howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes:
     },
     relatedTools: [
       {
+        title: "Fictional Language Generator",
+        description:
+          "Establish shared words, naming patterns and speech registers without assigning traits to all speakers.",
+        href: "/generators/language-generator",
+      },
+      {
         title: "Settlement generator",
         description:
           "Create towns and cities where cultural customs become visible in streets, markets, and public buildings.",

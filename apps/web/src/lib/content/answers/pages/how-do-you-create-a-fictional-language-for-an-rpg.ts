@@ -138,6 +138,12 @@ export const howDoYouCreateAFictionalLanguageForAnRpg: AnswerConfigInput = {
   },
   relatedTools: [
     {
+      title: "RPG Name Generator",
+      description:
+        "Create a shortlist of names, then adapt their patterns to the language you designed.",
+      href: "/generators/names",
+    },
+    {
       title: "Fictional Language Generator",
       description:
         "Draft a language profile and sample words to edit into your campaign glossary.",

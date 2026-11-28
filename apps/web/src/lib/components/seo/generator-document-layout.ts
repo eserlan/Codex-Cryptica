@@ -104,6 +104,7 @@ const LAYOUT_RULES: LayoutRule[] = [
   },
   {
     label: "nation-generator",
+    unrecognizedLoreToRail: true,
     railSections: new Set([
       "At a Glance",
       "Power Blocs",
@@ -555,7 +556,11 @@ export function getGeneratorDocumentLayout(
   const rawContent = routedTableCard.content;
   const content = deduplicateMarkdownSections(rawContent, seenHeadings);
 
-  const rule = LAYOUT_RULES.find((r) => labels.includes(r.label));
+  // Nation output keeps unrecognised lore private. Its stricter routing must
+  // win even when the model also supplies another generator's label.
+  const rule = labels.includes("nation-generator")
+    ? LAYOUT_RULES.find((r) => r.label === "nation-generator")
+    : LAYOUT_RULES.find((r) => labels.includes(r.label));
   if (!rule) {
     return {
       content,
@@ -617,5 +622,36 @@ export function getGeneratorDocumentLayout(
       .join("\n\n")
       .trim(),
     lore: appendGmOnlySecrets(lore, gmOnlyBullets),
+  };
+}
+
+/** The three inhabited-place routes have source GM reference rather than
+ * player-ready text in the reading layout's promoted sections. */
+export function getInhabitedPlaceHandoffLayout(
+  data: GeneratorOutput,
+  layout: { content: string; lore: string },
+  generatorType?: string,
+) {
+  if (generatorType === "settlement") {
+    return { content: data.content, lore: data.lore ?? "" };
+  }
+  if (generatorType !== "tavern" && generatorType !== "kingdom") return layout;
+  const publicHeadings = new Set(
+    generatorType === "tavern"
+      ? ["the place", "the people"]
+      : ["the realm", "society & culture"],
+  );
+  const content: string[] = [];
+  const gm: string[] = [];
+  const sections = splitMarkdownSections(data.content);
+  if (sections.length === 0 && data.content.trim()) gm.push(data.content);
+  for (const section of sections) {
+    (publicHeadings.has(section.heading.toLowerCase()) ? content : gm).push(
+      section.body,
+    );
+  }
+  return {
+    content: content.join("\n\n"),
+    lore: [...gm, data.lore ?? ""].filter(Boolean).join("\n\n"),
   };
 }
