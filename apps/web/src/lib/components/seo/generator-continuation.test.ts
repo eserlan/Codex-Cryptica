@@ -66,7 +66,9 @@ describe("generator-continuation", () => {
       placement: "near-result",
       ctaLabel: "Add to my Codex",
     });
-    expect(magicItem?.summary).toContain("Magical properties stay in GM notes");
+    expect(magicItem?.summary).toContain(
+      "Only sections headed GM Reference Information or Magical Properties stay in GM reference; AI headings can vary",
+    );
 
     const newsSheet = getGeneratorContinuationConfig("news-sheet-generator");
     expect(newsSheet).toMatchObject({

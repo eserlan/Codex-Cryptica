@@ -1168,7 +1168,7 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       {
         title: "Tie recovery and identification to earlier play",
         detail:
-          "Use Add campaign context to name a known smith or battlefield. Offline drafts display this context in the document, so avoid hidden facts there. Save one Item to Codex with the visible Description and Lore & History, and the Magical Properties in GM notes. Once identified, record what the party has learned, who carries it and any limits you agree.",
+          "Use Add campaign context to name a known smith or battlefield. Offline drafts display this context in the document, so avoid hidden facts there. Save one Item to Codex with the visible Description and Lore & History. Only sections headed GM Reference Information or Magical Properties stay in GM reference; AI headings can vary, so differently headed powers may appear in main text. Check the rendered Item before sharing it. Once identified, record what the party has learned, who carries it and any limits you agree.",
       },
     ],
     linksTitle: "Make magical rewards meaningful beyond damage",
