@@ -5,13 +5,19 @@ import { flushSync, tick } from "svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const h = vi.hoisted(() => ({
+  page: {
+    url: new URL("http://localhost/"),
+  },
   helpStore: {
     activeTour: null as unknown,
     hasSeen: vi.fn(() => false),
     startTour: vi.fn(),
     skipTour: vi.fn(),
   },
-  vault: { isInitialized: true, activeVaultId: "v1" as string | null },
+  vault: {
+    isInitialized: true,
+    activeVaultId: "v1" as string | null,
+  },
   session: { isGuestMode: false, isDemoMode: false },
   modal: {
     isAnyModalOpen: false,
@@ -22,9 +28,19 @@ const h = vi.hoisted(() => ({
 }));
 
 vi.mock("$app/environment", () => ({ browser: true }));
-vi.mock("$app/state", () => ({
-  page: { url: new URL("http://localhost/") },
-}));
+vi.mock("$app/state", async () => {
+  const { reactiveImport } = await import("./test-help-store.svelte");
+  return {
+    page: {
+      get url() {
+        return h.page.url;
+      },
+      get route() {
+        return reactiveImport.route;
+      },
+    },
+  };
+});
 vi.mock("#lib/content/changelog/releases.json", () => ({
   default: [{ version: "0.9.0" }],
 }));
@@ -44,7 +60,17 @@ vi.mock("#lib/stores/help.svelte.js", async () => {
     }),
   };
 });
-vi.mock("#lib/stores/vault.svelte.js", () => ({ vault: h.vault }));
+vi.mock("#lib/stores/vault.svelte.js", async () => {
+  const { reactiveImport } = await import("./test-help-store.svelte");
+  return {
+    vault: {
+      ...h.vault,
+      get selectedEntityId() {
+        return reactiveImport.selectedEntityId;
+      },
+    },
+  };
+});
 vi.mock("#lib/stores/ui/session-mode.svelte.js", () => ({
   sessionModeStore: h.session,
 }));
@@ -104,13 +130,15 @@ vi.mock("#lib/app/onboarding/journey/journey-runtime.js", async () => {
 
 import OnboardingHost from "./OnboardingHost.svelte";
 import { onboardingStore } from "#lib/stores/ui/onboarding.svelte.js";
-import { reactiveHelp } from "./test-help-store.svelte";
+import { reactiveHelp, reactiveImport } from "./test-help-store.svelte";
 import { journeyStore } from "#lib/app/onboarding/journey/journey-runtime.js";
 
 describe("OnboardingHost", () => {
   beforeEach(() => {
     vi.useRealTimers();
     localStorage.clear();
+    h.page.url = new URL("http://localhost/");
+    reactiveImport.route.id = "/(app)";
     h.helpStore.hasSeen.mockReturnValue(false);
     reactiveHelp.activeTour = null;
     h.helpStore.startTour.mockClear();
@@ -122,6 +150,8 @@ describe("OnboardingHost", () => {
     onboardingStore.showChangelog = false;
     onboardingStore.dismissedLandingPage = true;
     onboardingStore.firstRunGuidanceActive = false;
+    onboardingStore.publicImportHandoff = null;
+    reactiveImport.selectedEntityId = null;
     journeyStore.exit();
     journeyStore.done();
   });
@@ -132,6 +162,71 @@ describe("OnboardingHost", () => {
     expect(screen.getByTestId("goal-invitation")).toBeTruthy();
     expect(h.helpStore.startTour).not.toHaveBeenCalled();
     expect(onboardingStore.firstRunGuidanceActive).toBe(true);
+  });
+
+  it("defers the invitation while importing or viewing the imported root without recording a choice", async () => {
+    onboardingStore.publicImportHandoff = "pending";
+    render(OnboardingHost);
+    await tick();
+    expect(screen.queryByTestId("goal-invitation")).toBeNull();
+    expect(onboardingStore.firstRunGuidanceActive).toBe(true);
+
+    reactiveImport.selectedEntityId = "imported-root";
+    onboardingStore.publicImportHandoff = { rootId: "imported-root" };
+    await tick();
+    expect(screen.queryByTestId("goal-invitation")).toBeNull();
+    expect(onboardingStore.goalInvitation).toBeNull();
+    expect(onboardingStore.firstRunGuidanceActive).toBe(true);
+
+    onboardingStore.publicImportHandoff = null;
+    await tick();
+    expect(screen.getByTestId("goal-invitation")).toBeTruthy();
+  });
+
+  it("defers competing prompts during a public import and releases them without persisting a dismissal", async () => {
+    h.helpStore.hasSeen.mockReturnValue(true);
+    onboardingStore.publicImportHandoff = "pending";
+    render(OnboardingHost);
+    await tick();
+    expect(onboardingStore.firstRunGuidanceActive).toBe(true);
+
+    reactiveImport.selectedEntityId = "imported-root";
+    onboardingStore.publicImportHandoff = { rootId: "imported-root" };
+    await tick();
+    expect(onboardingStore.firstRunGuidanceActive).toBe(true);
+
+    reactiveImport.route.id = "/(app)/table";
+    await tick();
+    expect(onboardingStore.firstRunGuidanceActive).toBe(false);
+    expect(onboardingStore.goalInvitation).toBeNull();
+
+    reactiveImport.route.id = "/(app)";
+    await tick();
+    expect(onboardingStore.firstRunGuidanceActive).toBe(true);
+
+    reactiveImport.selectedEntityId = "another-root";
+    await tick();
+    expect(onboardingStore.firstRunGuidanceActive).toBe(false);
+
+    onboardingStore.publicImportHandoff = "pending";
+    await tick();
+    expect(onboardingStore.firstRunGuidanceActive).toBe(true);
+
+    onboardingStore.publicImportHandoff = null;
+    await tick();
+    expect(onboardingStore.firstRunGuidanceActive).toBe(false);
+  });
+
+  it("releases the import blocker after leaving the root detail route", async () => {
+    reactiveImport.selectedEntityId = "imported-root";
+    onboardingStore.publicImportHandoff = { rootId: "imported-root" };
+    h.page.url = new URL("http://localhost/table");
+    reactiveImport.route.id = "/(app)/table";
+
+    render(OnboardingHost);
+    await tick();
+
+    expect(screen.getByTestId("goal-invitation")).toBeTruthy();
   });
 
   it("does not show it to a user who already took the tour, or in a demo", async () => {

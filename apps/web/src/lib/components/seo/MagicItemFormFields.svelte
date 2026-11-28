@@ -63,7 +63,8 @@
     id="magic-item-campaign-context-help"
     class="text-micro text-theme-text/60 leading-relaxed"
   >
-    Name the campaign, region, or faction this belongs to. Offline drafts keep
-    it in the GM notes, and the AI draft is built to fit it.
+    Name the campaign, region or faction this belongs to. Offline drafts show
+    this in the main document under Campaign Context; AI generation uses it as
+    context. Review the draft before sharing it.
   </p>
 </div>

@@ -1,6 +1,7 @@
 import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 import { parseGeneratorShareMarkdown } from "./generator-copy";
 import { resolveGeneratorShareTheme } from "./generator-page-identity";
+import { getSourceHandoffEntityType } from "./generator-document-layout";
 
 interface SharedGeneratorSnapshot {
   title: string;
@@ -39,14 +40,58 @@ export async function loadGeneratorRemixDraft(
       return null;
     }
 
+    if (options.targetPath === "/generators/heist") {
+      const score = parseGeneratorShareMarkdown(shared.content);
+      return {
+        draft: {
+          type: "event",
+          title: shared.title,
+          summary: "",
+          content: "",
+          lore: [score.summary ? `*${score.summary}*` : "", score.content]
+            .filter(Boolean)
+            .join("\n\n"),
+          labels: shared.metadata.labels ?? [],
+          status: "draft",
+        },
+        theme: resolveGeneratorShareTheme(shared.metadata.theme),
+      };
+    }
     const parsed = parseGeneratorShareMarkdown(shared.content);
+    // The business share contains text only, not its structured batch state.
+    // Preserve that inseparable draft in GM notes instead of exposing its secret.
+    if (options.targetPath === "/generators/business") {
+      return {
+        draft: {
+          type: "note",
+          title: shared.title,
+          summary: "",
+          content: "",
+          lore: [parsed.summary ? `*${parsed.summary}*` : "", parsed.content]
+            .filter(Boolean)
+            .join("\n\n"),
+          labels: shared.metadata.labels ?? [],
+          status: "draft",
+        },
+        theme: resolveGeneratorShareTheme(shared.metadata.theme),
+      };
+    }
+    // Share markdown combines the original content and lore without a reliable
+    // delimiter. Private restoration must not guess which text is player-safe.
+    const privateEntityType = getSourceHandoffEntityType(
+      options.targetPath?.split("/").at(-1),
+    );
     return {
       draft: {
-        type: "note",
+        type: privateEntityType ?? "note",
         title: shared.title,
-        summary: parsed.summary,
-        content: parsed.content,
-        lore: "",
+        summary: privateEntityType ? "" : parsed.summary,
+        content: privateEntityType ? "" : parsed.content,
+        lore: privateEntityType
+          ? [parsed.summary ? `*${parsed.summary}*` : "", parsed.content]
+              .filter(Boolean)
+              .join("\n\n")
+          : "",
         labels: shared.metadata.labels ?? [],
         status: "draft",
       },

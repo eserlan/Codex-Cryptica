@@ -1,30 +1,95 @@
 import type { ValidSlug } from "./generator-types";
 
+export interface GeneratorGuideLink {
+  href: string;
+  label: string;
+  description?: string;
+}
+
 export interface GeneratorGuide {
   summary: string;
   tips: { title: string; detail: string }[];
-  links?: { href: string; label: string }[];
+  linksTitle?: string;
+  links?: GeneratorGuideLink[];
 }
+
+const ADVENTURE_GUIDE: GeneratorGuide = {
+  summary:
+    "Build an adventure around something the characters can change, not a sequence of required scenes. Decide who is moving against them, what happens if they delay, and how more than one approach can change the outcome.",
+  tips: [
+    {
+      title: "Choose a problem that can be tackled in several ways",
+      detail:
+        "Set Choose a vibe to Classic Fantasy, Adventure Type to Rescue & Recovery, Adventure Scale to Short Arc (2-3 Sessions), and Tone to Heroic & High Stakes. Use Primary Objective & Pressure to decide what must be secured before the city gate closes. Give the party a route through the gate and another via the river, each with a different cost.",
+    },
+    {
+      title: "Give the clock and factions independent motives",
+      detail:
+        "In Starting Seed / Situation (optional), enter the witness, the ledger, and the 36-hour deadline. In World context (optional), name a magistrate who needs the evidence destroyed and dock workers who want their missing colleagues accounted for. Place clues in two different locations. Advance Complications & Escalating Pressures when the party spends time, not because they chose the wrong route.",
+    },
+    {
+      title: "Keep the prep separate from what players know",
+      detail:
+        "Use Possible Outcomes to decide what each faction does if the witness escapes, disappears, or negotiates. Add to my Codex saves one Note with the scenario details in GM notes. Open Adventure Canvas is a separate action for arranging scenes, actors and clues. Tell players only the opening situation and facts they discover.",
+    },
+  ],
+  linksTitle: "Turn an adventure premise into playable pressure",
+  links: [
+    {
+      href: "/answers/how-do-i-turn-an-rpg-idea-into-an-adventure",
+      label: "Build more than one route through a premise",
+      description:
+        "Turn a single situation into locations, opposition and evidence the party can approach in different orders.",
+    },
+    {
+      href: "/answers/how-do-i-plan-story-arcs-for-an-rpg-campaign",
+      label: "Keep the next session responsive to choices",
+      description:
+        "Use consequences and unresolved situations to carry a story arc forward without fixing its ending.",
+    },
+  ],
+};
 
 export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   nation: {
     summary:
-      "Generate a named state with a leader, two or three power blocs, a centre of power and one hidden problem, then use it as the political backdrop for a campaign.",
+      "Draft a state with a seat of authority, competing power blocs and a pressure that can undermine its rule. Turn the political backdrop into places where laws are obeyed, disputed or ignored, and let the party affect who actually governs.",
     tips: [
       {
-        title: "Set conflict level and scale first",
+        title: "Draw the limits of state power",
         detail:
-          "Conflict level changes the Society & Tensions section, from a state at peace to one in total war, so set it before anything else. Scale sets the size of the state, from a single city-state to a continent-spanning dominion.",
+          "Choose Scale to decide which journeys cross a political boundary. A City-state (single settlement) can contest a bridge or harbour; a Continent-spanning dominion must delegate to distant governors. Mark a supply route or border where officials cannot immediately enforce the capital's orders.",
       },
       {
-        title: "Use the hidden problem as the first hook",
+        title: "Separate lawful authority from practical power",
         detail:
-          "In offline drafts, the Hidden Problem in At a Glance is repeated as a Crisis entry in Entity Seeds. AI results may structure those seeds differently. Let the party uncover the problem through the state's officials or dissidents, or replace it if the campaign already has a secret.",
+          "Government style tells you who is supposed to rule. For a Corporate board, decide which director can withhold payroll or transport; for a Hereditary dynasty, choose who controls the soldiers. Give each of the Power Blocs a different means of blocking the ruler and an offer the party could accept.",
       },
       {
-        title: "Meet the factions behind the state",
+        title: "Make the hidden problem break into public life",
         detail:
-          "Power Blocs shows which factions compete for influence. Entity Seeds suggests Codex entries that can become people, groups, or places for the party to encounter from the first session.",
+          "Use Conflict level to choose how urgently the state needs help. Under Simmering tensions, a missing grain shipment may provoke a strike; during Total war, it may open a gap in the defences. Decide what evidence exposes the Hidden Problem, who benefits from suppressing it and when the next decision must be made.",
+      },
+    ],
+    linksTitle: "Bring your nation to life",
+    links: [
+      {
+        href: "/answers/how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
+        label: "Give civilisations distinct strengths and weaknesses",
+        description:
+          "Develop believable institutional advantages, dependencies and weaknesses for the generated nation.",
+      },
+      {
+        href: "/answers/how-do-i-run-political-intrigue-and-faction-play",
+        label: "Run political intrigue and faction play",
+        description:
+          "Turn its competing power blocs into active rivalries and consequential player choices.",
+      },
+      {
+        href: "/answers/how-do-i-build-a-believable-constitutional-crisis-or-coup",
+        label: "Build a believable constitutional crisis or coup",
+        description:
+          "Develop its hidden problem into a political crisis with stakes and multiple outcomes.",
       },
     ],
   },
@@ -61,32 +126,32 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   holiday: {
     summary:
-      "Generate one observance or a connected calendar of festivals, memorials and civic days, each with its origin, traditions, who keeps it, and a tension the party can walk into at the table.",
+      "Make a day on the calendar into a change in everyday life: who closes their shops, who owes a duty and what happens when someone breaks with tradition. Decide what the party witnesses before you decide whether they intervene.",
     tips: [
       {
-        title: "Choose Observance scope to decide who keeps the day",
+        title: "Choose who keeps the day, not just its date",
         detail:
-          "Observance scope sets who keeps each observance, from a local settlement to a religion or a faction. Every entry's Observed by line starts from that scope, and calendar titles and overviews name it too, so pick it before you read the traditions.",
+          "Set Observance scope to A local settlement for a harbour remembrance or A faction for a guild rite. In Culture or society and Climate, seasons, or calendar, name the people, their livelihood and a real seasonal pressure. Use Religion or cosmology and Tone to frame a solemn duty or a celebration. Ask which households cannot afford to stop work and how they keep the day differently.",
       },
       {
-        title: "Use the calendar size to choose one day or a set",
+        title: "Make a calendar change the campaign schedule",
         detail:
-          "Generate creates a single observance or a calendar of several. A single observance is one note with its timing, origin and table hook. A calendar adds an overview and a separate section for each day, so the set reads as connected rather than as a list of unrelated holidays.",
+          "Set Generate to one observance for the next session or choose a calendar of 6, 10 or 14 observances for recurring campaign dates. Read When and Observed by for each day, then mark two dates against upcoming travel: which ferry stops, market opens or authority becomes unavailable? Copy the dates into your existing campaign timeline yourself.",
       },
       {
-        title: "Add context fields when the offline draft is too generic",
+        title: "Give a contested tradition a choice, not a mandatory quest",
         detail:
-          "The offline draft uses Observance scope, the calendar size and the genre, but it does not use Culture, Climate, Religion, history, Important people, Important events or Tone. Those fields feed the AI draft, so use it when you want the observances to follow your setting.",
+          "Tick Include a contested, secret, or suppressed observance and name a remembered event or rival account in Political or historical background. Use the AI option to ground it in your campaign. Read What people believe and the GM history separately. Offer two ways to participate, such as escorting a procession or protecting a dissenter, and decide what the community does if the party declines.",
       },
     ],
     links: [
       {
         href: "/answers/how-do-you-create-a-believable-fictional-religion",
-        label: "Creating a believable fictional religion",
+        label: "Build rituals around beliefs and obligations",
       },
       {
         href: "/answers/how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
-        label: "Making cultures feel distinct",
+        label: "Give different households and regions their own traditions",
       },
     ],
   },
@@ -123,32 +188,32 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   tome: {
     summary:
-      "Generate an in-world book with its physical format, provenance, a deception, a reading hazard, and the ground truth the GM keeps, so a forbidden text can drive a scene rather than sit on a shelf.",
+      "Turn a dangerous text into a problem investigators can work on. Decide what the book claims, what is actually true, and how a reader could discover the difference through evidence rather than a compulsory reading check.",
     tips: [
       {
-        title: "Choose the Primary Reading Hazard first",
+        title: "Choose a reading hazard the party can anticipate",
         detail:
-          "Primary Reading Hazard sets the main risk in Risks & Costs of Study, and the same hazard appears in the Failure Condition and Safe Handling notes. Pick it before the other fields, since it decides what reading the book costs the party.",
+          "Set Primary Reading Hazard according to the cost you want in play. Read Risks & Costs of Study and Quick Checks & Mechanics. Give the readers a visible warning first, then choose a precaution that reduces the danger, such as a translation done away from the ritual site. Adapt any suggested check or cost to your system.",
       },
       {
-        title: "Use Current Custodian to decide who wants the book",
+        title: "Make obtaining the book a scene",
         detail:
-          "Current Custodian is the place or group that holds the book. It appears in the summary, the provenance, the Connected Entities list, and, in the offline draft, the first adventure hook, where either an agent of the custodian hires the party or a source hires them before the custodian purges access logs. Pick one that gives the party a reason to visit.",
+          "Current Custodian determines who controls access. In Optional Campaign Context, name a patron, a rival and what they each need from the text; use the AI option for this grounding. Decide whether the party can borrow, copy or bargain for the book, and what changes if another reader gets to it first.",
       },
       {
-        title: "Use Campaign Context with the AI draft",
+        title: "Reveal a passage before the interpretation",
         detail:
-          "Optional Campaign Context is not used by the offline draft. It reaches the AI prompt, so use the AI draft when the book has to connect to your campaign's people or places.",
+          "Compare Contents & Revelations with Ground Truth for the GM. Extract the actual quoted passage and one visible physical clue for a player handout. Keep the flaw, objective truth and failure condition in your private prep. Offer a second source that confirms the clue, and let characters choose whether to test the instruction or seek more evidence.",
       },
     ],
     links: [
       {
         href: "/answers/how-do-i-give-players-immersive-handouts-in-an-online-rpg",
-        label: "Giving players immersive handouts and props",
+        label: "Turn an excerpt into a useful player handout",
       },
       {
-        href: "/answers/how-to-write-an-in-world-newspaper-for-an-rpg",
-        label: "Writing an in-world newspaper for an RPG",
+        href: "/answers/how-do-you-run-a-mystery-without-railroading",
+        label: "Give investigations independent routes to the truth",
       },
     ],
   },
@@ -278,340 +343,423 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "star-system": {
     summary:
-      "Treat a star system as a playable region map rather than an astronomy textbook: every orbit should exist because a faction, resource, or travel hazard gives the crew a reason to go there.",
+      "Prepare a playable region map with a resource, a travel cost and competing groups whose needs reach across named bodies. Give each major destination a reason to visit, and let the crew decide which route and employer they trust.",
     tips: [
       {
-        title: "Start with the stakes, not every rock",
+        title: "Choose what the crew relies on",
         detail:
-          "Pick two or three bodies where rival factions or scarce resources collide, and leave the remaining orbits as landmarks or refueling stops.",
+          "Set Genre, Civilisation Level and System Character together: for example, a Contested Frontier in Hard Sci-Fi. Read Major Bodies and Resources & Strategic Importance, then identify one place supplying food, fuel or repairs and one place dependent on it. Decide what the crew can trade when the regular supply fails.",
       },
       {
-        title: "Use travel hazards to pace scenes",
+        title: "Make distance and hazards into meaningful routes",
         detail:
-          "Radiation belts, debris fields, and sensor-blind Lagrange points create natural complications between stations without needing scripted ambushes.",
+          "Use System Type and Scientific Realism to decide how strongly stellar conditions shape your travel. Read The Star(s), Major Bodies and Travel Hazards, then mark a safe but slow route and a faster risky one. The diagram shows orbital structure, but does not calculate travel times. Choose those according to your RPG's rules.",
       },
       {
-        title: "Expand key worlds on demand",
+        title: "Use existing factions to turn the system into a campaign",
         detail:
-          "Click Develop This World on any named body in the result to spin up a full planetary profile that inherits the system's tension.",
+          "Name existing powers and a disputed route in Add campaign context and use the AI option to ground the draft. Read Settlements & Factions and System-Wide Conflict or Mystery, then choose one demand from each side and what happens if the crew refuses both. Develop This World opens a separate world draft with a body's context; save and link it yourself if the crew visits.",
       },
     ],
     links: [
       {
         href: "/answers/how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg",
-        label: "Running sci-fi party roles",
+        label: "Give a crew different ways to solve travel and trade problems",
       },
       {
         href: "/answers/how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
-        label: "Differentiating sci-fi civilisations",
+        label: "Give competing powers distinct resources and dependencies",
       },
     ],
   },
   "language-generator": {
     summary:
-      "A tabletop conlang only needs enough phonology, naming patterns, and 8–12 everyday words to make place names, inscriptions, and NPC titles sound cohesive at the table.",
+      "Build just enough of a fictional language to let players recognise repeated words, read a sign and distinguish one register of speech from another. Treat the glossary as a growing record of meanings your table can rely on, not a complete language you have to learn before play.",
     tips: [
       {
-        title: "Match sound to culture",
+        title: "Decide who speaks it and when",
         detail:
-          "Pair clipped consonants with military or bureaucratic tongues and vowel-rich structures with coastal, liturgical, or courtly speech.",
+          "Try Genre Classic Fantasy, Tone & Sounds Lyrical & Vowel-rich and Linguistic Role Common Speech. In World context (optional), name the trading towns and speakers that use it. Choose the sound pattern for ease of recognition, not as a shorthand for a people's personality or morality.",
       },
       {
-        title: "Reuse roots across the map",
+        title: "Build an inscription players can decipher",
         detail:
-          "Take two or three generated root words for river, gate, or stone and combine them into local landmarks so players can decode names by ear.",
+          "Select Compound Words in Name Structure and check Common Vocabulary & Word Bank against Word Formation & Naming Conventions. In Iofielefana, aevi means city and liofi means water, so Aeviliofi can name a river city if the head word comes first. Repeat the same roots on a ferry sign and on a map; give the party a translation to discover through context.",
       },
       {
-        title: "Keep idioms playable",
+        title: "Keep meanings consistent across sessions",
         detail:
-          "Drop one untranslated greeting or oath into NPC dialogue rather than full sentences—players remember a single recurring phrase.",
+          "Pick a greeting from Sample Phrases and speak it the same way each time. Save one Note with the sound rules, glossary and phrases in main text, and the example names and At the Table cues in GM notes. Link it to the cultures and locations that use it, then add new terms only when you establish what they mean.",
       },
     ],
+    linksTitle: "Build a vocabulary your table can remember",
     links: [
       {
+        href: "/answers/how-do-you-create-a-fictional-language-for-an-rpg",
+        label: "Make a small, consistent fictional language",
+        description:
+          "Choose reusable roots, a few grammar patterns and a practical vocabulary for scenes.",
+      },
+      {
         href: "/answers/how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
-        label: "Building distinct cultures",
+        label: "Give speakers varied cultures and identities",
+        description:
+          "Separate shared institutions and customs from the personality of an individual speaker.",
       },
     ],
   },
   "origin-generator": {
     summary:
-      "Strong character origins explain why a hero or villain stepped into danger today—not just what happened to them years ago.",
+      "An origin explains what the hero can do and why the consequences keep arriving. Separate the witnessed incident, the public explanation and the truth, then choose a current demand the hero can accept, refuse or investigate.",
     tips: [
       {
-        title: "Tie the incident to an active faction",
+        title: "Choose how the event creates an obligation",
         detail:
-          "Swap generic disaster details for a named guild, lab, or bloodline already present in your campaign so the backstory creates immediate allies or rivals.",
+          "Set Origin Type to Technology for an artefact or device that someone wants back, or Scientific Experiment for an institution that may have records and witnesses. Choose Tone for the hero's response to that pressure. Read The Origin and What the World Knows separately; ask the player which details their hero is willing to disclose.",
       },
       {
-        title: "Keep one unresolved cost",
+        title: "Tie the first hook to someone already in play",
         detail:
-          "The best origin leaves behind a debt, a witness, or a physical tell that the GM can bring back mid-arc.",
+          "Name a city, team or rival in Campaign context (optional) and use the AI option to ground it. Read Campaign Hook and give the patron a concrete request that follows from the incident. Let the hero decline or follow a different lead, without undoing their origin or taking control of their decisions.",
       },
       {
-        title: "Pair with a personality profile",
+        title: "Keep one cost that survives the revelation",
         detail:
-          "Use the generated flaw or vow as the character's default reaction under pressure.",
+          "Read The Full Truth, Who Knows and Ongoing Consequence together. Choose an observable warning before the complication returns, such as a stolen device sending a signal. Record who learns the truth after the next session. The origin should still create a problem even if the hero reveals everything to the public.",
       },
     ],
     links: [
       {
-        href: "/answers/how-do-i-improvise-npcs-in-dnd",
-        label: "Improvising memorable characters",
+        href: "/answers/how-do-you-use-player-backstories-in-an-rpg-campaign-world",
+        label: "Turn backstory people and debts into campaign consequences",
+      },
+      {
+        href: "/answers/how-do-i-plan-story-arcs-for-an-rpg-campaign",
+        label: "Build recurring pressures without scripting the hero's choices",
       },
     ],
   },
   personality: {
     summary:
-      "Memorable RPG characters come from a visible habit, a private pressure, and one contradiction—not a two-page monologue.",
+      "Keep a character recognisable across very different conversations. Choose a visible habit for their first appearance, then use their drives, virtue, flaw and contradiction to work out how their behaviour changes when the party puts them under pressure.",
     tips: [
       {
-        title: "Lead with one physical tell",
+        title: "Give them someone to answer to",
         detail:
-          "Pick a single posture, vocal cadence, or prop from the draft so you can drop straight into character without acting.",
+          "Use Role / Context and Optional Relationship Context to set a target for a tailored AI draft or to guide your own edits to a non-AI profile. A Contact / Informant who owes the party a favour still has a loyalty elsewhere: decide what they will tell a friend that they would never tell a stranger.",
       },
       {
-        title: "Play the want against the fear",
+        title: "Let a genuine strength cause a problem",
         detail:
-          "When players push an NPC, decide whether they protect their public reputation or chase their secret goal.",
+          "Try Guarded in Social Style with Loyalty above all in Moral Outlook. Read Virtue and Flaw together and decide when protecting an ally turns into withholding information the party needs; the players can then appeal to the same loyalty instead of simply rolling against a hostile character.",
       },
       {
-        title: "Save keepers to your vault",
+        title: "Know when the usual manner breaks",
         detail:
-          "Use Save to Codex to keep recurring contacts linked to the locations and factions where players met them.",
+          "Choose Calm in Temperament and Reserved in Reserved / Expressive for a character who keeps control in ordinary conversation. Pick a cue from Mannerism / Tell, then consult Under Pressure and Boundary / Trigger to decide what changes if the party crosses a line.",
       },
     ],
+    linksTitle: "Bring the personality to the table and back again",
     links: [
       {
+        href: "/answers/how-do-you-make-npcs-memorable-without-lots-of-prep",
+        label: "Reduce a profile to the cues players will notice",
+        description:
+          "Choose an immediate want, a recognisable habit and a contradiction, then add the relationship or sensory detail needed for the first scene.",
+      },
+      {
         href: "/answers/how-do-i-roleplay-npcs-if-im-not-good-at-acting",
-        label: "Roleplaying NPCs without acting",
+        label: "Portray a character without doing a voice",
+        description:
+          "Use a clear attitude, habitual behaviour and simple third-person narration to make the character identifiable as conversations shift.",
+      },
+      {
+        href: "/answers/how-do-you-keep-track-of-npcs-in-a-long-campaign",
+        label: "Remember what changed before they return",
+        description:
+          "Record the last meeting, current want and unresolved obligation so a recurring character remembers what the party did.",
       },
     ],
   },
   npc: {
     summary:
-      "Every table-ready NPC needs three things: a clear role in the scene, a faction or personal stake, and one secret that changes how the party negotiates with them.",
+      "Give an unexpected contact something to ask of the party, not just a name to introduce. Use a Table Card for an encounter now or a Full Dossier for someone whose loyalties and price will matter in later scenes.",
     tips: [
       {
-        title: "Give them an immediate agenda",
+        title: "Choose the person who controls the next step",
         detail:
-          "Decide what the NPC wants in the next ten minutes before the party even speaks to them.",
+          "In Choose their role, a Classic Fantasy Guard can refuse passage while a Merchant can withhold supplies. Pick Common Good under Choose their moral stance if harm to innocent people should change their mind, or Mercenary Instinct if a better bargain should sway them.",
       },
       {
-        title: "Connect them to a place or faction",
+        title: "Give the first conversation a decision",
         detail:
-          "Link the NPC to an existing settlement or guild so their alliances and enemies ripple through the campaign.",
+          "Set Prep style to Table Card for a surprise encounter. Start with the sensory tag and immediate want, then reveal the contradiction only when the players challenge their first impression. For a recurring rival or contact, choose Full Dossier and decide what price they will demand next time.",
       },
       {
-        title: "Leave the secret discoverable",
+        title: "Make the witness useful without making them omniscient",
         detail:
-          "Plant one visible clue in their gear, companions, or ledger that rewards curious players.",
+          "Separate what they witnessed from what they merely suspect or conceal. Let an honest question uncover a genuine lead, then use the relationship hook or faction connection to point the party towards someone who can answer what this NPC cannot.",
       },
     ],
+    linksTitle: "From first meeting to a recurring cast",
     links: [
       {
-        href: "/answers/how-do-i-improvise-npcs-in-dnd",
-        label: "How to improvise NPCs",
+        href: "/answers/how-do-you-improvise-npcs-on-the-spot",
+        label: "Introduce a contact without stopping play",
+        description:
+          "Use the five-beat introduction to establish their role, want and attitude before delivering backstory.",
       },
       {
-        href: "/answers/how-do-i-roleplay-npcs-if-im-not-good-at-acting",
-        label: "Roleplaying without acting",
+        href: "/answers/how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know",
+        label: "Handle broad questions without hiding essential clues",
+        description:
+          "Give the witness's useful account, distinguish evidence from hearsay and offer a lead the party can act on.",
+      },
+      {
+        href: "/answers/how-do-you-organise-npc-relationships",
+        label: "Turn a tentative connection into a changing relationship",
+        description:
+          "Record who owes whom, why, who knows and what could break the arrangement.",
       },
     ],
   },
   settlement: {
     summary:
-      "A believable settlement exists for a reason—a ford, mine, shrine, or relay—and stays interesting because two local groups disagree on how to run it.",
+      "Create an inhabited place the party can navigate and return to. Give it a reason to exist, a recognisable everyday routine and a tension that changes what visitors can do.",
     tips: [
       {
-        title: "Anchor the economy to one export",
+        title: "Choose the reason people settled here",
         detail:
-          "Build the market, guards, and visitor traffic around the town's main trade good or strategic choke point.",
+          "Pair Environment with Primary Function: Forest edge and Trade hub gives you a market where guides and foresters meet merchants. Make the main route, resource or service visible on arrival, then decide what travellers must ask for and what locals can deny them.",
       },
       {
-        title: "Put the tension on main street",
+        title: "Set the size for the scene you need",
         detail:
-          "Show the local conflict in the first scene—a closed gate, a tax dispute, or a ration queue—rather than burying it in lore.",
+          "Choose Scale as Village when the party should quickly learn who knows whom, or Town for distinct neighbourhoods and competing contacts. Use Points of Interest and Notable Inhabitants to prepare an official, a broker and a resident who offers a different perspective.",
       },
       {
-        title: "Seed three recurring faces",
+        title: "Put the tension on the party's path",
         detail:
-          "Pair the settlement with an official, a broker, and a local troublemaker so players have immediate contacts.",
+          "Pair Dominant Tension with Tone: a cosy town in Succession crisis can welcome visitors while its factions argue over who may collect tolls. Show that disagreement at the gate or market; give two NPCs different reasons for asking the party to act.",
       },
     ],
+    linksTitle: "Build a place, then put it into play",
     links: [
       {
         href: "/answers/how-do-i-design-a-geographically-realistic-town-or-village",
-        label: "Designing realistic settlements",
+        label: "Put the settlement where it makes sense",
+        description:
+          "Make terrain, roads and water explain why people live there.",
       },
       {
         href: "/answers/how-do-i-decide-what-a-settlement-produces-imports-and-exports",
-        label: "Settlement trade and exports",
+        label: "Turn local trade into dependencies",
+        description:
+          "Choose what locals need and what they can offer visitors.",
+      },
+      {
+        href: "/answers/what-should-an-rpg-settlement-contain",
+        label: "Prepare the places and contacts players actually use",
+        description:
+          "Make the town ready for a session without detailing every house.",
       },
     ],
   },
-  "adventure-generator": {
-    summary:
-      "Use an adventure outline as a situation with pressure, not a rigid script: set a ticking clock, two competing NPCs, and clues that point forward even when plans go sideways.",
-    tips: [
-      {
-        title: "Start near the inciting pressure",
-        detail:
-          "Open with the witness, contract, or crisis already knocking on the party's door so session one has momentum.",
-      },
-      {
-        title: "Convert to an Adventure Canvas",
-        detail:
-          "Click Open Adventure Canvas on the output to turn locations, factions, and clues into a movable relationship map.",
-      },
-      {
-        title: "Keep outcomes open",
-        detail:
-          "Let player choices determine which faction wins—track only what each side will do if the party ignores them.",
-      },
-    ],
-    links: [
-      {
-        href: "/answers/how-do-i-prepare-an-rpg-session-step-by-step",
-        label: "Preparing a session step by step",
-      },
-      {
-        href: "/answers/how-do-i-plan-story-arcs-for-an-rpg-campaign",
-        label: "Planning campaign story arcs",
-      },
-    ],
-  },
+  "adventure-generator": ADVENTURE_GUIDE,
   "point-crawl": {
     summary:
-      "Point crawls replace empty hex-counting with meaningful travel decisions: every node is a landmark or hazard, and every route has a cost, risk, or secret shortcut.",
+      "Prepare travel as a succession of choices rather than a journey along a fixed path. Use a small network of locations with different costs, then tell the party what they can see at each junction without revealing the whole map.",
     tips: [
       {
-        title: "Make junctions ask a question",
+        title: "Match the route choices to your session",
         detail:
-          "Give each fork a clear trade-off—fast and exposed versus slow and hidden—so players can make informed choices.",
+          "Set Genre / Theme to Classic Fantasy, Crawl Scale to Wilderness, Number of Points to 8 and Interconnection Density to Balanced branching for a coastal pilgrimage. In Free-Text Premise, say the tide will return before the party reaches the shrine. Use Danger Level to set the stakes, then give the exposed causeway and sheltered cave different travel times and risks.",
       },
       {
-        title: "Use loops, not straight lines",
+        title: "Make the hidden route discoverable",
         detail:
-          "At least one alternate loop or secret path prevents dead ends and rewards scouting.",
+          "Set Secret Route Frequency to Standard (1-2 secret routes). Inspect the graph and follow the Signpost field at each junction. In the Receding Tide Road example, the causeway bells hold the sequence for the locked arch at the Lantern-Ruin Fork. Decide what the party can notice before committing to a route, and offer a second way to learn the sequence if they miss it.",
       },
       {
-        title: "Keep node prep to three lines",
+        title: "Save a network you can run from the vault",
         detail:
-          "What is visible on arrival, what hazard or inhabitant waits here, and what clue points to neighbouring nodes.",
+          "Inspect locations and use Include in Vault Save, Select All or Core Only before adding the crawl. Check that the starting point, goal and clues needed for locked routes are still selected. Add to my Codex opens the overview Note and creates one Location for each selected point, with routes between selected endpoints. Keep this full map and the overview for GM prep; share only discovered routes and sights with players.",
       },
     ],
+    linksTitle: "Make every journey a meaningful choice",
     links: [
       {
         href: "/answers/how-do-you-build-a-point-crawl-for-an-rpg",
-        label: "Building a point crawl",
+        label: "Build a navigable network of landmarks",
+        description:
+          "Place junctions, route signposts, obstacles and clues so players can make informed travel choices.",
       },
       {
         href: "/answers/point-crawl-vs-hex-crawl",
-        label: "Point crawl vs hex crawl",
+        label: "Choose the right scale of exploration",
+        description:
+          "Decide whether travel between landmarks or exploration of unknown terrain is the interesting part of play.",
+      },
+      {
+        href: "/examples/the-receding-tide-road-point-crawl",
+        label: "Walk through the Receding Tide Road example",
+        description:
+          "See how the tidal causeway, hidden routes and the Lantern-Ruin gate make an eight-point coastal expedition playable.",
       },
     ],
   },
   rumour: {
     summary:
-      "Great rumours give players actionable leads without spoiling the truth: mix reliable gossip, distorted exaggerations, and dangerous misconceptions.",
+      "Offer gossip as a set of choices, not a disguised mission list. Give each claim a traceable source, somewhere to check it, and a consequence if the party believes the wrong person.",
     tips: [
       {
-        title: "Always name a pursuable lead",
+        title: "Make the leads fit the place",
         detail:
-          "A rumour should mention a specific NPC, dock, ruin, or faction the party can visit right away.",
+          "Set Genre to Classic Fantasy, Tone to Everyday, Danger Level to Low and Subject Focus to Balanced Mix for a busy market town. Replace a generic lead with a name, stall or shift the party can actually find. Read two or three rumours first and keep the others for later visits.",
       },
       {
-        title: "Separate player gossip from GM truth",
+        title: "Let wrong information reveal something useful",
         detail:
-          "Read only the rumour bullets aloud; keep the Reality and If Investigated notes behind the screen.",
+          "Check Reality and If Investigated under GM Reference. If the rumour about a poisoned well is false, let inspection reveal a broken sluice and a merchant profiting from panic instead. Give the party evidence before they make an irreversible accusation.",
       },
       {
-        title: "Drop two rumours per tavern stop",
+        title: "Track what the characters have heard",
         detail:
-          "Giving players a choice between competing leads turns downtime into player-driven exploration.",
+          "Add to my Codex saves all six rumours in one Note. Keep the Rumour, Lead and Source entries in the main text and the truth in GM notes. Mark claims as heard, checked or disproved after each session, and link the Note to the settlement or people already in your vault.",
       },
     ],
+    linksTitle: "Make local gossip worth following",
     links: [
       {
-        href: "/answers/how-do-i-get-a-stalled-rpg-investigation-moving-again",
-        label: "Keeping investigations moving",
+        href: "/answers/how-do-you-generate-useful-rpg-rumours",
+        label: "Write rumours that give players something to do",
+        description:
+          "Give each rumour a concrete lead and make the truth discoverable even when the claim is mistaken.",
+      },
+      {
+        href: "/answers/how-to-create-rumours-for-a-fantasy-town",
+        label: "Tie gossip to local pressures",
+        description:
+          "Use the people, places and disagreements in a settlement to decide what its inhabitants talk about.",
       },
     ],
   },
   "bbeg-generator": {
     summary:
-      "A compelling main villain believes they are solving a real problem—and uses lieutenants, leverage, and a ticking clock so the party feels their reach before meeting them.",
+      "Build a campaign around an antagonist whose influence is felt before the party meets them. Use the first signs, the people carrying out the plan and the consequences of interference to make an evolving threat rather than a sequence of compulsory encounters.",
     tips: [
       {
-        title: "Define what happens if the party does nothing",
+        title: "Make the scale of the threat tangible",
         detail:
-          "Give the villain three concrete milestones so their scheme advances visibly between sessions.",
+          "Choose a Threat Scale the party can see and affect: a Regional villain might close the only ferry between two towns, while a Local one could control a single market. Pick one First Signs clue the players can encounter in ordinary travel and give them at least two ways to investigate it.",
       },
       {
-        title: "Put lieutenants in the spotlight early",
+        title: "Decide what the villain will sacrifice",
         detail:
-          "Let players clash with the villain's agents and policies long before the final confrontation.",
+          "Combine Corrupt Ruler in Villain Archetype with Guardian in World Relation; someone protecting a city might sacrifice the surrounding villages to do it. Use Tragic in Tone and Understandable, Still Wrong in Degree of Sympathy / Redeemability, then give a loyal lieutenant a line they will not cross, so the party can expose that cost and win an ally.",
       },
       {
-        title: "Offer a moral or tactical flaw",
+        title: "Let interference change the next move",
         detail:
-          "A blind spot—pride, an oath, or an old ally—gives clever players a way to disrupt the plan without brute force.",
+          "Read The Villain's Plan and Escalation If Ignored as what the antagonist would attempt without opposition. If the party exposes a forged order, decide what resource or support was lost, change the next viable stage, and show the fallout at the table through a cancelled patrol, a public accusation or an offer to negotiate.",
       },
     ],
+    linksTitle: "Build, run and update the campaign threat",
     links: [
       {
+        href: "/answers/how-do-i-plan-story-arcs-for-an-rpg-campaign",
+        label: "Turn an antagonist's agenda into playable arcs",
+        description:
+          "Separate the long-term stakes from the current problem and prep only the next session in detail.",
+      },
+      {
         href: "/answers/how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
-        label: "Making threats feel urgent",
+        label: "Show the threat advancing without forcing a path",
+        description:
+          "Use visible consequences, soft clocks and rival actors to create informed choices even when the party goes elsewhere.",
+      },
+      {
+        href: "/answers/how-do-you-track-faction-turns-between-rpg-sessions",
+        label: "Resolve the villain's next move between sessions",
+        description:
+          "Give the organisation one targeted action, resolve its outcome and log a consequence that the party can notice next time.",
       },
     ],
   },
   creature: {
     summary:
-      "Memorable monsters behave like living creatures (or focused hazards) with a habitat, a tell before they strike, and an instinct that tells you when they flee or bargain.",
+      "Design an inhabitant of the world rather than a bag of hit points. Use its habitat, ecological role and observable behaviour to decide what it is doing when the party arrives, what warns them of danger and how they can interact without fighting.",
     tips: [
       {
-        title: "Telegraph their signature threat",
+        title: "Give the creature a reason to be in this place",
         detail:
-          "Show tracks, scorched masonry, or prey behaviour before initiative starts so players can prepare tactics.",
+          "Pair Ecological Role / Behaviour with Habitat / Environment. A Herbivore / Migratory Grazer crossing a wetland may leave a ruined footbridge and a new trail; a Territorial Guardian in caverns may block a passage to its nesting chamber. Choose what the party disturbs by taking the obvious route.",
       },
       {
-        title: "Give every creature a non-combat motive",
+        title: "Decide what the party can learn before danger",
         detail:
-          "Territorial defence, hunger, or protecting a nest creates opportunities for stealth, bribery, or retreat.",
+          "Use Threat Level to decide how urgent the warning should be, not as a numerical encounter rating. Turn one Observable Ability into a recognisable sign, such as scorched moss or a shed scale. Let players change their plan after finding that sign instead of learning the danger only when it strikes.",
       },
       {
-        title: "Pair with terrain",
+        title: "Give every encounter an end other than death",
         detail:
-          "Drop the creature into an environment that favours its movement or senses rather than a flat room.",
+          "Use Intelligence / Temperament to decide what changes the creature's behaviour. A Cunning / Pack Mind might retreat when its group is separated; a Fully Sapient / Cultured one may negotiate access to a feeding ground. Choose the boundary it will not cross and the consequence if the party honours it.",
       },
     ],
+    linksTitle: "Turn a creature into a playable encounter",
     links: [
       {
+        href: "/answers/what-makes-a-good-random-encounter",
+        label: "Give the creature an activity and a reason to be here",
+        description:
+          "Create an encounter with an existing situation, non-combat choices and regional consequences.",
+      },
+      {
         href: "/answers/how-do-i-balance-rpg-combat-encounters-without-a-tpk",
-        label: "Balancing combat encounters",
+        label: "Telegraph threat and build a way out",
+        description:
+          "Assess action economy, objectives and retreat using the rules of your game.",
       },
     ],
   },
   "god-generator": {
     summary:
-      "Deities feel real in a campaign when you see how ordinary people bargain with them—shrines, taboos, rival priesthoods, and small daily prayers.",
+      "Give a god, saint or spirit a place in ordinary life before it appears in a myth. Use its domain, worshippers, rite and taboo to show who seeks its help, what the faith demands and where its clergy disagree.",
     tips: [
       {
-        title: "Focus on worship, not cosmic stats",
+        title: "Choose who calls on this power and why",
         detail:
-          "Define one visible shrine custom and one taboo that players notice when entering a temple town.",
+          "Choose Single Deity / Spirit under Generate target, then set Divine Type and Primary Domain for the role the power plays. A Saint of Knowledge might attract apprentices seeking permission to read forbidden texts, while a God of War could be invoked by people hoping to keep a battle away from their homes.",
       },
       {
-        title: "Give domains human friction",
+        title: "Turn the faith into a visible custom",
         detail:
-          "Two sects of the same god often disagree harder than rival pantheons.",
+          "Set Worshippers to Folk Devotion for rituals at ordinary thresholds, or State Religion for a rite enforced by officials. Read Rituals & Taboos and show one practice when the party enters a shrine or household. Decide what help someone offers when the party observes it, and who is excluded if they refuse.",
+      },
+      {
+        title: "Make two interpretations create a decision",
+        detail:
+          "Set Tone to Dark / Grim for a promise with a troubling price, or Heroic when people look to the power for courage. Name an existing institution or community in Campaign context (optional), then turn the Secret or Immediate Hook into an observable omen two clergy factions interpret differently.",
       },
     ],
+    linksTitle: "From a single power to a living faith",
     links: [
       {
+        href: "/answers/how-do-you-create-a-believable-fictional-religion",
+        label: "Make worship part of everyday life",
+        description:
+          "Give worshippers habits, institutions and disputes rather than only a list of gods.",
+      },
+      {
         href: "/answers/can-multiple-gods-share-a-domain",
-        label: "Sharing divine domains",
+        label: "Turn overlapping domains into competing claims",
+        description: "Decide what each power promises that the others cannot.",
+      },
+      {
+        href: "/answers/how-do-you-create-a-pantheon",
+        label: "Connect the deity to a larger pantheon",
+        description:
+          "Give neighbouring gods alliances and rivalries with mortal consequences.",
       },
     ],
   },
@@ -652,407 +800,668 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   quest: {
     summary:
-      "Each result is a quest with a hook, a location, a key NPC, a threat, a complication, a twist and a reward. The vibe sets the hook, the complication and the names, and the GM notes hold the scope and any campaign context.",
+      "Treat a quest as a situation that will evolve with or without the party. The hook is an invitation, not a sequence of required scenes. Prepare what the people involved want and what happens if nobody intervenes.",
     tips: [
       {
-        title: "Pick the vibe first",
+        title: "Set stakes the party can reach",
         detail:
-          "Choose a vibe changes the Tone, Scope, Location Type, Main Threat, Twist and Reward options, so each vibe offers its own choices. It also sets the hook, the complication and the key NPC's name.",
+          "Choose a vibe, then use Scope to decide how far the consequences spread. In Classic Fantasy, Local (village / district) could mean a mill that stops supplying flour; World-threatening needs signs of danger beyond the first location. Show the next consequence rather than explaining the entire crisis.",
       },
       {
-        title: "Read the scope in the GM notes",
+        title: "Give the hook more than one entrance",
         detail:
-          "Scope appears as a Core Field in the GM notes, drawn from the labels of the vibe you chose, such as City-wide for Cyberpunk or Territory-scale (frontier) for Western.",
+          "Pair Location Type with Main Threat to decide what the party can discover before meeting the patron. At a Cursed Ruin threatened by a Corrupt Noble, a missing supply wagon, a frightened witness and a disputed deed could each lead to the same problem. The party can investigate without taking the offered job.",
       },
       {
-        title: "Give the campaign context a situation",
+        title: "Let the reversal change the bargain",
         detail:
-          "Optional Campaign Context is preserved in a dedicated GM-note section, separate from the hook and threat. Write a situation the GM can connect to the quest.",
+          "Use Twist and Reward to decide what the players stand to gain or lose once they learn the hidden truth. If the patron hired them to recover a stolen deed, revealing that it was forged gives them a choice: collect the promised reward or earn the villagers' trust by exposing it.",
+      },
+      {
+        title: "Anchor the quest to something already in play",
+        detail:
+          "In Optional Campaign Context, name a person, place or unresolved promise the party already knows. After drafting, choose one way the quest changes that relationship, even if the party leaves it unfinished.",
+      },
+    ],
+    linksTitle: "Turn a quest hook into playable choices",
+    links: [
+      {
+        href: "/answers/how-do-you-create-quest-hooks-without-railroading",
+        label: "Present the hook without dictating the solution",
+        description:
+          "Give players clear reasons to investigate and room to choose a different approach.",
+      },
+      {
+        href: "/answers/how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
+        label: "Make the threat matter without forcing the party's hand",
+        description:
+          "Use visible consequences and other actors' plans to build urgency without punishing every delay.",
+      },
+      {
+        href: "/answers/how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
+        label: "Keep unanswered hooks useful across sessions",
+        description:
+          "Record leads, their current state and when to bring them back into play.",
       },
     ],
   },
   "faction-roster": {
     summary:
-      "An offline draft is a note listing 3 to 6 members of one faction, each with a duty, motive, stance, immediate want, leverage point and connection to another member. The AI draft is prompted for the selected number and these details, though its returned structure can vary. Any people already named in the faction you paste in take the first places.",
+      "Give a faction faces the party can bargain with, not a single voice that speaks for everyone. Use the roster's duties, personal wants and connections to decide who has the power to grant a favour, who needs something in return and who objects.",
     tips: [
       {
-        title: "Paste in the named people",
+        title: "Choose who gets a seat in the scene",
         detail:
-          "In The faction field, paste a generated faction with its Notable NPCs list. Each named person keeps their name and description and takes a place before any new members are added.",
+          "Paste the faction and its Notable NPCs list into The faction, then set Roster size to include the people the party already knows. Three members can carry a disputed contract, while five or six give a council hearing several competing votes and witnesses.",
       },
       {
-        title: "Set the roster emphasis",
+        title: "Put authority in the right hands",
         detail:
-          "In Roster emphasis, Public face puts the authority figure and the true believer on the roster, and Internal dissent puts the conflicted member and the internal problem there. Field operators and New blood each bring the recent recruit in.",
+          "Use How the faction is organised to work out what a member can actually promise. In a Council, a spokesperson may need another vote before granting passage; in a Cell network, a contact might offer local help without knowing what other cells are planning.",
       },
       {
-        title: "Let the vibe name the new members",
+        title: "Give a bargain two interested parties",
         detail:
-          "The Choose a vibe field sets the names of members the faction does not already name, so a Cyberpunk roster gets names such as Mira and Kade. Text in Add campaign context (optional) goes into the GM notes under Campaign Context, not into the member text.",
+          "Choose Internal dissent in Roster emphasis when the party needs to exploit an internal fault line, or Public face when it must deal with representatives and their promises. Pick two members whose immediate wants collide, then use their leverage and named connection to decide what each would concede and whose trust the party might lose.",
+      },
+      {
+        title: "Let the next meeting change the roster",
+        detail:
+          "In Add campaign context (optional), note an approaching vote, missing delivery or debt the members cannot ignore. Use the roster's stance and current wants to decide who acts before the party returns, then record which obligation or alliance has changed.",
+      },
+    ],
+    linksTitle: "Put the faction's members into play",
+    links: [
+      {
+        href: "/answers/how-do-i-roleplay-npcs-if-im-not-good-at-acting",
+        label: "Give each member a recognisable voice at the table",
+        description:
+          "Combine a current want, an attitude and one observable habit to distinguish people without acting out the whole council meeting.",
+      },
+      {
+        href: "/answers/how-do-i-run-political-intrigue-and-faction-play",
+        label: "Make competing loyalties drive negotiation",
+        description:
+          "Use rival agendas, obligations and visible consequences to present political choices the party can influence.",
+      },
+      {
+        href: "/answers/how-do-you-track-faction-turns-between-rpg-sessions",
+        label: "Record who acted while the party was away",
+        description:
+          "Resolve one faction move, show what changed and update the member's commitments before the next session.",
       },
     ],
   },
   "artifact-generator": {
     summary:
-      "Each result is a named relic with dormant, awakened and ascendant powers, an attunement ritual, a cost, factions that want it, adventure hooks and a way to destroy it. GM notes retain your campaign setting, while its vibe shapes the factions, rumours and hooks.",
+      "Build a relic that changes a campaign because people pursue it and its wielder has difficult choices to make. Treat its powers, its price and the means of ending its influence as parts of the same story.",
     tips: [
       {
-        title: "Set the curse to set the cost",
+        title: "Choose who has to live with its power",
         detail:
-          "In the offline draft, Curse / Cost / Drawback sets the Cost, Curse, Corruption, or Taboo paragraph. Choose None (Pure Burden of Custody) for a relic that is heavy to keep but has no supernatural price.",
+          "Set Power Tier / Scope to Heroic Wonder for a relic that changes a skirmish, or Regional Masterpiece when whole towns have reason to claim it. Check each of the three power stages against that reach; give the party a reason to hold back rather than always use the strongest power.",
       },
       {
-        title: "Let the status open the adventure",
+        title: "Start with a claim, not a free treasure",
         detail:
-          "In the offline draft, Current Status puts one matching hook first. A relic Sealed in Royal / High-Security Vault opens with a vault break, while one Lost in Ruined Sanctuary opens with getting into the sanctuary.",
+          "Choose Current Status as Lost in Ruined Sanctuary when several factions can race for the discovery, or Wielded by a Tyrant / Rival when the party must take it from someone. Give two pursuers incompatible demands and let the party decide whom to trust, bargain with or defy.",
       },
       {
-        title: "Use the tier to set how far it reaches",
+        title: "Make awakening and the price visible",
         detail:
-          "Power Tier / Scope changes only the Ascendant / Zenith Powers line. Heroic Wonder and Regional Masterpiece give it a smaller reach than Cataclysmic Power, and the dormant and awakened powers stay the same at every tier.",
+          "Match Curse / Cost / Drawback to a dilemma you want to play. With Strict Moral / Physical Taboo, show the vow in the relic's history before testing it; with None (Pure Burden of Custody), make its need for protection the real price. Reveal an achievable awakening requirement and a credible way to seal or destroy it.",
+      },
+    ],
+    linksTitle: "Make the relic matter beyond its first discovery",
+    links: [
+      {
+        href: "/answers/how-do-i-upgrade-a-player-characters-weapon-without-replacing-it",
+        label: "Unlock meaningful powers through deeds",
+        description:
+          "Let a relic develop with its bearer rather than simply increasing numbers.",
+      },
+      {
+        href: "/answers/how-much-loot-and-how-many-magic-items-should-i-give-my-players",
+        label: "Decide when a campaign-shaping reward belongs",
+        description:
+          "Pace major finds across the campaign and consider what happens if the party trades them.",
       },
     ],
   },
   faction: {
     summary:
-      "Each result is a named faction with a type, a scale, a goal, an internal conflict, an immediate hook, two named NPCs and a rival faction. Campaign context goes into the GM notes, and the vibe changes the goal, conflict and hook.",
+      "Create an organisation that has the means to pursue its own agenda, even when the party is elsewhere. Give its representatives something worth bargaining for, a reason to disagree and a rival who can act first.",
     tips: [
       {
-        title: "Choose the type for the base and resources",
+        title: "Make one resource worth negotiating over",
         detail:
-          "In the offline draft, Choose what they are sets the Base and Resource lines in At a Glance. Changing the type changes both lines for most types, so the same vibe can produce a very different base.",
+          "Choose what they are according to what the party will need: a Merchant Guild can offer legal passage for disputed cargo, while a Mercenary Company can escort refugees across a siege line. Decide what favour they demand in return and who will object if the party accepts.",
       },
       {
-        title: "Use the scale to set their reach",
+        title: "Decide where their authority ends",
         detail:
-          "In the offline draft, Choose their scale is repeated in What they control, so a single city and a kingdom-wide network read as different threats.",
+          "Use Choose their scale to draw a boundary players can exploit. A Single city guild can close its docks but not a neighbouring port; a Kingdom-wide network can pursue the party further, but must rely on local agents who may have competing loyalties.",
       },
       {
-        title: "Let the vibe set the goal and the trouble",
+        title: "Prepare a move they will make without the party",
         detail:
-          "In the offline draft, Choose a vibe decides the goal, the internal conflict and the immediate hook. With the type unchanged, a cyberpunk vibe and a cosmic horror vibe still get different goals and hooks.",
+          "In Add campaign context, name an existing dispute or scarce resource. Read the Immediate Hook against the rival's goal, then choose which representative approaches the party first and what the rival takes if the offer is refused. Let the consequences become visible next session.",
+      },
+    ],
+    linksTitle: "Make the organisation an active campaign power",
+    links: [
+      {
+        href: "/answers/how-do-you-create-a-fantasy-faction",
+        label: "Give the faction goals, limits and assets",
+        description:
+          "Decide what it can achieve and what it refuses to sacrifice.",
+      },
+      {
+        href: "/answers/how-do-i-run-political-intrigue-and-faction-play",
+        label: "Create negotiations with meaningful leverage",
+        description:
+          "Put competing offers and visible costs in front of the party.",
+      },
+      {
+        href: "/answers/how-do-you-track-faction-turns-between-rpg-sessions",
+        label: "Resolve the faction's next move between sessions",
+        description:
+          "Track one action, its outcome and its visible consequence.",
       },
     ],
   },
   "urban-fantasy-faction": {
     summary:
-      "Each offline draft is a named city faction with a faction type, a mode, an operating scope, a moral posture, a goal, a base, a secret, two named NPCs, a rival and an immediate hook. AI results may vary the NPC count and phrase the secret and internal conflict independently. Use it when a hidden-world group needs a place in a modern city, then decide which parts the party can see.",
+      "Put a hidden-world group behind an ordinary city service. A clinic, transit authority or market can give the party a reason to meet its members before they recognise the supernatural stakes. Establish who depends on that service and what changes if the faction loses control.",
     tips: [
       {
-        title: "Set the operating scope to size the threat",
+        title: "Let the city itself provide leverage",
         detail:
-          "Operating scope appears in the summary and in What they control, as in across the neighbourhood or across the transit network. A neighbourhood faction suits one investigation, while a regional network fits a conflict that crosses several districts.",
+          "Choose Paranormal investigation in Urban fantasy mode, Fae Market in Faction type and Transit Network in Operating scope for the Open Door Committee example. Give them access to station records rather than magical authority over the whole city. Decide who can deny a permit, close an entrance or provide a second route.",
       },
       {
-        title: "Use campaign context for a place or problem",
+        title: "Make a disagreement visible through civic life",
         detail:
-          "Text in Add campaign context becomes one sentence in What they control, starting The faction's choices are shaped by. Write a specific place or problem, such as a flooded tunnel, because the sentence uses your words as written and a mood reads less clearly.",
+          "Set Moral posture to Pragmatic brokers. An investigator wants accurate safety reports while another member fears exposing protected residents. Use Add campaign context to name a specific clinic or transport line. Put the version of the report the party can request in a public office and the proof of alteration with the investigator.",
       },
       {
-        title: "Check the conflict against the moral posture",
+        title: "Keep the hidden network behind the screen",
         detail:
-          "In offline drafts, the Moral posture changes the wording of Why they are dangerous and Internal Conflict, but the conflict comes from a fixed list and the Secret line repeats it. AI results may phrase the secret and internal conflict differently, so decide which details the players learn or discover as clues.",
+          "Start with the power outage from Immediate Hook and offer a choice between speaking to patients, checking the meter logs or bargaining with a rival. Add to my Codex saves a Faction; its model-produced summary, supernatural operation, internal conflict, contacts and secret stay in GM notes. Decide what the party learns before moving any of it into public-facing records.",
       },
     ],
+    linksTitle: "Make hidden factions matter through ordinary institutions",
     links: [
       {
         href: "/answers/how-do-i-run-political-intrigue-and-faction-play",
-        label: "Running faction play",
+        label: "Run competing groups with independent goals",
+        description:
+          "Use leverage, relationships and escalating consequences to give players genuine political choices.",
       },
       {
-        href: "/generators/faction",
-        label: "Classic fantasy faction generator",
+        href: "/answers/how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
+        label: "Design groups around shared practices, not stereotypes",
+        description:
+          "Show differences in institutions and resources while giving individual members distinct motives.",
       },
     ],
   },
   "dark-fantasy-faction": {
     summary:
-      "Each result is a named dark fantasy faction shaped by the mode, type, scope and moral posture you pick. You get what it wants, what is tearing it apart, named NPCs, a rival and a hook. Use it when the table needs a power whose cruelty or compromise still makes sense from the inside, such as a plague cult or a corpse guild.",
+      "Build a power the party cannot simply remove without risking the people it protects. Give it a useful service, an unacceptable price and an internal division that offers more than one way to challenge it.",
     tips: [
       {
-        title: "Let the mode set the pressure",
+        title: "Start with the price of survival",
         detail:
-          "Dark fantasy mode is the disaster the faction is built on. The draft says they stand on it in What they control and names it as the place they operate through in the summary, so pick the mode that matches your campaign's crisis.",
+          "Combine Dark fantasy mode set to Plague City with Faction type set to Plague Cult to give a faction something people need. Set Moral posture to Necessary evil if it has public supporters despite its methods, or Fallen idealists if members might be persuaded to return to their original oath.",
       },
       {
-        title: "Match the moral posture to the danger",
+        title: "Make the players need them first",
         detail:
-          "Moral posture drives the Why they are dangerous section. Openly cruel shows a faction that no longer hides its methods, while Fallen idealists describes a group that once meant well, which gives the party someone to negotiate with.",
+          "Set Operating scope to A haunted border march if the faction protects the road the party must travel, or A single plague-stricken village for a crisis that can be confronted in one evening. Offer the service first; let an observable sign reveal what people sacrifice to keep it.",
       },
       {
-        title: "Use the scope and campaign context for place",
+        title: "Give the faction a breaking point",
         detail:
-          "Operating scope sets the area named in What they control, so a single plague-stricken village and an entire doomed barony put very different pressure on the party. In the offline draft, anything typed into Add campaign context is added to the end of How to use them at the table as Campaign context.",
+          "Name an affected person or settlement in Add campaign context. Use Internal Conflict to decide which NPC would break with the faction if the party offered a better way to protect that place; use Rival Faction to determine what happens if the party does nothing.",
       },
     ],
+    linksTitle: "Make your faction matter at the table",
     links: [
       {
+        href: "/answers/how-do-you-create-a-fantasy-faction",
+        label: "How do you create a fantasy faction?",
+        description: "Define its resources, weaknesses and relationships.",
+      },
+      {
         href: "/answers/how-do-i-run-political-intrigue-and-faction-play",
-        label: "Running faction play",
+        label: "How do I run political intrigue and faction play?",
+        description:
+          "Turn rival groups into active decisions and consequences.",
+      },
+      {
+        href: "/answers/how-do-you-track-faction-turns-between-rpg-sessions",
+        label: "How do you track faction turns between RPG sessions?",
+        description: "Keep schemes moving when the party does not intervene.",
       },
     ],
   },
   "fantasy-names": {
     summary:
-      "Each batch gives ten names of one type (person, place, faction or item). Built-in cultures shape offline names; custom culture labels use generic fantasy tables. AI results include a short style note for each name; offline results list names only. Use it to fill a cast list, a set of map labels or a shop board, then keep the names that suit your table and adapt the rest.",
+      "Each detailed batch gives ten names of one type, for people, places, factions or items. Built-in cultures shape offline names; custom culture labels use generic fantasy tables. AI results include a short style note for each name; offline results list names only. Use Quick names to build a shortlist for the next session, then copy the selected names into your notes or existing Character entries.",
     tips: [
       {
         title: "Choose the culture for the sound",
         detail:
-          "Built-in Culture / Style options shape the sound of the whole batch. Dwarven gives stone and forge compounds such as Balrin Granitefist, while Norse / Viking gives person names ending in -son or -dottir. A custom culture or style label uses generic fantasy tables on the offline roll. Name Type changes the shape, so a Place adds endings such as Keep, Downs or Hollow, and a Faction often starts with The or uses of the.",
+          "Built-in Culture / Style options shape the batch. Choose Dwarven for a guild hall or border settlement and use Name Type to make a Place or Faction list; use Person for its inhabitants. A custom culture or style label uses generic fantasy tables on the offline roll. Keep one shared sound pattern and vary the first syllable so players do not confuse important names.",
       },
       {
         title:
           "Set Gender / Presentation for full Norse and Celtic person names",
         detail:
-          "On offline full person names, Gender / Presentation changes the surname only in Norse / Viking (-dottir for Feminine, -son for Masculine) and Celtic / Gaelic (Nic or Mac before the surname). It has no effect on first-name-only rolls or names in other cultures, so Any is fine for those.",
+          "On offline full person names, Gender / Presentation changes the surname only in Norse / Viking and Celtic / Gaelic names. It has no effect on first-name-only rolls or names in other cultures, so Any is fine for those. Choose names that distinguish household members or rivals when spoken aloud rather than treating a naming style as a personality.",
       },
       {
-        title: "Add campaign context when AI is on",
+        title: "Pin names for play, then paste into the campaign",
         detail:
-          "Add campaign context is sent to the AI path, which can tie names to the setting you describe, such as an Assyrian trading port. The offline roll does not read it, so the same batch comes back whatever you type there.",
+          "In Quick names, pin a name you like, use New names to refresh the rest, then Copy pinned or Copy all. Use a separate list for each community. Generate names with notes if you need a style explanation; Add campaign context can ground the AI draft, not the offline roll. Paste the names into existing NPCs, map labels or notes rather than creating a Character for every spare name.",
       },
     ],
     links: [
       {
         href: "/answers/how-do-i-improvise-npcs-in-dnd",
-        label: "Improvising NPCs in D&D",
+        label: "Keep a shortlist for characters the party meets unexpectedly",
+      },
+      {
+        href: "/answers/how-do-you-create-a-fictional-language-for-an-rpg",
+        label: "Create shared naming sounds for a culture",
       },
     ],
   },
   "minor-magic-item": {
     summary:
-      "Each result gives you a small item with a description, a quick reference, an effect, a quirk and a suggested use. The usage limit and the way the item is activated decide how it plays, so settle those before you read the effect.",
+      "Make a small find into a choice about when to spend it. Put a limited-use charm, draught or gadget in a place where it has a believable owner and gives the party an extra option, not an automatic answer.",
     tips: [
       {
-        title: "Set the usage limit before the effect",
+        title: "Give the item a job the party can choose",
         detail:
-          "The usage limit tells players how often the item can help them. A single-use item suits one dramatic moment, while fragile charges give a few uses before it breaks.",
+          "Set Focus / Primary Utility to Exploration & Travel when a river crossing or climb is coming up, or Infiltration & Stealth when the party needs another way past a guard. Leave the ordinary approach viable so using the item is a decision rather than a requirement.",
       },
       {
-        title: "Use the quirk as a cost",
+        title: "Choose the moment they spend it",
         detail:
-          "The quirk can be a sensory or environmental side effect, such as chalky residue or a sudden draft. Treat it as a giveaway or cost only when the generated detail fits, and set Quirk or Side Effect to 'None' when it should be clean.",
+          "Set Usage Limit / Charges to Single Use for one important decision or Fragile Charges for a tool worth saving across several scenes. Match Activation Method to the Item Form and tell the players when the charge is spent and what it cannot do before they commit.",
       },
       {
-        title: "Match the effect to the scene, not the vibe",
+        title: "Let the quirk be visible in play",
         detail:
-          "The same effect can appear under different vibes, sometimes with only the heading changed. Read the effect against what the party is doing right now before you decide what it means.",
+          "Choose a Harmless Sensory Tell under Quirk or Side Effect if the item should be memorable rather than costly. A chime in a silent passage creates an observable risk; let players muffle it or choose a different approach instead of springing a hidden penalty on them.",
+      },
+    ],
+    linksTitle: "Place the find, then make its effect fair",
+    links: [
+      {
+        href: "/answers/how-much-loot-and-how-many-magic-items-should-i-give-my-players",
+        label: "Place small rewards without making every search pay",
+        description:
+          "Pace finds across the campaign and make treasure fit its owner.",
+      },
+      {
+        href: "/answers/how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery",
+        label: "Use detection items without solving the entire mystery",
+        description:
+          "Decide what information the item can reveal and what still needs investigation.",
       },
     ],
   },
   kingdom: {
     summary:
-      "Each draft names a realm, its ruler and capital, two rival factions and the hidden problem its rulers would rather nobody found. In an offline draft the Immediate Hook, two of the rumours and the last entity seed all lead back to that problem; the examples below come from the offline draft, and the AI draft works from the same choices in its own words.",
+      "Build a realm whose ruler depends on powerful people, valuable places and fragile agreements. Use its factions and hidden problem to decide what the party can change, even when the kingdom itself is much larger than their adventure.",
     tips: [
       {
-        title: "Pick Government style for the person the party petitions",
+        title: "Decide whose permission the party needs",
         detail:
-          "Government style sets how the ruler holds power and the note beside their name, from an heir without a trusted successor under Hereditary dynasty to a general who never stood down under Military dictatorship. Choose it for the kind of audience the party will have to win.",
+          "Set Government style to Hereditary dynasty if a noble's claim matters, or Military dictatorship if rank and orders matter. Pair this with Magic level to decide who can grant an exception or issue a warrant when the party needs access.",
       },
       {
-        title: "Let Geography decide the capital and the prize",
+        title: "Make the geography a source of leverage",
         detail:
-          "Geography places the capital, such as an oasis city with guarded wells in Arid desert, and decides what the first faction controls, such as the mines and the mountain passes in Mountain range. That faction is the easiest employer for a party looking for work, and Geography also adds one rumour.",
+          "Set Geography to Mountain range when the passes and mines are worth holding, or Arid desert when access to wells matters. Choose Scale for how far a ruler can respond and give one faction control over the route or resource the party needs.",
       },
       {
-        title: "Use Conflict level to set the opposition's next move",
+        title: "Let the next crisis change daily life",
         detail:
-          "Conflict level writes the Society & Culture section and the second faction's agenda: during Total war it is talking to the enemy in secret, and after Post-war recovery it wants a reckoning. Magic level adds its own line under Government & Power, and an offline draft files Campaign context (optional) under its own heading in the GM notes.",
+          "Set Conflict level to Total war when roads and supplies are contested, or Post-war recovery when former allies demand repayment. Name a borderland or noble family in Campaign context (optional), then make the hidden problem create an observable event and give rivals incompatible responses.",
+      },
+    ],
+    linksTitle: "Turn the realm into choices and consequences",
+    links: [
+      {
+        href: "/answers/how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
+        label: "Give the realm practical strengths and limits",
+        description:
+          "Make institutions, resources and vulnerabilities matter rather than relying on stereotypes.",
+      },
+      {
+        href: "/answers/how-do-i-run-political-intrigue-and-faction-play",
+        label: "Turn competing claims into playable politics",
+        description: "Give rivals goals and leverage the party can use.",
       },
     ],
   },
   tavern: {
     summary:
-      "Each result is a named tavern with an owner, a few regulars, a hidden problem, an opening hook and a short list of rumours in the GM notes. Read the Hidden Problem line first: in an offline draft, the Immediate Hook and two of the rumours lead the party towards it.",
+      "Prepare a meeting place that players want to return to. Use its owner, clientele, signature food or drink and hidden trouble to make an ordinary stop become a lead, a refuge or a difficult choice.",
     tips: [
       {
-        title: "Let Wealth level set the table",
+        title: "Make the room feel like their next stop",
         detail:
-          "Wealth level changes the signature drink or dish and the line about the room, from thin barley beer on a dirt floor to brandy poured from a locked cabinet. Pick it for what the party can afford tonight, not for the size of the town.",
+          "Pair Atmosphere with Wealth level to decide whom visitors will meet and what hospitality costs, from a cheap fire and bench to a private table. Give the regulars one recognisable routine so the party notices when something changes.",
       },
       {
         title: "Choose Primary clientele for the contact you need",
         detail:
-          "Primary clientele decides who the two notable patrons are, such as a one-handed sergeant for Soldiers and mercenaries or a fence at the corner table for Criminals and fence-seekers. Pick the crowd that holds the witness or ally your next scene needs.",
+          "Set Primary clientele to Soldiers and mercenaries for a witness to trouble on the road, or Criminals and fence-seekers for someone who can arrange an illicit trade. Let the owner introduce the contact, but give them a reason to ask for something in return.",
       },
       {
-        title: "Use Settlement type to point outside",
+        title: "Give rumours somewhere to lead",
         detail:
-          "In an offline draft the last rumour comes from the Settlement type, such as a ship that has not unloaded in a Coastal port. Use it to send the party back out once the tavern's own trouble is known; anything typed in Campaign context (optional) stays in the GM notes.",
+          "Use Settlement type to choose a destination outside the tavern: a Coastal port can point to a ship that has not unloaded. Name an existing place or feud in Campaign context (optional), then decide which rumour reveals the hidden problem and which sends the party to a different scene.",
+      },
+    ],
+    linksTitle: "From a memorable inn to an adventure lead",
+    links: [
+      {
+        href: "/answers/what-should-an-rpg-settlement-contain",
+        label: "Give the inn a job in the settlement",
+        description:
+          "Place the tavern among the everyday services and contacts the party needs.",
+      },
+      {
+        href: "/answers/how-to-create-rumours-for-a-fantasy-town",
+        label: "Make overheard rumours actionable",
+        description:
+          "Give each source a reason to speak and a next place to investigate.",
       },
     ],
   },
   "magic-item": {
     summary:
-      "Pick an item type and a rarity, and the generator names the item, describes how it looks and feels, and writes GM notes with a magical property and a line of history. Treat the result as a first draft to tune for your table.",
+      "Give a lasting magical possession one recognisable behaviour and a place in the campaign's history. Before awarding it, decide what players can learn through testing, what it cannot do, and which choices become more interesting once they know how it works.",
     tips: [
       {
-        title: "Match the effect to the rarity you picked",
+        title: "Choose an effect the bearer can test",
         detail:
-          "The rarity you pick does not decide the effect, so check that the two agree. A minor trick on a Legendary item, or a strong power on a Common one, means one of them should change.",
+          "Set Item Type to Weapon and Rarity to Uncommon for Frostbite Blade. In Magical Properties, decide exactly what causes its runes to light up and how the bearer can tell. The glow near undead warns of danger without identifying its direction or removing the threat. Rarity is a starting point, not a calibrated game mechanic; adjust the effect to your rules.",
       },
       {
-        title: "Treat the magical property as a clue first",
+        title: "Give the magic a consistent limit",
         detail:
-          "Effects vary by genre: in a Classic Fantasy setting, a hum that points toward fresh water or a glow near the undead works best as a hint, then becomes a tool once the players trust it. Pick the effect that suits the scene you are running.",
+          "A cold blade that signals undead is interesting only if the bearer can distinguish that signal from ordinary frost. Let the party compare the glow in a frozen room and near a disturbed tomb, then decide how close they must be. Agree the limit before an ambiguous situation arises rather than changing it to force a result.",
       },
       {
-        title: "Put the history on your own map",
+        title: "Tie recovery and identification to earlier play",
         detail:
-          "In a Classic Fantasy setting, the history line names a source such as a red dragon's hoard or a paladin who fell at the Siege of Shadowkeep. Swap those names for places in your world, or keep one as a rumour the players can chase.",
+          "Use Add campaign context to name a known smith or battlefield. Offline drafts display this context in the document, so avoid hidden facts there. Save one Item to Codex with the visible Description and Lore & History. Only sections headed GM Reference Information or Magical Properties stay in GM reference; AI headings can vary, so differently headed powers may appear in main text. Check the rendered Item before sharing it. Once identified, record what the party has learned, who carries it and any limits you agree.",
       },
     ],
+    linksTitle: "Make magical rewards meaningful beyond damage",
     links: [
       {
         href: "/answers/how-much-loot-and-how-many-magic-items-should-i-give-my-players",
-        label: "How much loot and how many magic items to give players",
+        label: "Judge what the next reward should change",
+        description:
+          "Balance the frequency, value and long-term impact of magical treasure in your campaign.",
+      },
+      {
+        href: "/answers/how-do-i-upgrade-a-player-characters-weapon-without-replacing-it",
+        label: "Let a treasured item grow with its bearer",
+        description:
+          "Use milestones, repairs and discoveries rather than replacing an established signature weapon.",
+      },
+      {
+        href: "/answers/how-do-you-create-a-magic-system",
+        label: "Set limits that fit your world's magic",
+        description:
+          "Give magic consistent costs and boundaries so the group can reason about what it does.",
       },
     ],
   },
   item: {
     summary:
-      "Even mundane gear or signature keepsakes carry story weight when you add a maker's mark, a quirk of wear, and a previous owner who might want it back.",
+      "Make a found object worth deciding what to do with, rather than another line on a treasure list. Use the item's appearance, property and former owner to give the party reasons to keep it, return it, trade it or investigate where it came from.",
     tips: [
       {
-        title: "Attach one story hook to loot",
+        title: "Give the find a job in the next scene",
         detail:
-          "A scratched crest, serial number, or courier seal turns found equipment into an instant lead.",
+          "Choose Item Type to suit the person or place holding the loot. A Ring on a magistrate might be recognised at a locked gate; a Potion in an apothecary's cabinet offers an expendable resource the party can spend when it matters.",
       },
       {
-        title: "Balance power with a clear cost",
+        title: "Decide who can afford the find",
         detail:
-          "Noticeable side effects or maintenance needs make special gear memorable without breaking encounter balance.",
+          "Use Rarity to set your intended place in the treasure supply. A Common object might find a buyer locally, while a Very Rare piece could require an introduction to a collector; review the actual property against your game's rules before deciding its value.",
+      },
+      {
+        title: "Leave a trace of the former owner",
+        detail:
+          "Name the place of discovery or a known owner in Add campaign context. Use a visible detail from the description and a fact from Lore & History to plant a clue, then decide who would recognise the object and what they could tell the party.",
+      },
+      {
+        title: "Reward a new use rather than a bigger number",
+        detail:
+          "If the party keeps the object, decide which specific situation its property makes easier and agree any limits before play. A ring that warns of damaged masonry can prompt a route choice without solving the entire crossing for them.",
       },
     ],
+    linksTitle: "Put found equipment to work in your campaign",
     links: [
       {
-        href: "/answers/how-common-should-magic-be-in-a-fantasy-world",
-        label: "Calibrating magic rarity",
+        href: "/answers/how-much-loot-and-how-many-magic-items-should-i-give-my-players",
+        label: "Place treasure where it makes sense",
+        description:
+          "Separate routine possessions from substantial rewards and decide what belongs in the room or owner's pack before a search.",
+      },
+      {
+        href: "/answers/how-do-i-upgrade-a-player-characters-weapon-without-replacing-it",
+        label: "Let a favourite weapon grow with its wielder",
+        description:
+          "If the find is a weapon the party keeps, use its history and situational properties to plan meaningful upgrades instead of constant replacement.",
+      },
+      {
+        href: "/answers/what-can-players-actually-buy-and-sell-in-a-fantasy-settlement",
+        label: "Find a plausible buyer or specialist",
+        description:
+          "When players want to sell or commission equipment, use market scale, specialist availability and named buyers to make the next transaction a decision.",
       },
     ],
   },
   business: {
     summary:
-      "Player-run or NPC businesses shine when they generate leads, debts, and rival pressures—not just bookkeeping spreadsheets.",
+      "Build an enterprise that matters because people depend on what it supplies, not because it has a long inventory. Turn its staff, dependencies and competitors into immediate costs and opportunities for the party, whether they are customers or owners.",
     tips: [
       {
-        title: "Tie suppliers to adventure hooks",
+        title: "Choose something the settlement cannot do without",
         detail:
-          "A delayed shipment or rival guild tariff gives the party a personal reason to investigate.",
+          "Use Business type and Location (optional) to choose a service with local stakes: a blacksmith beside a ferry crossing could repair the last working winch. Read Suppliers and Dependencies and decide what stops working first if a delivery fails.",
       },
       {
-        title: "Name two staff members",
+        title: "Put the competitor's offer on the table",
         detail:
-          "A loyal clerk and an ambitious apprentice keep the business alive while the party is out of town.",
+          "Use Legitimacy to decide whether resolving the Current Pressure means asking an inspector for a licence, bargaining with a criminal protector or exposing a rival. Give the party two ways to help the business survive, each benefiting a different named relationship.",
+      },
+      {
+        title: "Make ownership a recurring decision",
+        detail:
+          "Select Players own this business if the party wants to build an enterprise. Use its manager's goal, Recurring obligations and Upgrade paths to offer a choice before their next expedition: hire another worker to protect a contract, or fund an expansion that creates a new obligation.",
       },
     ],
+    linksTitle: "Turn trade into recurring adventure",
     links: [
       {
+        href: "/answers/how-do-i-turn-economic-pressures-into-rpg-adventure-hooks",
+        label: "Build an adventure from a broken dependency",
+        description:
+          "Trace the shortage to people, choices and consequences rather than a price list.",
+      },
+      {
         href: "/answers/how-do-i-run-a-campaign-where-the-players-own-a-business",
-        label: "Running player-owned businesses",
+        label: "Run an owned business between adventures",
+        description:
+          "Use lightweight business turns, investment choices and recurring obligations.",
       },
     ],
   },
   heist: {
     summary:
-      "A great RPG heist gives players a clear target, layered security they can scout in advance, and a complication that forces improvisation once they are inside.",
+      "Prepare a score whose objective, security and escalating response give the crew choices instead of a single intended plan. Use casing to establish what they know, the practical catch to shape how they act, and the getaway to reward or complicate those choices.",
     tips: [
       {
-        title: "Reward reconnaissance",
+        title: "Make success mean more than reaching the target",
         detail:
-          "Let every guard shift, delivery schedule, or blueprint detail be discoverable before the job begins.",
+          "Choose Heist Type according to what must change by the end of the score. Rescue means bringing someone out alive, while Information means getting knowledge the crew can use. In The Prize (optional), name an objective whose condition matters, such as a fragile royal seal or a witness who refuses to leave without their child.",
       },
       {
-        title: "Keep the exit harder than the entry",
+        title: "Make casing reveal a real alternative",
         detail:
-          "Triggering an alarm or rival crew during extraction creates tension without stalling the opening.",
+          "Use Target and Target Scale to set how much of the location needs to be negotiated or infiltrated. For each Security Ring, choose one discoverable fact that makes an alternative plausible, such as a trusted escort instead of a risky crossing. Reveal useful intel before asking the players how they enter.",
+      },
+      {
+        title: "Escalate when the fiction changes",
+        detail:
+          "Read the Alarm Track and The Getaway together. Decide what evidence would actually alert the defenders, when their response changes the exit options, and which alternative remains costly but possible. Offer a flashback when a player's idea needs a plausible prior preparation, not as a requirement.",
       },
     ],
+    linksTitle: "Build and run the score",
     links: [
       {
-        href: "/answers/how-do-i-run-a-stealth-mission-in-a-tabletop-rpg",
-        label: "Running stealth & heist missions",
+        href: "/answers/what-makes-a-good-heist-target-in-a-tabletop-rpg",
+        label: "Give the objective a practical catch and lasting stakes",
+        description:
+          "Choose why it matters, who keeps it and what makes getting it out difficult.",
+      },
+      {
+        href: "/answers/how-do-you-run-a-heist-in-a-tabletop-rpg",
+        label: "Run casing, infiltration, escalation and escape",
+        description:
+          "Move through the four beats without forcing a plan or a fixed solution.",
       },
     ],
   },
   "mystery-investigation": {
     summary:
-      "Keep tabletop mysteries moving with three independent clues per revelation so a single failed skill check never stalls the session.",
+      "Start from a fixed answer, then give players several ways to establish it. Use the draft as a case file, not a sequence of scenes they have to visit in order. Scope, Clue density and Danger / pressure guide AI-generated cases; the offline fallback does not apply those settings.",
     tips: [
       {
-        title: "Anchor clues to people and places",
+        title: "Choose the question and the size of the cast",
         detail:
-          "Every node in the mystery graph should point to at least one witness, physical trace, or ledger.",
+          "For AI-generated cases, set Mystery type to Theft, Disappearance or the event the players can actually investigate. Pair Scope set to One-shot case with Complexity / suspect count set to Lean (3 suspects) if you have one evening. Give every innocent suspect something to hide that the players can disprove.",
       },
       {
-        title: "Escalate when the trail cools",
+        title: "Make the essential inference independently testable",
         detail:
-          "If players hesitate, have the culprit try to cover their tracks—leaving a fresh lead behind.",
+          "For AI-generated cases, use Clue density set to Generous for a group new to investigation. For each conclusion the players need, check that at least two leads come from different sources: for example, an altered ledger and a witness who saw a delivery. Give a plausible way to test each rather than requiring one successful roll.",
+      },
+      {
+        title: "Advance the situation, not the solution",
+        detail:
+          "For AI-generated cases, Danger / pressure sets how urgently the case demands action. With Low, let the party follow a wrong lead without losing the case. With High, decide what changes at the next deadline and use the Next NPC Moves table in GM notes when the party stalls. Never change who did it to make a theory right.",
+      },
+      {
+        title: "Give the discovery a consequence",
+        detail:
+          "In Optional Campaign Context, name someone who needs the case solved and what they stand to lose. After drafting, decide how a supported accusation, a partial answer or an unsolved case changes that person's relationship with the party.",
       },
     ],
+    linksTitle: "From a fair clue trail to an unexpected conclusion",
     links: [
       {
+        href: "/answers/how-do-you-run-a-mystery-without-railroading",
+        label: "Run a case without prescribing the route",
+        description:
+          "Make essential information reachable from independent leads.",
+      },
+      {
         href: "/answers/how-do-i-get-a-stalled-rpg-investigation-moving-again",
-        label: "Unsticking stalled investigations",
+        label: "Move a stalled investigation forward",
+        description:
+          "Change what the suspects do without handing out the solution.",
+      },
+      {
+        href: "/answers/how-do-you-handle-players-reaching-the-wrong-conclusion-in-an-rpg-mystery",
+        label: "Let the party test a plausible but wrong conclusion",
+        description:
+          "Give theories observable consequences while keeping the truth fixed.",
       },
     ],
   },
   puzzle: {
     summary:
-      "Each draft puts an obstacle between the party and the Puzzle purpose you choose, then gives you clues, spotlight prompts, alternate solutions and what a failed attempt does. The intended solution and the escalating hints sit in the GM notes, so you can read the setup aloud and keep the answer back.",
+      "Put an obstacle between the party and a goal, then use visible clues, distinct approaches and feedback to keep everyone involved. Prepare what the characters can learn and what a failed attempt changes instead of asking them to guess a single answer.",
     tips: [
       {
-        title: "Let Puzzle style pick the obstacle",
+        title: "Make the obstacle answer a question the players can test",
         detail:
-          "Offline drafts choose the obstacle from the Puzzle style: Social gives a suspicious gatekeeper or two guards who disagree, Mechanical a locked mechanism or a panel of gears. A style you type yourself gets a plain obstacle, so describe it in your own words.",
+          "Choose Puzzle purpose and Puzzle style for the action the characters need to take. A Mechanical Sealed door might respond when they balance a counterweight; a Social Cross obstacle might require two disagreeing bridgekeepers to accept a compromise. Give a visible clue before the first check and show what changes after a partial success.",
       },
       {
-        title: "Use Complexity to set the solution length",
+        title: "Give abilities a spotlight, not a lock",
         detail:
-          "In offline drafts, Complexity sets how many linked actions the GM-only solution needs: two for Simple, three for Moderate and four for Elaborate. Pair a long chain with Failure pressure set to None if you want players to experiment without cost.",
+          "In PC capabilities to make matter, name abilities the actual party enjoys using, such as a familiar or a smith's tools. Use Participation style to decide who gets a moment to contribute. For every specialist opening, leave another character a credible way to achieve the same step at a different cost.",
       },
       {
-        title: "Name what your party can actually do",
+        title: "Choose what a wrong attempt changes",
         detail:
-          "Abilities listed in PC capabilities to make matter are treated as openings, never requirements: an offline draft names them in the spotlight section, and the AI draft is told to make them useful. Participation style then says whether one character, two or three, or the whole party leads the solve.",
+          "Pair Complexity with Failure pressure so the scene fits your session. None lets the party experiment safely; Time pressure can threaten the downstream objective while the mechanism remains solvable. Decide which alternate solution becomes attractive as the cost rises, and reveal another hint only once new attempts have stopped.",
       },
     ],
+    linksTitle: "Make the puzzle fair and keep it moving",
     links: [
       {
         href: "/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
-        label: "Designing puzzles that do not stall",
+        label: "Design alternate routes and meaningful feedback",
+        description:
+          "Replace a guessing gate with partial progress, useful information and a costlier way through.",
+      },
+      {
+        href: "/answers/how-do-you-give-hints-for-an-rpg-puzzle-without-giving-away-the-answer",
+        label: "Deliver the next hint without solving it for the party",
+        description:
+          "Step from sensory reminder to changed component to immediate goal when play stalls.",
       },
     ],
   },
   "social-hub": {
     summary:
-      "Use this when the party needs a place to meet people in any genre, from a Western saloon to a cyberpunk hacker café. Each draft names the venue, its operator and its regulars, then gives you one hidden problem with an opening hook and rumours to feed in over later visits.",
+      "Build a meeting place that the party will want to revisit for its services and people, not just for a single hook. Use the recurring regulars as sources of changing information, and decide how the venue responds when the characters take sides.",
     tips: [
       {
-        title: "Set Genre / Setting before anything else",
+        title: "Give the group a reason to use the venue",
         detail:
-          "The Venue type and Primary clientele lists change with Genre / Setting, so a Lancer table is offered a mech bay canteen and off-duty pilots rather than a mead hall. The genre also shapes the names and the signature drink or service.",
+          "Choose Cyberpunk in Genre / Setting and Noodle Bar in Venue type for Reyes' Noodle Hole. Set Primary clientele to the people passing through the nearby transit station. Give the operator a reason to tolerate both couriers and security workers, so the party can choose whom to approach.",
       },
       {
-        title: "Use Atmosphere and Wealth level to dress the room",
+        title: "Let the room's mood change the conversation",
         detail:
-          "Atmosphere colours how the operator treats strangers, and Wealth level runs from watered drinks at Destitute to someone on the door turning people away at Wealthy. If none of the six choices fits, type your own and the draft keeps your wording.",
+          "Use Atmosphere and Wealth level to decide whether a stranger can talk openly at the counter or needs to buy a private booth. Introduce an ordinary service first, such as the owner's cheap broth, then use The People to pick a regular who remembers the party's previous visit.",
       },
       {
-        title: "Hold the hidden problem back",
+        title: "Give the trouble two possible witnesses",
         detail:
-          "Lead with the Immediate Hook and save the rumours for return visits, so the Hidden Problem, such as a debt coming due or a fugitive on the staff, surfaces slowly. In offline drafts, an Entity Seed names the person, faction or place behind it, and text from Campaign context (optional) gets its own GM notes section.",
+          "Name a nearby station or known contact in Campaign context (optional). Use Immediate Hook to introduce the missing surveillance footage, then give the party a courier who saw it and a security worker who wants it suppressed. Add to my Codex saves one Location; the place and people remain in main text while hidden trouble, rumours and entity seeds stay in GM notes. Update the regulars' reactions after the party intervenes.",
       },
     ],
+    linksTitle: "Make return visits change the campaign",
     links: [
       {
         href: "/answers/how-do-you-generate-useful-rpg-rumours",
-        label: "Writing useful rumours",
+        label: "Give the regulars useful leads",
+        description:
+          "Connect overheard gossip to concrete people and places the party can investigate.",
       },
       {
         href: "/answers/how-do-you-make-npcs-memorable-without-lots-of-prep",
-        label: "Memorable NPCs with little prep",
+        label: "Make recurring patrons easy to recognise",
+        description:
+          "Use a distinct desire and visible habit, then let their response change as relationships develop.",
       },
     ],
   },
@@ -1093,43 +1502,79 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "vampire-clan": {
     summary:
-      "Each result is a vampire clan with a public front, a feeding habit that shows where its members hunt, and a weakness you can turn into a plot point. The GM Reference block holds the clan's dark agenda, its internal conflict, a rival and an adventure hook.",
+      "Create a vampire clan with a face the mortals know, a feeding network that leaves traces and a hidden conflict the party can exploit. Let the clan need something from the characters as much as the characters need it.",
     tips: [
       {
-        title: "Choose how they feed first",
+        title: "Place the feeding network in an ordinary scene",
         detail:
-          "Choose how they feed becomes the Feeding Habit line in the GM Reference block, which tells the table where the clan hunts. Pick the habit that puts them in scenes your party already visits.",
+          "Set Choose how they feed to Street Predation for a trail of disappearances or High-Society Salons for favours and access to elite gatherings. Read Feeding Habit and give the party an observable sign, such as a missing porter or an invitation issued only after sunset.",
       },
       {
-        title: "Turn the weakness into a lever",
+        title: "Make the weakness a lever, not a surprise kill",
         detail:
-          "Choose their weakness appears as Clan Weakness in the GM Reference block. Pick one the party can realistically reach, then build the adventure hook around it.",
+          "Set Choose their weakness to Mirror & Reflection Absence for a way to test a suspicion, or Consecrated Ground Aversion for a refuge the party can reach. Use Clan Weakness to plan a fair clue before it becomes a weapon or bargaining chip.",
       },
       {
-        title: "Ground the clan in your setting",
+        title: "Give the court a reason to need outsiders",
         detail:
-          "In offline drafts, Add campaign context inserts a Campaign Fit section that reads Use [clan name] in [your text]. Name a real city, guild or threat there so the overview points the clan at your table.",
+          "Set Choose their nature to Aristocratic Court when influence and favours matter, or Rebel Anarchs for competing loyalties. Name an existing city or investigator in Add campaign context and use the Campaign Fit, Dark Agenda and Internal Conflict to decide which clan member offers the party a deal the sire will oppose.",
+      },
+    ],
+    linksTitle: "Build the clan, then run its hidden politics",
+    links: [
+      {
+        href: "/answers/how-do-you-create-a-fantasy-faction",
+        label: "Give the clan a resource and a credible weakness",
+        description:
+          "Build a faction that needs something and cannot simply take it.",
+      },
+      {
+        href: "/answers/how-do-i-run-political-intrigue-and-faction-play",
+        label: "Turn feeding rights and debts into playable intrigue",
+        description:
+          "Give players competing offers and options rather than a prescribed alliance.",
+      },
+      {
+        href: "/answers/how-do-you-track-faction-turns-between-rpg-sessions",
+        label: "Advance the clan's hidden agenda between sessions",
+        description:
+          "Decide what the clan and its enemies do if the party ignores them.",
       },
     ],
   },
   names: {
     summary:
-      "Each run rolls ten names in one culture's style, for a person, place, faction or item, and adds a short usage note for the GM. Use it when you need a batch of names during prep or at the table and want to keep the few that fit.",
+      "Start in Quick names when you need a name immediately: tap a name to copy it, pin favourites, or use Copy all for a plain list. With favourites pinned, Copy pinned copies just those names. Choose Generate names with notes for more context. Keep the names you can say aloud and give the people or places their own histories later.",
     tips: [
       {
-        title: "Pick the Name Type first",
+        title: "Pick names for the situation rather than the whole world",
         detail:
-          "Name Type sets the shape. In the Classic Fantasy cultures, Person gives a first name and a surname, such as Kaelra Thornfist. Place gives settlement-style names like Kaelhaven, Faction gives groups like The Thorned Wardens, and Item gives named objects like Elmar's Blade.",
+          "Name Type sets the shape: Person for someone the party can address, Place for a landmark, Faction for a group or Item for a named possession. Choose three names from a Person batch, say them aloud and avoid similar opening syllables for people appearing in the same scene. Pin an unused pair before selecting New names so you can return to them.",
       },
       {
-        title: "Choose a vibe before Culture / Style",
+        title: "Give a region recognisable patterns",
         detail:
-          "On the offline roll, Choose a vibe only changes the Culture / Style list. Cultures under Cyberpunk / Corporate, Vampire / Gothic Noir, Sci-Fi / Space Opera, Modern Conspiracy and Post-Apocalyptic have no offline tables, so their batches use fantasy syllables and the Usage Suggestions say so.",
+          "Choose a vibe before Culture / Style, then repeat a few name stems across related places or family names. Do not assign moral character by sound. On the offline roll, Cyberpunk / Corporate, Vampire / Gothic Noir, Sci-Fi / Space Opera, Modern Conspiracy and Post-Apocalyptic cultures without local tables use generic fantasy syllables; review the Usage Suggestions and any Offline Tables notice.",
       },
       {
-        title: "Use campaign context with AI on",
+        title: "Copy the shortlist into the right campaign records",
         detail:
-          "Text in Add campaign context steers the AI batch, for example a reclusive mage or harsh and guttural. Local results ignore it and add a note whenever context is present, including after an AI failure. AI generation is needed to use this context; retry if AI is already enabled.",
+          "Use Ask AI for a quick tailored list, or Add campaign context with AI enabled in Generate names with notes. Offline results ignore that context, including after an AI failure; retry if AI is already enabled. Paste a chosen name into the Character, Location, Faction or Item you intend to use; no batch import creates records for you.",
+      },
+    ],
+    linksTitle: "Turn a name into something players can remember",
+    links: [
+      {
+        href: "/answers/how-do-you-improvise-npcs-on-the-spot",
+        label: "Give an improvised NPC a name and a motive",
+        description:
+          "Prepare a small pool of names and establish what each person wants when they first appear.",
+      },
+      {
+        href: "/answers/how-do-you-create-a-fictional-language-for-an-rpg",
+        label: "Use a shared pattern for the names of a region",
+        description:
+          "Build a handful of consistent roots and reuse them in people, places and titles.",
       },
     ],
   },
@@ -1240,74 +1685,40 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "dungeon-generator": {
     summary:
-      "Generate a multi-sector delve with an original purpose, two rival factions fighting over specific rooms, and a GM reference split between layout, traps, treasures and a central secret.",
+      "Prepare a site the party can explore in more than one order. Use its original purpose to explain the architecture, its current inhabitants to create decisions, and its central secret to change what the party does rather than merely explain the past.",
     tips: [
       {
-        title: "Contrast purpose against current state",
+        title: "Choose a scale and a route problem",
         detail:
-          "Use Choose a vibe, Original Purpose and Current State & Function to build tension between what the builders intended and who occupies the halls now, then pick Complex Scale to set the number of connected sectors.",
+          "Choose a vibe, then contrast Original Purpose with Current State & Function, such as a temple occupied by miners. Set Complex Scale for the available session. Read Key Sectors & Layout and Dungeon Layout; mark an obvious route, an alternative route and the cost of each before the party enters.",
       },
       {
-        title: "Play the two factions against their obstacles",
+        title: "Give occupants goals that change while players explore",
         detail:
-          "Check each faction's Territory, Goal and Obstacle in Faction Situation before the party arrives: offer a shortcut, bargain or rival secret so players can exploit the standoff instead of clearing every room.",
+          "Read each faction's Territory, Goal and Obstacle in Faction Situation. Choose one move they make if the party delays, such as opening a sluice or sealing a passage. Identify something each faction can trade, and let players bargain, bypass the conflict or stir it up rather than requiring a fight in every sector.",
       },
       {
-        title: "Seed local threats before opening the map",
+        title: "Put warnings before hazards and choices after discoveries",
         detail:
-          "Add a nearby settlement, patron or border conflict in World context (optional) so Adventure Hooks & Rumours tie straight into your campaign, then use Build Delve Canvas when you want an editable room map.",
+          "In World context (optional), name the nearby settlement or patron that cares about the delve; use the AI option for that grounding. Pick a visible sign of each serious trap and two ways to reach the central secret. Use Adventure Hooks & Rumours for invitations. Build Delve Canvas is the separate editable-map action; saving the text alone creates a Location.",
       },
     ],
     links: [
       {
         href: "/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
-        label: "Keeping obstacles moving without stalling",
+        label: "Provide more than one way through obstacles",
       },
       {
         href: "/answers/how-do-i-run-exploration-in-a-huge-ruined-city",
-        label: "Running layered sector-to-sector delves",
+        label: "Make routes, factions and landmarks guide exploration",
       },
       {
         href: "/answers/what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl",
-        label: "Matching delve lethality and pacing to a system",
+        label: "Match resource pressure and lethality to your rules",
       },
     ],
   },
-  "adventure-idea-generator": {
-    summary:
-      "Draft a situation-first scenario with an inciting pressure, competing factions, clues and non-linear outcomes, then hand your party a crisis with real choices rather than a scripted plot.",
-    tips: [
-      {
-        title: "Frame the scope and stakes first",
-        detail:
-          "Pick Choose a vibe, Adventure Type, Adventure Scale and Tone to set whether the table faces a tight one-shot crisis or a multi-session arc, then check Primary Objective & Pressure for what worsens if nobody acts.",
-      },
-      {
-        title: "Build directly from a table seed",
-        detail:
-          "Paste an unresolved thread into Starting Seed / Situation (optional) with any deadline, and use World context (optional) to name active regions or factions so Clues, Secrets & Discoveries anchor to your world.",
-      },
-      {
-        title: "Leave the ending to the party",
-        detail:
-          "Use Possible Outcomes and Complications & Escalating Pressures in GM Reference as moving consequences rather than targets, then click Open Adventure Canvas when you want to link scenes and NPCs on a board.",
-      },
-    ],
-    links: [
-      {
-        href: "/answers/is-my-rpg-campaign-idea-good",
-        label: "Testing whether a premise creates play",
-      },
-      {
-        href: "/answers/how-do-i-turn-an-rpg-idea-into-an-adventure",
-        label: "Turning a premise into a playable situation",
-      },
-      {
-        href: "/answers/how-do-you-create-quest-hooks-without-railroading",
-        label: "Dropping adventure hooks without railroading",
-      },
-    ],
-  },
+  "adventure-idea-generator": ADVENTURE_GUIDE,
   "one-shot-adventure-generator": {
     summary:
       "Build a timed single-session adventure with a GM briefing, three to six essential or optional scenes, multi-route clues, multiple endings and a one-page cheat sheet ready to run tonight.",
@@ -1376,36 +1787,36 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "plot-twist-generator": {
     summary:
-      "Reframe an active campaign problem without invalidating what the party already witnessed, producing a reversal, the assumption it overturns, fair clues and new player choices.",
+      "Reframe an active problem without undoing the party's earlier discoveries. Prepare a reversal that remains true whether the players spot it early, accept it as presented, or pursue a third course.",
     tips: [
       {
-        title: "Lock in the facts you must protect",
+        title: "Separate established facts from the party's assumptions",
         detail:
-          "Describe the scene in Current situation / premise, then list protected NPCs or truths in Avoid / constraints (optional) and World context (optional) so the reversal reinterprets motives rather than erasing play.",
+          "In Current situation / premise, name what the party witnessed and what they inferred, for example, the ferries stopped and the council blamed smugglers. Put the witnessed facts in Avoid / constraints (optional), and existing loyalties in World context (optional). Read Why It Makes Sense against those facts before accepting the reveal.",
       },
       {
-        title: "Dial scale, timing and fairness upfront",
+        title: "Choose a reversal proportional to the stakes",
         detail:
-          "Pair Choose a vibe and Twist Type with Impact, When It Hits and Fairness / Foreshadowing to decide whether the turn hits early as a subtle complication or lands at the climax.",
+          "Choose a vibe that fits the campaign. For a local hidden motive, set Twist Type to Hidden motive, Impact to Significant and When It Hits to Midpoint. Choose Foreshadowable in Fairness / Foreshadowing, or Already hinted if the players have relevant evidence. Use the AI draft for your premise and constraints; treat an offline draft as a starting point to adapt.",
       },
       {
-        title: "Plant clues before you spring the turn",
+        title: "Turn clues and consequences into decisions",
         detail:
-          "Seed two entries from Foreshadowing in an earlier scene, reveal What Everyone Believed alongside The Reveal, and put New Choices straight in front of the party.",
+          "Assign two Foreshadowing clues to different sources, such as a harbour ledger and a ferryman. When the players investigate either, give them the evidence honestly. Choose one Immediate Consequence that follows even if they leave, and keep at least two New Choices open. If they discover the reveal early, let them act on it instead of withholding it until the planned scene.",
       },
     ],
     links: [
       {
         href: "/answers/how-do-you-handle-players-reaching-the-wrong-conclusion-in-an-rpg-mystery",
-        label: "Keeping established facts steady when players theorise",
+        label: "Keep fixed facts steady when players theorise",
       },
       {
         href: "/answers/how-do-you-run-a-conspiracy-campaign",
-        label: "Leaking clues before the reversal lands",
+        label: "Reveal conspiracies through independent evidence",
       },
       {
         href: "/answers/how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
-        label: "Tracking fallout and unresolved hooks",
+        label: "Track the consequences of choices and delayed leads",
       },
     ],
   },

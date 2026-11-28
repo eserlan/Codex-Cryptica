@@ -256,6 +256,12 @@ export const howMuchLootAndHowManyMagicItemsShouldIGiveMyPlayers: AnswerConfigIn
     ],
     relatedTools: [
       {
+        title: "Artifact & Relic Generator",
+        description:
+          "Draft a rare, campaign-shaping relic only after deciding how its powers, costs and competing claimants will affect the campaign.",
+        href: "/generators/artifact-generator",
+      },
+      {
         title: "Magic item generator",
         description:
           "Draft a candidate item with rarity, properties and history once you have decided the pace and band a hoard should serve.",
@@ -270,7 +276,7 @@ export const howMuchLootAndHowManyMagicItemsShouldIGiveMyPlayers: AnswerConfigIn
       {
         title: "RPG item and loot generator",
         description:
-          "Generate ordinary loot and equipment for routine possessions and mundane valuables, with rarity and backstory where you want them.",
+          "Draft an individual find with a property and backstory; for an ordinary possession, keep the description and history and remove the magical property.",
         href: "/generators/item",
       },
     ],

@@ -116,10 +116,22 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
   },
   relatedTools: [
     {
+      title: "Vampire Clan Generator",
+      description:
+        "Draft a vampire clan with a mortal facade, feeding network, hidden agenda and concrete weakness.",
+      href: "/generators/vampire-clan",
+    },
+    {
       title: "Faction generator",
       description:
         "Free, no login. Produces a goal, an obstacle and a method you can edit into shape.",
       href: "/generators/faction",
+    },
+    {
+      title: "Dark Fantasy Faction Generator",
+      description:
+        "Morally compromised powers with a base, a secret, named NPCs and a rival.",
+      href: "/generators/dark-fantasy-faction",
     },
     {
       title: "Secret society generator",

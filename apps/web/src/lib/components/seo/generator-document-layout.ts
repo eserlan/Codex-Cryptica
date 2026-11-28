@@ -53,6 +53,16 @@ const LAYOUT_RULES: LayoutRule[] = [
   },
   {
     label: "puzzle-generator",
+    unrecognizedLoreToRail: true,
+    documentSections: new Set([
+      "Player-Facing Setup",
+      "Clues",
+      "Character Spotlight Opportunities",
+      "Alternate Solutions",
+      "Failure & Escalation",
+      "Running the Puzzle",
+      "Scaling",
+    ]),
     railSections: new Set([
       "At a Glance",
       "GM-Only Solution",
@@ -94,6 +104,7 @@ const LAYOUT_RULES: LayoutRule[] = [
   },
   {
     label: "nation-generator",
+    unrecognizedLoreToRail: true,
     railSections: new Set([
       "At a Glance",
       "Power Blocs",
@@ -101,7 +112,7 @@ const LAYOUT_RULES: LayoutRule[] = [
       "Entity Seeds",
     ]),
     documentBullets: {
-      labels: new Set(["Hidden Problem", "Immediate Hook"]),
+      labels: new Set(["Immediate Hook"]),
       heading: "Secrets & Hooks",
     },
   },
@@ -244,43 +255,87 @@ const LAYOUT_RULES: LayoutRule[] = [
   },
 ];
 
+/** A venue's trouble can be repeated in the body as well as the GM rail. */
+function getSocialHubHandoffLayout(data: GeneratorOutput) {
+  const observable = new Set(["the place", "the people"]);
+  const content: string[] = [];
+  const gm: string[] = [];
+  const sections = splitMarkdownSections(data.content);
+  if (sections.length === 0 && data.content.trim()) gm.push(data.content);
+  for (const section of sections) {
+    (observable.has(section.heading.toLowerCase()) ? content : gm).push(
+      section.body,
+    );
+  }
+  return {
+    content: content.join("\n\n"),
+    lore: [...gm, data.lore ?? ""].filter(Boolean).join("\n\n"),
+  };
+}
+
 interface MarkdownSection {
   heading: string;
   body: string;
 }
 
-function splitMarkdownSections(markdown: string): MarkdownSection[] {
+function splitMarkdownSections(
+  markdown: string,
+  respectFences = false,
+): MarkdownSection[] {
   const normalized = markdown.trim();
   if (!normalized) return [];
 
-  // ⚡ Bolt Optimization: Replace Array.from(matchAll).map() with an imperative iterator loop
-  // to avoid intermediate array allocations, reducing GC pressure for large documents.
-  const iterator = normalized.matchAll(/^#{2,3}\s+(.+)$/gm);
   const sections: MarkdownSection[] = [];
-  let prevMatch: RegExpExecArray | null = null;
-
-  for (const match of iterator) {
-    if (!prevMatch) {
-      const preamble = normalized.slice(0, match.index ?? 0).trim();
-      if (preamble) {
-        sections.push({ heading: "", body: preamble });
-      }
-    } else {
-      const heading = prevMatch[1]?.trim() ?? "";
-      const start = prevMatch.index ?? 0;
-      const end = match.index ?? normalized.length;
-      sections.push({ heading, body: normalized.slice(start, end).trim() });
-    }
-    prevMatch = match;
+  let heading = "";
+  let start = 0;
+  let foundHeading = false;
+  for (const match of findMarkdownHeadings(normalized, respectFences)) {
+    const body = normalized.slice(start, match.index).trim();
+    if (body) sections.push({ heading, body });
+    heading = match.heading;
+    start = match.index;
+    foundHeading = true;
   }
-
-  if (prevMatch) {
-    const heading = prevMatch[1]?.trim() ?? "";
-    const start = prevMatch.index ?? 0;
+  if (foundHeading) {
     sections.push({ heading, body: normalized.slice(start).trim() });
   }
-
   return sections;
+}
+
+/** Scan without allocating an intermediate array; headings in fences are literal text. */
+function* findMarkdownHeadings(markdown: string, respectFences: boolean) {
+  let fence: string | null = null;
+  const pattern = respectFences
+    ? /^(?:[ \t]*(?:`{3,}|~{3,})[^\r\n]*|#{2,3}[ \t]+(.+))$/gm
+    : /^#{2,3}\s+(.+)$/gm;
+  for (const match of markdown.matchAll(pattern)) {
+    if (!match[1]) {
+      fence = updateMarkdownFence(match[0], fence);
+    } else if (fence === null) {
+      yield { heading: match[1].trim(), index: match.index ?? 0 };
+    }
+  }
+}
+
+/** Fences close only with a matching marker of at least the opening length.
+ * Allow indentation for fenced continuations within list items.
+ */
+function updateMarkdownFence(
+  line: string,
+  fence: string | null,
+): string | null {
+  const match = /^[ \t]*(`{3,}|~{3,})(.*)$/.exec(line);
+  if (!match) return fence;
+  const [, marker, suffix] = match;
+  if (fence !== null) {
+    return marker[0] === fence[0] &&
+      marker.length >= fence.length &&
+      !suffix.trim()
+      ? null
+      : fence;
+  }
+  // A backtick fence cannot have a backtick in its info string.
+  return marker[0] === "`" && suffix.includes("`") ? null : marker;
 }
 
 function extractBullets(body: string, labels: Set<string>) {
@@ -299,16 +354,84 @@ function extractBullets(body: string, labels: Set<string>) {
   return { kept: kept.join("\n").trim(), moved };
 }
 
+/** Keep an entire labelled secret bullet, including wrapped/nested lines. */
+function extractTableCardSecretBlocks(body: string) {
+  const moved: string[] = [];
+  const kept: string[] = [];
+  const lines = body.split("\n");
+  let fence: string | null = null;
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index] ?? "";
+    const nextFence = updateMarkdownFence(line, fence);
+    if (fence !== null || nextFence !== null) {
+      kept.push(line);
+      fence = nextFence;
+      continue;
+    }
+    const secretIndent = getTableCardSecretIndent(line);
+    if (secretIndent === null) {
+      kept.push(line);
+      continue;
+    }
+
+    const blockEnd = findSecretBlockEnd(lines, index, secretIndent);
+    moved.push(
+      lines
+        .slice(index, blockEnd + 1)
+        .join("\n")
+        .trim(),
+    );
+    index = blockEnd;
+  }
+
+  return { kept: kept.join("\n").trim(), moved };
+}
+
+function getTableCardSecretIndent(line: string): number | null {
+  const match = line.match(/^([ \t]{0,3})-[ \t]+\*\*Knowledge & Secrets\*\*/);
+  return match ? getMarkdownIndentWidth(match[1] ?? "") : null;
+}
+
+function findSecretBlockEnd(
+  lines: string[],
+  startIndex: number,
+  secretIndent: number,
+): number {
+  let endIndex = startIndex;
+  let fence: string | null = null;
+  while (endIndex + 1 < lines.length) {
+    const line = lines[endIndex + 1] ?? "";
+    if (fence === null && isPeerListItem(line, secretIndent)) break;
+    fence = updateMarkdownFence(line, fence);
+    endIndex += 1;
+  }
+  return endIndex;
+}
+
+function isPeerListItem(line: string, secretIndent: number): boolean {
+  const match = line.match(/^([ \t]*)-[ \t]+/);
+  return !!match && getMarkdownIndentWidth(match[1] ?? "") <= secretIndent;
+}
+
+function getMarkdownIndentWidth(indent: string): number {
+  let width = 0;
+  for (const character of indent) {
+    width = character === "\t" ? width + (4 - (width % 4)) : width + 1;
+  }
+  return width;
+}
+
 function extractTableCardSecrets(
   markdown: string,
   gmOnlyBullets: string[],
 ): string {
-  return splitMarkdownSections(markdown)
+  // The Table Card extractor owns fenced secret blocks; other section-based
+  // handoffs retain their existing conservative heading rules.
+  const sections = splitMarkdownSections(markdown, true);
+  return (sections.length ? sections : [{ heading: "", body: markdown }])
     .map((section) => {
-      const { kept, moved } = extractBullets(
-        section.body,
-        new Set(["Knowledge & Secrets"]),
-      );
+      const { kept, moved } = extractTableCardSecretBlocks(section.body);
       for (const bullet of moved) {
         if (!gmOnlyBullets.includes(bullet)) {
           gmOnlyBullets.push(bullet);
@@ -357,12 +480,26 @@ function routeTableCardSecrets(
   };
 }
 
+/** Apply Table Card secrecy routing without changing the source's section layout. */
+export function routeTableCardSecretHandoff(
+  content: string,
+  lore: string,
+  isTableCard: boolean,
+) {
+  const routed = routeTableCardSecrets(content, lore, isTableCard);
+  return {
+    content: routed.content,
+    lore: appendGmOnlySecrets(routed.lore, routed.gmOnlyBullets),
+  };
+}
+
 function appendGmOnlySecrets(lore: string, bullets: string[]): string {
-  if (bullets.length === 0 || /-\s+\*\*Knowledge & Secrets\*\*/.test(lore)) {
+  const missingBullets = bullets.filter((bullet) => !lore.includes(bullet));
+  if (missingBullets.length === 0) {
     return lore;
   }
 
-  return [lore, `### GM-Only Secrets\n${bullets.join("\n")}`]
+  return [lore, `### GM-Only Secrets\n${missingBullets.join("\n")}`]
     .filter(Boolean)
     .join("\n\n");
 }
@@ -421,6 +558,150 @@ export function deduplicateMarkdownSections(
     : markdown;
 }
 
+/** Preserve the factions' source secrecy boundary rather than promoting
+ * GM reference prose from the generator reading layout into vault content. */
+function getDarkOrVampireHandoffLayout(
+  data: GeneratorOutput,
+  generatorType: string,
+) {
+  const publicHeadings = new Set(
+    generatorType === "dark-fantasy-faction"
+      ? ["what they control", "what they want"]
+      : ["", "overview", "history", "public facade", "public role"],
+  );
+  const content: string[] = [];
+  const gm: string[] = [];
+  const sections = splitMarkdownSections(data.content);
+  if (sections.length === 0 && data.content.trim()) {
+    (generatorType === "vampire-clan" ? content : gm).push(data.content);
+  }
+  for (const section of sections) {
+    (publicHeadings.has(section.heading.toLowerCase()) ? content : gm).push(
+      section.body,
+    );
+  }
+  return {
+    content: content.join("\n\n"),
+    lore: [...gm, data.lore ?? ""].filter(Boolean).join("\n\n"),
+  };
+}
+
+/** Canonical RPG NPC routes share one generator and import contract. */
+function isRpgNpcGenerator(generatorType?: string) {
+  return generatorType === "npc" || generatorType === "rpg-npc-generator";
+}
+
+export function getSourceHandoffEntityType(generatorType?: string) {
+  if (generatorType === "faction" || generatorType === "faction-generator")
+    return "faction";
+  if (generatorType === "bbeg-generator" || isRpgNpcGenerator(generatorType))
+    return "character";
+  return undefined;
+}
+
+export function usesSourceHandoff(generatorType?: string) {
+  return getSourceHandoffEntityType(generatorType) !== undefined;
+}
+
+function getFactionHandoffLayout(data: GeneratorOutput) {
+  // The faction's danger paragraph can repeat its explicitly labelled secret.
+  // Keep GM-facing sections and source lore together, not the preview layout.
+  // Only the two explicitly public sections are safe to show in the entry body.
+  // Model-added headings (including nested headings) stay in GM notes by default.
+  const publicHeadings = new Set(["what they control", "what they want"]);
+  const publicSections: string[] = [];
+  const gmSections: string[] = [];
+  for (const section of splitMarkdownSections(data.content)) {
+    const heading = section.heading.toLowerCase();
+    const sectionLines = section.body.split(/\r?\n/).slice(1);
+    const hasAdditionalHeading = sectionLines.some((line, index) => {
+      if (/^ {0,3}#{1,6}(?:[ \t]+|$)/.test(line)) return true;
+      const previousLine = sectionLines[index - 1];
+      return Boolean(
+        previousLine?.trim() && /^ {0,3}(?:=+|-+)[ \t]*$/.test(line),
+      );
+    });
+    const isPublic = publicHeadings.has(heading) && !hasAdditionalHeading;
+    (isPublic ? publicSections : gmSections).push(section.body);
+  }
+  return {
+    content: publicSections.join("\n\n"),
+    lore: [...gmSections, data.lore ?? ""].filter(Boolean).join("\n\n"),
+  };
+}
+
+export function usesPrivateSummaryHandoff(generatorType?: string) {
+  return (
+    generatorType === "urban-fantasy-faction" ||
+    generatorType === "social-hub" ||
+    generatorType === "plot-twist-generator"
+  );
+}
+
+function getNpcHandoffLayout(data: GeneratorOutput) {
+  const lore = data.lore ?? "";
+  // Table Card repeats the labelled secret in its body. Keep the original
+  // reference notes private and preserve any distinct secret from the body.
+  if (!data.content.includes("**Knowledge & Secrets**")) {
+    return { content: data.content, lore };
+  }
+  const secrets: string[] = [];
+  const content = extractTableCardSecrets(data.content, secrets);
+  const missing = secrets.filter((secret) => !lore.includes(secret));
+  return {
+    content,
+    lore: missing.length
+      ? [lore, `### GM-Only Secrets\n${missing.join("\n")}`]
+          .filter(Boolean)
+          .join("\n\n")
+      : lore,
+  };
+}
+
+/** The reading layout is not the storage or refinement secrecy boundary.
+ * Use the trusted route, not generated labels, to preserve the original fields.
+ */
+function getBaseGeneratorHandoffLayout(
+  data: GeneratorOutput,
+  layout: { content: string; lore: string },
+  generatorType?: string,
+): { content: string; lore: string } {
+  if (generatorType === "heist")
+    return { content: data.content, lore: data.lore ?? "" };
+  if (isRpgNpcGenerator(generatorType)) return getNpcHandoffLayout(data);
+  if (getSourceHandoffEntityType(generatorType) === "faction")
+    return getFactionHandoffLayout(data);
+  return generatorType === "bbeg-generator"
+    ? { content: data.content, lore: data.lore ?? "" }
+    : generatorType === "dark-fantasy-faction" ||
+        generatorType === "vampire-clan"
+      ? getDarkOrVampireHandoffLayout(data, generatorType)
+      : layout;
+}
+
+export function getGeneratorHandoffLayout(
+  data: GeneratorOutput,
+  layout: { content: string; lore: string },
+  generatorType?: string,
+): { content: string; lore: string } {
+  if (generatorType === "urban-fantasy-faction") {
+    return {
+      content: "",
+      lore: [data.summary, data.content, data.lore ?? ""]
+        .filter(Boolean)
+        .join("\n\n"),
+    };
+  }
+  if (generatorType === "social-hub") {
+    const layout = getSocialHubHandoffLayout(data);
+    return {
+      ...layout,
+      lore: [data.summary, layout.lore].filter(Boolean).join("\n\n"),
+    };
+  }
+  return getBaseGeneratorHandoffLayout(data, layout, generatorType);
+}
+
 export function getGeneratorDocumentLayout(
   generatedData: GeneratorOutput | null,
 ) {
@@ -443,7 +724,11 @@ export function getGeneratorDocumentLayout(
   const rawContent = routedTableCard.content;
   const content = deduplicateMarkdownSections(rawContent, seenHeadings);
 
-  const rule = LAYOUT_RULES.find((r) => labels.includes(r.label));
+  // Nation output keeps unrecognised lore private. Its stricter routing must
+  // win even when the model also supplies another generator's label.
+  const rule = labels.includes("nation-generator")
+    ? LAYOUT_RULES.find((r) => r.label === "nation-generator")
+    : LAYOUT_RULES.find((r) => labels.includes(r.label));
   if (!rule) {
     return {
       content,
@@ -505,5 +790,36 @@ export function getGeneratorDocumentLayout(
       .join("\n\n")
       .trim(),
     lore: appendGmOnlySecrets(lore, gmOnlyBullets),
+  };
+}
+
+/** The three inhabited-place routes have source GM reference rather than
+ * player-ready text in the reading layout's promoted sections. */
+export function getInhabitedPlaceHandoffLayout(
+  data: GeneratorOutput,
+  layout: { content: string; lore: string },
+  generatorType?: string,
+) {
+  if (generatorType === "settlement") {
+    return { content: data.content, lore: data.lore ?? "" };
+  }
+  if (generatorType !== "tavern" && generatorType !== "kingdom") return layout;
+  const publicHeadings = new Set(
+    generatorType === "tavern"
+      ? ["the place", "the people"]
+      : ["the realm", "society & culture"],
+  );
+  const content: string[] = [];
+  const gm: string[] = [];
+  const sections = splitMarkdownSections(data.content);
+  if (sections.length === 0 && data.content.trim()) gm.push(data.content);
+  for (const section of sections) {
+    (publicHeadings.has(section.heading.toLowerCase()) ? content : gm).push(
+      section.body,
+    );
+  }
+  return {
+    content: content.join("\n\n"),
+    lore: [...gm, data.lore ?? ""].filter(Boolean).join("\n\n"),
   };
 }

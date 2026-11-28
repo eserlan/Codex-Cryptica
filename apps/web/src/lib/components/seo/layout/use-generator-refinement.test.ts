@@ -46,13 +46,20 @@ const current = {
   status: "draft",
 };
 
-function setup(options: { canRefine?: boolean } = {}) {
+function setup(
+  options: {
+    canRefine?: boolean;
+    generatorType?: string;
+    documentLayout?: { content: string; lore: string };
+  } = {},
+) {
   const applyRefinedOutput = vi.fn();
   const onOpenFromHub = vi.fn();
   const refinement = useGeneratorRefinement({
-    getGeneratorType: () => "npc",
+    getGeneratorType: () => options.generatorType ?? "npc",
     getGeneratedData: () => current as never,
-    getDocumentLayout: () => ({ content: "Body", lore: "old lore" }) as never,
+    getDocumentLayout: () =>
+      options.documentLayout ?? { content: "Body", lore: "old lore" },
     getCurrentEntityId: () => "entity-0",
     getContextSelection: () => ({ entities: [], trimmed: false }) as never,
     canRefineCurrentOutput: () => options.canRefine ?? true,
@@ -89,6 +96,98 @@ describe("useGeneratorRefinement", () => {
       generator_type: "npc",
       source: "current_output",
     });
+  });
+
+  it("passes original NPC GM notes to refinement even when the preview promotes them", () => {
+    const { refinement } = setup({
+      generatorType: "npc",
+      documentLayout: { content: "Body\nold lore", lore: "" },
+    });
+    refinement.openForCurrentOutput();
+    expect(service.start).toHaveBeenCalledWith(
+      expect.objectContaining({ content: current.content, lore: current.lore }),
+    );
+  });
+
+  it("keeps a refined Table Card's newly proposed secret out of the Session Hub body", async () => {
+    const { refinement, applyRefinedOutput } = setup({ generatorType: "npc" });
+    refinement.openForCurrentOutput();
+    const secret = "The ferry has a forged manifest.";
+    await refinement.accept({
+      type: "character",
+      title: "Mira the Bold",
+      summary: "s2",
+      labels: ["table-card"],
+      status: "draft",
+      content: `### The Six Elements\n- **Immediate Want**: A boat.\n- **Knowledge & Secrets**: ${secret}`,
+      lore: "old lore",
+    });
+    expect(hub.addEntity).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: expect.stringContaining("A boat."),
+        lore: expect.stringContaining(secret),
+      }),
+    );
+    expect(hub.addEntity).not.toHaveBeenCalledWith(
+      expect.objectContaining({ content: expect.stringContaining(secret) }),
+    );
+    expect(applyRefinedOutput).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: expect.not.stringContaining(secret),
+        lore: expect.stringContaining(secret),
+      }),
+      "derived-1",
+    );
+  });
+
+  it("keeps a refined Plot Twist summary in GM notes rather than the Session Hub body", async () => {
+    const { refinement } = setup({ generatorType: "plot-twist-generator" });
+    refinement.openForCurrentOutput();
+    const secret = "The clerk paid the smugglers.";
+    await refinement.accept({
+      type: "note",
+      title: "The reversal",
+      summary: secret,
+      content: "### The Reveal\nThe clerk is responsible.",
+      lore: "old lore",
+      labels: ["plot-twist-generator"],
+      status: "draft",
+    });
+    expect(hub.addEntity).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: expect.not.stringContaining(secret),
+        summary: undefined,
+        lore: expect.stringContaining(secret),
+      }),
+    );
+  });
+
+  it("passes the original BBEG public fields and private plan to refinement, not the reading layout", async () => {
+    const { refinement, applyRefinedOutput } = setup({
+      generatorType: "bbeg-generator",
+      documentLayout: { content: "Body\nold lore", lore: "" },
+    });
+    refinement.openForCurrentOutput();
+    expect(service.start).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: current.content,
+        lore: current.lore,
+      }),
+    );
+    await refinement.accept(proposal);
+    expect(hub.addEntity).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: "*s2*\n\nNew body",
+        lore: "old lore",
+      }),
+    );
+    expect(applyRefinedOutput).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: "New body",
+        lore: "old lore",
+      }),
+      "derived-1",
+    );
   });
 
   it("closes the hub detail before refining a hub entity", () => {

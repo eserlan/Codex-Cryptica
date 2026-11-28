@@ -98,6 +98,11 @@ export const howDoYouImproviseNpcsOnTheSpot: AnswerConfigInput = {
   },
   relatedTools: [
     {
+      title: "RPG Name Generator",
+      description: "Keep a shortlist of names ready for improvised contacts.",
+      href: "/generators/names",
+    },
+    {
       title: "NPC generator",
       description:
         "Generate characters with instant motives, distinct mannerisms, and regional hooks.",

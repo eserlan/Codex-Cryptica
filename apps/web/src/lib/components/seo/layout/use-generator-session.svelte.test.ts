@@ -35,6 +35,8 @@ function setup(
     autoGenerateExplicit?: boolean;
     aiModeRequired?: boolean;
     supportsStreaming?: boolean;
+    generatorType?: string;
+    documentLayout?: { content: string; lore: string };
   } = {},
 ) {
   const generate = options.generate ?? vi.fn(async () => output);
@@ -49,8 +51,9 @@ function setup(
       getAiModeRequired: () => options.aiModeRequired ?? false,
       getSupportsStreaming: () => options.supportsStreaming ?? false,
       getSingleColumn: () => false,
-      getGeneratorType: () => "npc",
-      getDocumentLayout: () => ({ content: "Body", lore: "Lore" }) as never,
+      getGeneratorType: () => options.generatorType ?? "npc",
+      getDocumentLayout: () =>
+        options.documentLayout ?? { content: "Body", lore: "Lore" },
       getContextSelection: () => ({ entities: [], trimmed: false }) as never,
       getOutputCard: () => null,
       generate: generate as never,
@@ -76,6 +79,109 @@ describe("useGeneratorSession", () => {
     track.mockClear();
   });
   afterEach(() => cleanup?.());
+
+  it("records a BBEG's original public face and GM lore in the Session Hub even when the preview promotes it", async () => {
+    const villain = {
+      ...output,
+      summary: "",
+      content: "Public face",
+      lore: "GM secret plan",
+      labels: ["villain", "npc-generator", "imported-draft"],
+    };
+    const ctx = setup({
+      generate: vi.fn(async () => villain),
+      generatorType: "bbeg-generator",
+      documentLayout: { content: "Public face\nGM secret plan", lore: "" },
+    });
+    cleanup = ctx.cleanup;
+    await ctx.session.handleGenerate();
+    expect(hub.addEntity).toHaveBeenCalledOnce();
+    expect(hub.addEntity).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "character",
+        content: villain.content,
+        lore: villain.lore,
+        labels: villain.labels,
+      }),
+    );
+    expect(ctx.session.generatedData).toEqual(villain);
+  });
+
+  it("records NPC Full Dossier source notes privately instead of the preview layout", async () => {
+    const npc = {
+      ...output,
+      summary: "",
+      content: "Known details",
+      lore: "### At a Glance\n- **Secret**: Hidden ledger",
+      labels: ["npc-generator"],
+    };
+    const ctx = setup({
+      generate: vi.fn(async () => npc),
+      generatorType: "npc",
+      documentLayout: { content: "Known details and Hidden ledger", lore: "" },
+    });
+    cleanup = ctx.cleanup;
+    await ctx.session.handleGenerate();
+    expect(hub.addEntity).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "character",
+        content: npc.content,
+        lore: npc.lore,
+      }),
+    );
+  });
+
+  it("keeps Urban Faction summaries with GM notes in the Session Hub", async () => {
+    const secret = "The mayor secretly controls the faction.";
+    const faction = {
+      ...output,
+      type: "faction" as const,
+      summary: secret,
+      content: "### Secret\nThe mayor controls the faction.",
+      lore: "### Rival Faction\nThe city watch is closing in.",
+    };
+    const ctx = setup({
+      generate: vi.fn(async () => faction),
+      generatorType: "urban-fantasy-faction",
+    });
+    cleanup = ctx.cleanup;
+
+    await ctx.session.handleGenerate();
+
+    expect(hub.addEntity).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: "",
+        summary: undefined,
+        lore: expect.stringContaining(secret),
+      }),
+    );
+  });
+
+  it("keeps Plot Twist summaries and reveals in Session Hub GM notes", async () => {
+    const twist = {
+      ...output,
+      type: "note" as const,
+      summary: "The patron paid the smugglers.",
+      content: "### The Reveal\nThe patron is behind the theft.",
+      lore: "GM consequence.",
+    };
+    const ctx = setup({
+      generate: vi.fn(async () => twist),
+      generatorType: "plot-twist-generator",
+    });
+    cleanup = ctx.cleanup;
+    await ctx.session.handleGenerate();
+    expect(hub.addEntity).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: expect.not.stringContaining(twist.summary),
+        summary: undefined,
+        lore: expect.stringContaining(twist.summary),
+      }),
+    );
+    expect(hub.addEntity).toHaveBeenCalledWith(
+      expect.objectContaining({ lore: expect.stringContaining(twist.content) }),
+    );
+  });
 
   it("generates with AI by default, records the result and tracks the run", async () => {
     const ctx = setup();

@@ -54,10 +54,59 @@ function guide(summary: string, detail = "A short tip."): GeneratorGuide {
   return { summary, tips: [{ title: "Tip", detail }] };
 }
 
+describe("Heist editorial guide", () => {
+  it("teaches success conditions, casing and conditional escalation", () => {
+    const guide = SLUG_GUIDES.heist!;
+    const text = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const phrase of [
+      "Heist Type",
+      "The Prize (optional)",
+      "Target Scale",
+      "Alarm Track",
+      "The Getaway",
+    ])
+      expect(text).toContain(phrase);
+    expect(guide.links?.map((link) => link.href)).toEqual([
+      "/answers/what-makes-a-good-heist-target-in-a-tabletop-rpg",
+      "/answers/how-do-you-run-a-heist-in-a-tabletop-rpg",
+    ]);
+  });
+});
+
+describe("RPG NPC guide", () => {
+  it("teaches role and moral stance choices, prep style and witness boundaries", () => {
+    const guide = getGeneratorGuide("npc", "RPG NPC Generator");
+    const tips = guide.tips.map((t) => t.detail).join(" ");
+    for (const label of [
+      "Choose their role",
+      "Choose their moral stance",
+      "Common Good",
+      "Mercenary Instinct",
+      "Prep style",
+      "Table Card",
+      "Full Dossier",
+      "merely suspect",
+    ])
+      expect(tips).toContain(label);
+    expect(guide.links?.map((l) => l.href)).toEqual([
+      "/answers/how-do-you-improvise-npcs-on-the-spot",
+      "/answers/how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know",
+      "/answers/how-do-you-organise-npc-relationships",
+    ]);
+    expect(guide.links?.every((l) => l.description)).toBe(true);
+    expect(tips).not.toMatch(/[–—]/);
+  });
+});
+
 describe("generator guide distinctness", () => {
   it("has no copy shared across specific guides", () => {
+    // The retired adventure slug is an alias of the same canonical generator,
+    // not a second generator that should have independently authored copy.
+    const { "adventure-idea-generator": legacyAdventure, ...canonicalGuides } =
+      SLUG_GUIDES;
+    expect(legacyAdventure).toBe(canonicalGuides["adventure-generator"]);
     expect(
-      findSharedGuideCopy(SLUG_GUIDES as Record<string, GeneratorGuide>),
+      findSharedGuideCopy(canonicalGuides as Record<string, GeneratorGuide>),
     ).toEqual([]);
   });
 
@@ -192,6 +241,33 @@ describe("generator guide distinctness", () => {
     ]);
   });
 
+  it("guides fantasy name, superhero origin and star-system preparation with actual controls", () => {
+    for (const [slug, labels] of [
+      [
+        "fantasy-names",
+        ["Quick names", "Copy pinned", "Generate names with notes"],
+      ],
+      [
+        "origin-generator",
+        ["Origin Type", "Tone", "Campaign Hook", "Ongoing Consequence"],
+      ],
+      [
+        "star-system",
+        [
+          "System Type",
+          "Civilisation Level",
+          "Scientific Realism",
+          "Develop This World",
+        ],
+      ],
+    ] as const) {
+      const guide = getGeneratorGuide(slug, slug);
+      const tips = guide.tips.map((tip) => tip.detail).join(" ");
+      for (const label of labels) expect(tips).toContain(label);
+      expect(guide.links?.length).toBeGreaterThanOrEqual(2);
+    }
+  });
+
   it("qualifies custom culture behavior for the offline fantasy name roll", () => {
     const guide = getGeneratorGuide("fantasy-names", "Fantasy Names");
     const cultureTip = guide.tips.find((tip) =>
@@ -246,7 +322,8 @@ describe("generator guide distinctness", () => {
     ]) {
       expect(tipText).toContain(label);
     }
-    expect(tipText).toContain("In offline drafts, Add campaign context");
+    expect(tipText).toContain("observable sign");
+    expect(guide.links).toHaveLength(3);
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
@@ -324,6 +401,17 @@ describe("generator guide distinctness", () => {
     ]) {
       expect(tipText).toContain(label);
     }
+    expect(guide.linksTitle).toBe("Make your faction matter at the table");
+    expect(guide.links).toHaveLength(3);
+    expect(guide.links?.map((link) => link.href)).toEqual([
+      "/answers/how-do-you-create-a-fantasy-faction",
+      "/answers/how-do-i-run-political-intrigue-and-faction-play",
+      "/answers/how-do-you-track-faction-turns-between-rpg-sessions",
+    ]);
+    for (const link of guide.links ?? []) {
+      expect(link.description).toBeTruthy();
+      expect([link.label, link.description].join(" ")).not.toMatch(/[–—]/);
+    }
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
@@ -333,13 +421,27 @@ describe("generator guide distinctness", () => {
     expect(guide.summary).not.toContain("Nation Generator");
     expect(guide.tips).toHaveLength(3);
     const tipText = guide.tips.map((tip) => tip.detail).join(" ");
-    expect(guide.summary).toContain("two or three power blocs");
-    expect(tipText).toContain("In offline drafts");
-    expect(tipText).toContain(
-      "AI results may structure those seeds differently",
-    );
-    for (const label of ["Conflict level", "Scale", "Power Blocs"]) {
+    expect(guide.summary).toContain("competing power blocs");
+    for (const label of [
+      "Conflict level",
+      "Scale",
+      "Government style",
+      "Power Blocs",
+      "Hidden Problem",
+    ]) {
       expect(tipText).toContain(label);
+    }
+    expect(tipText).not.toContain("In offline drafts");
+    expect(guide.linksTitle).toBe("Bring your nation to life");
+    expect(guide.links).toHaveLength(3);
+    expect(guide.links?.map((link) => link.href)).toEqual([
+      "/answers/how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
+      "/answers/how-do-i-run-political-intrigue-and-faction-play",
+      "/answers/how-do-i-build-a-believable-constitutional-crisis-or-coup",
+    ]);
+    for (const link of guide.links ?? []) {
+      expect(link.description).toBeTruthy();
+      expect([link.label, link.description].join(" ")).not.toMatch(/[–—]/);
     }
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
@@ -527,6 +629,9 @@ describe("generator guide distinctness", () => {
       "Adventure Idea Generator",
     );
     expect(guide).toBe(SLUG_GUIDES["adventure-idea-generator"]);
+    expect(
+      getGeneratorGuide("adventure-generator", "Adventure Idea Generator"),
+    ).toBe(guide);
     expect(guide).not.toEqual(
       defaultGuideForSlug(
         "adventure-idea-generator",
@@ -829,4 +934,185 @@ describe("generator guide distinctness", () => {
       defaultGuideForSlug(fallbackSlug, "Custom Generator"),
     );
   });
+});
+
+describe("BBEG editorial guide", () => {
+  it("teaches scale, motive and adapting the next move, with a campaign reading sequence", () => {
+    const guide = getGeneratorGuide("bbeg-generator", "BBEG Generator");
+    const text = guide.tips.map(({ detail }) => detail).join(" ");
+    for (const label of [
+      "Threat Scale",
+      "Villain Archetype",
+      "World Relation",
+      "Tone",
+      "Degree of Sympathy / Redeemability",
+      "The Villain's Plan",
+      "Escalation If Ignored",
+    ]) {
+      expect(text).toContain(label);
+    }
+    expect(text).toContain("change the next viable stage");
+    expect(text).not.toContain("Save to Codex");
+    expect(guide.linksTitle).toBe("Build, run and update the campaign threat");
+    expect(guide.links?.map(({ href }) => href)).toEqual([
+      "/answers/how-do-i-plan-story-arcs-for-an-rpg-campaign",
+      "/answers/how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
+      "/answers/how-do-you-track-faction-turns-between-rpg-sessions",
+    ]);
+    expect(guide.links?.every(({ description }) => description)).toBe(true);
+  });
+});
+
+describe("Puzzle editorial guide", () => {
+  it("teaches feedback, spotlight and consequences using the real form controls", () => {
+    const guide = SLUG_GUIDES.puzzle!;
+    const text = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const phrase of [
+      "Puzzle purpose",
+      "Puzzle style",
+      "PC capabilities to make matter",
+      "Participation style",
+      "Complexity",
+      "Failure pressure",
+    ])
+      expect(text).toContain(phrase);
+    expect(guide.links?.map((link) => link.href)).toEqual([
+      "/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
+      "/answers/how-do-you-give-hints-for-an-rpg-puzzle-without-giving-away-the-answer",
+    ]);
+  });
+});
+
+describe("Quest editorial guide", () => {
+  it("teaches table decisions using field labels and three progressive Answers", () => {
+    const guide = getGeneratorGuide("quest", "RPG Quest Generator");
+    const text = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const label of [
+      "Choose a vibe",
+      "Scope",
+      "Location Type",
+      "Main Threat",
+      "Twist",
+      "Reward",
+      "Optional Campaign Context",
+    ]) {
+      expect(text).toContain(label);
+    }
+    expect(guide.linksTitle).toBe("Turn a quest hook into playable choices");
+    expect(guide.links?.map(({ href }) => href)).toEqual([
+      "/answers/how-do-you-create-quest-hooks-without-railroading",
+      "/answers/how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
+      "/answers/how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
+    ]);
+    expect(guide.links?.every(({ description }) => description)).toBe(true);
+  });
+});
+
+describe("Personality editorial guide", () => {
+  it("connects personality choices to relationships, flaws and pressure, with a reading progression", () => {
+    const guide = getGeneratorGuide("personality", "Personality Generator");
+    const detail = guide.tips.map(({ detail }) => detail).join(" ");
+    for (const label of [
+      "Role / Context",
+      "Optional Relationship Context",
+      "Social Style",
+      "Moral Outlook",
+      "Temperament",
+      "Reserved / Expressive",
+    ]) {
+      expect(detail).toContain(label);
+    }
+    expect(detail).toContain("guide your own edits to a non-AI profile");
+    expect(detail).not.toContain("Save to Codex");
+    expect(guide.linksTitle).toBe(
+      "Bring the personality to the table and back again",
+    );
+    expect(guide.links?.map(({ href }) => href)).toEqual([
+      "/answers/how-do-you-make-npcs-memorable-without-lots-of-prep",
+      "/answers/how-do-i-roleplay-npcs-if-im-not-good-at-acting",
+      "/answers/how-do-you-keep-track-of-npcs-in-a-long-campaign",
+    ]);
+    expect(guide.links?.every(({ description }) => description)).toBe(true);
+  });
+});
+
+describe("Business editorial guide", () => {
+  it("teaches dependencies, rival bargains and ownership using actual controls", () => {
+    const guide = SLUG_GUIDES.business!;
+    const text = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const phrase of [
+      "Business type",
+      "Location (optional)",
+      "Legitimacy",
+      "Players own this business",
+      "Recurring obligations",
+    ])
+      expect(text).toContain(phrase);
+    expect(guide.links?.map((link) => link.href)).toEqual([
+      "/answers/how-do-i-turn-economic-pressures-into-rpg-adventure-hooks",
+      "/answers/how-do-i-run-a-campaign-where-the-players-own-a-business",
+    ]);
+  });
+});
+
+describe("Faction Roster editorial guide", () => {
+  it("uses roster controls and progresses from roleplay to negotiation and faction turns", () => {
+    const guide = getGeneratorGuide(
+      "faction-roster",
+      "Faction Roster Generator",
+    );
+    const detail = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const label of [
+      "The faction",
+      "Roster size",
+      "How the faction is organised",
+      "Roster emphasis",
+      "Add campaign context (optional)",
+    ]) {
+      expect(detail).toContain(label);
+    }
+    expect(guide.linksTitle).toBe("Put the faction's members into play");
+    expect(guide.links?.map(({ href }) => href)).toEqual([
+      "/answers/how-do-i-roleplay-npcs-if-im-not-good-at-acting",
+      "/answers/how-do-i-run-political-intrigue-and-faction-play",
+      "/answers/how-do-you-track-faction-turns-between-rpg-sessions",
+    ]);
+    expect(guide.links?.every(({ description }) => description)).toBe(true);
+  });
+});
+
+describe("RPG Item editorial guide", () => {
+  it("uses the actual controls and curates loot placement, upgrades and trading", () => {
+    const guide = getGeneratorGuide("item", "RPG Item Generator");
+    const detail = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const label of ["Item Type", "Rarity", "Add campaign context"]) {
+      expect(detail).toContain(label);
+    }
+    expect(guide.linksTitle).toBe(
+      "Put found equipment to work in your campaign",
+    );
+    expect(guide.links?.map(({ href }) => href)).toEqual([
+      "/answers/how-much-loot-and-how-many-magic-items-should-i-give-my-players",
+      "/answers/how-do-i-upgrade-a-player-characters-weapon-without-replacing-it",
+      "/answers/what-can-players-actually-buy-and-sell-in-a-fantasy-settlement",
+    ]);
+    expect(guide.links?.every(({ description }) => description)).toBe(true);
+  });
+});
+
+it("teaches faction resource bargaining, territorial limits and an independent move with a design-to-play learning path", () => {
+  const guide = SLUG_GUIDES.faction!;
+  const tips = guide.tips.map((tip) => tip.detail).join(" ");
+  for (const phrase of [
+    "Choose what they are",
+    "Choose their scale",
+    "Add campaign context",
+    "Immediate Hook",
+  ])
+    expect(tips).toContain(phrase);
+  expect(guide.links?.map((link) => link.href)).toEqual([
+    "/answers/how-do-you-create-a-fantasy-faction",
+    "/answers/how-do-i-run-political-intrigue-and-faction-play",
+    "/answers/how-do-you-track-faction-turns-between-rpg-sessions",
+  ]);
 });

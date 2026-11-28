@@ -1251,7 +1251,9 @@ describe("SEOGeneratorLayout Theming Sync", () => {
           screen.getByTestId("generator-continuation-callout"),
         ).toBeTruthy();
       });
-      expect(screen.getByText("Keep this system connected")).toBeTruthy();
+      expect(
+        screen.getByText("Keep the system ready for the next jump"),
+      ).toBeTruthy();
       expect(screen.getByText("Add to my Codex")).toBeTruthy();
       expect(
         screen.getByText("No account needed; stored locally in this browser."),
@@ -1398,7 +1400,9 @@ describe("SEOGeneratorLayout Theming Sync", () => {
         });
         await fireEvent.click(document.querySelector("#generate-button")!);
         await vi.waitFor(() => {
-          expect(screen.getByText("Keep developing this origin")).toBeTruthy();
+          expect(
+            screen.getByText("Keep the hero's origin in play"),
+          ).toBeTruthy();
         });
         expect(generate).toHaveBeenCalledWith(
           expect.objectContaining({ useAI: false }),
@@ -1508,7 +1512,9 @@ describe("SEOGeneratorLayout Theming Sync", () => {
           screen.getByTestId("generator-continuation-callout"),
         ).toBeTruthy();
       });
-      expect(screen.getByText("Keep this system connected")).toBeTruthy();
+      expect(
+        screen.getByText("Keep the system ready for the next jump"),
+      ).toBeTruthy();
       expect(screen.getByText("Add to my Codex")).toBeTruthy();
       expect(
         screen.getByText("No account needed; stored locally in this browser."),
@@ -1654,7 +1660,9 @@ describe("SEOGeneratorLayout Theming Sync", () => {
         });
         await fireEvent.click(document.querySelector("#generate-button")!);
         await vi.waitFor(() => {
-          expect(screen.getByText("Keep developing this origin")).toBeTruthy();
+          expect(
+            screen.getByText("Keep the hero's origin in play"),
+          ).toBeTruthy();
         });
         expect(generate).toHaveBeenCalledWith(
           expect.objectContaining({ useAI: false }),

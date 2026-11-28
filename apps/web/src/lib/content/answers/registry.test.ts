@@ -243,6 +243,16 @@ describe("answer registry", () => {
     );
   });
 
+  it("offers a personality profile as a focused portrayal tool in the NPC roleplay Answer", () => {
+    const answer = answers["how-do-i-roleplay-npcs-if-im-not-good-at-acting"];
+    expect(answer.relatedTools).toContainEqual(
+      expect.objectContaining({
+        href: "/generators/personality",
+        description: expect.stringContaining("reactions under pressure"),
+      }),
+    );
+  });
+
   it("keeps the captive recruitment answer's practical prep checklist", () => {
     const answer =
       answers[
@@ -1923,4 +1933,18 @@ describe("answer structured data", () => {
     expect(buildAnswerFaqJsonLd(risky)).not.toContain("</script>");
     expect(buildAnswerFaqJsonLd(risky)).toContain("\\u003c");
   });
+});
+
+it("does not claim the RPG Item generator has a mundane mode in the loot Answer", () => {
+  const answer = getAnswer(
+    "how-much-loot-and-how-many-magic-items-should-i-give-my-players",
+  );
+  const itemTool = answer?.relatedTools?.find(
+    ({ href }) => href === "/generators/item",
+  );
+  expect(itemTool?.description).toContain("remove the magical property");
+  expect(
+    getDiscoveryEntries().find(({ id }) => id === "generator-item")
+      ?.uniqueValue,
+  ).toContain("enchanted objects");
 });

@@ -38,6 +38,16 @@ describe("PersonalityFormFields", () => {
     campaignContext: "",
   };
 
+  it("explains that the non-AI result is random and context is AI-only", () => {
+    render(PersonalityFormFields, { props });
+    expect(
+      screen.getByText(/Non-AI mode picks a prewritten personality at random/),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(/With AI, add a faction, location or ongoing tension/),
+    ).toBeTruthy();
+  });
+
   it("reports a genre change only when the user chooses one, never on Surprise Me", async () => {
     const onGenreChange = vi.fn();
     render(PersonalityFormFields, { props: { ...props, onGenreChange } });

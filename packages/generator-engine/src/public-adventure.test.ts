@@ -13,6 +13,7 @@ import {
   listGenerators,
   resolveEntityType,
 } from "./campaign-generator-registry";
+import { ADVENTURE_GENRE_TABLES } from "./adventure/genres";
 
 function seededRng(seed = 1): () => number {
   let s = seed >>> 0;
@@ -86,6 +87,32 @@ describe("generateAdventureLocal", () => {
     expect(out.labels).toContain("sci-fi-space-opera");
     expect(out.content).toContain("## Initial Situation");
     expect(out.content).toContain("## Key Locations");
+  });
+
+  it("does not fall back to fantasy tropes for non-fantasy genres or short aliases in offline mode", () => {
+    const nonFantasyGenres = [
+      "Sci-Fi",
+      "Sci-Fi / Space Opera",
+      "Cyberpunk",
+      "Cyberpunk / Corporate",
+      "Horror",
+      "Cosmic Horror",
+      "Gothic Horror",
+      "Post-Apocalyptic",
+      "Space Opera",
+      "Steampunk",
+      "Western",
+      "Western / Frontier",
+    ];
+    for (const genre of nonFantasyGenres) {
+      for (let seed = 1; seed <= 5; seed += 1) {
+        const out = generateAdventureLocal({ genre }, seededRng(seed));
+        const combined = `${out.title}\n${out.summary}\n${out.content}\n${out.lore}`;
+        expect(combined).not.toMatch(
+          /elven grove|druidic circle|runes of unmaking/i,
+        );
+      }
+    }
   });
 
   it("generates a one-shot with fewer locations and NPCs than a campaign arc", () => {
@@ -204,6 +231,30 @@ describe("buildAdventurePrompt", () => {
   it("includes genre hint in the user message", () => {
     const prompt = buildAdventurePrompt({ genre: "Cyberpunk / Corporate" });
     expect(prompt.userMessage).toContain("Cyberpunk / Corporate");
+  });
+
+  it("uses the resolved genre hint for every supported alias", () => {
+    const aliases = [
+      ["sci-fi", "Sci-Fi / Space Opera"],
+      ["scifi", "Sci-Fi / Space Opera"],
+      ["space opera", "Sci-Fi / Space Opera"],
+      ["cyberpunk", "Cyberpunk / Corporate"],
+      ["horror", "Cosmic Horror"],
+      ["western", "Western / Frontier"],
+      ["vampire", "Vampire / Gothic Noir"],
+      ["gothic noir", "Vampire / Gothic Noir"],
+      ["post-apocalyptic", "Post-Apocalyptic"],
+      ["post apocalyptic", "Post-Apocalyptic"],
+      ["superhero", "Superhero / Comic Book"],
+      ["comic book", "Superhero / Comic Book"],
+    ] as const;
+
+    for (const [alias, canonicalGenre] of aliases) {
+      const prompt = buildAdventurePrompt({ genre: alias });
+      expect(prompt.userMessage).toContain(
+        `- Active Theme / Genre: ${alias} (${ADVENTURE_GENRE_TABLES[canonicalGenre].hint})`,
+      );
+    }
   });
 
   it("includes multi-asset classification and preservation dilemma instructions", () => {

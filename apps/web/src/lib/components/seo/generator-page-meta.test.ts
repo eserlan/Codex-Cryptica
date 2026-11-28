@@ -57,7 +57,59 @@ const allExpectedSlugs: ValidSlug[] = [
   "mystery-investigation",
 ];
 
+describe("RPG NPC surrounding copy", () => {
+  it("explains both prep styles and their real context and sharing boundaries", () => {
+    const meta = slugMeta.npc;
+    expect(meta.introText).toContain("Table Card or a Full Dossier");
+    const faq = meta.faqs?.map((f) => f.answer).join(" ");
+    for (const phrase of [
+      "without incorporating that text",
+      "display it in the background",
+      "one new Character",
+      "do not create separate entities or links",
+      "GM notes",
+      "complete draft",
+      "imported remixes",
+    ])
+      expect(faq).toContain(phrase);
+    expect(
+      meta.faqs?.every(
+        (f) => !f.question.includes("D&D NPC generator require"),
+      ),
+    ).toBe(true);
+  });
+  it("preloads a concrete six-element Table Card example with actual labelled sections", () => {
+    const draft = slugDrafts.npc!;
+    expect(draft.title).toBe("Mara Reed");
+    expect(draft.labels).toContain("table-card");
+    for (const field of [
+      "Immediate Want",
+      "Physical Mannerism",
+      "Sharp Contradiction",
+      "Relationship Hook",
+      "Sensory Tag",
+      "Knowledge & Secrets",
+    ])
+      expect(draft.content).toContain(`**${field}**`);
+    expect(draft.content).toContain("### Table Delivery");
+    expect(draft.lore).toContain("### At a Glance");
+    expect(draft.lore).toContain("### Faction Connection");
+    expect(draft.lore).toContain("second manifest in her boot");
+  });
+});
+
 describe("generator-page-meta completeness and social preview tags", () => {
+  it("shows the Superhero Origin Vault explanation as a FAQ, not a related link", () => {
+    const meta = slugMeta["origin-generator"];
+    expect(meta.faqs).toContainEqual({
+      question: "What goes into my vault?",
+      answer: expect.stringContaining("one new Character"),
+    });
+    expect(meta.relatedLinks?.every((link) => link.href && link.label)).toBe(
+      true,
+    );
+  });
+
   it("uses the Mystery & Investigation Generator's rendered social screenshot", () => {
     expect(slugMeta["mystery-investigation"].ogImage).toBe(
       "https://assets.codexcryptica.com/screenshots/generator-mystery-investigation.png",
@@ -80,6 +132,20 @@ describe("generator-page-meta completeness and social preview tags", () => {
       "https://assets.codexcryptica.com/screenshots/generator-puzzle.png",
     );
     expect(slugMeta.puzzle.ogImage).not.toContain("generator-quest");
+  });
+
+  it("shows one coherent business example and describes the actual public batch", () => {
+    const draft = slugDrafts.business!;
+    expect(draft.business?.identity.type).toBe("Blacksmith");
+    expect(draft.content).toContain("The Crooked Compass");
+    for (const person of [draft.business!.leadership, ...draft.business!.staff])
+      expect(draft.content).toContain(person.name);
+    expect(draft.content).toContain(draft.business!.secret);
+    expect(
+      slugMeta.business.faqs?.some((faq) =>
+        faq.answer.includes("outside parties remain named references"),
+      ),
+    ).toBe(true);
   });
 
   it("uses Business's own rendered social screenshot", () => {
@@ -231,5 +297,205 @@ describe("generator-page-meta completeness and social preview tags", () => {
         expect(guide.tips.length).toBeGreaterThanOrEqual(2);
       }
     });
+  });
+});
+
+describe("BBEG editorial example and FAQ", () => {
+  it("keeps Governor Holt's three public sections and nineteen GM sections, with six concrete stages", () => {
+    const draft = slugDrafts["bbeg-generator"]!;
+    expect(draft).toMatchObject({
+      type: "character",
+      title: "Governor Ysra Holt",
+      labels: ["villain", "bbeg-generator", "imported-draft"],
+    });
+    expect(
+      [...draft.content.matchAll(/^### (.+)$/gm)].map((match) => match[1]),
+    ).toEqual(["Public Face", "Signature / Calling Card", "First Signs"]);
+    expect(
+      [...draft.lore!.matchAll(/^### (.+)$/gm)].map((match) => match[1]),
+    ).toEqual([
+      "Core Concept",
+      "True Nature",
+      "Ultimate Goal",
+      "Why Now",
+      "Motivation",
+      "Fatal Flaw",
+      "Methods",
+      "Resources",
+      "Lieutenants & Inner Circle",
+      "Organisation & Power Structure",
+      "Territory / Lair",
+      "The Villain's Plan",
+      "Escalation If Ignored",
+      "Discovery Layers",
+      "Personal Connections",
+      "Weakness / Vulnerability",
+      "Moral Complication",
+      "Final Confrontation",
+      "If Defeated",
+    ]);
+    expect(
+      [...draft.lore!.matchAll(/\*\*Stage (\d+):/g)].map((match) => match[1]),
+    ).toEqual(["1", "2", "3", "4", "5", "6"]);
+    expect(draft.lore).toContain("Bellan Cairn");
+    expect(draft.lore).toContain("Captain Vara Silt");
+    expect(draft.content).not.toContain("requisition the abandoned land");
+    expect(draft.lore).toContain("requisition the abandoned land");
+  });
+
+  it("distinguishes mode limitations and textual lieutenants from persisted graph connections", () => {
+    const answers = slugMeta["bbeg-generator"].faqs
+      ?.map(({ answer }) => answer)
+      .join(" ");
+    expect(answers).toContain(
+      "does not incorporate the campaign context or tailor the prose to Tone",
+    );
+    expect(answers).toContain("one new Character");
+    expect(answers).toContain("generated GM lore in GM notes");
+    expect(answers).toContain(
+      "a shared remix saves the restored text in GM notes",
+    );
+    expect(answers).toContain(
+      "not automatically created Characters, relationships or timeline events",
+    );
+  });
+});
+
+describe("Quest editorial example", () => {
+  it("provides a coherent Event example and four substantive FAQs", () => {
+    expect(slugDrafts.quest).toMatchObject({
+      title: "The Millrace Ultimatum",
+      type: "event",
+    });
+    for (const section of ["The Hook", "Location", "Key NPC", "Threat"]) {
+      expect(slugDrafts.quest!.content).toContain("### " + section);
+    }
+    for (const section of ["Complication", "The Twist", "Reward"]) {
+      expect(slugDrafts.quest!.lore).toContain("### " + section);
+    }
+    expect(slugMeta.quest.faqs).toHaveLength(4);
+    expect(
+      slugMeta.quest.faqs?.map(({ answer }) => answer).join(" "),
+    ).toContain("one Event entry");
+  });
+});
+
+describe("Personality editorial example and FAQ", () => {
+  it("keeps Iona Pell's portrayable cues distinct from the private pressures", () => {
+    const draft = slugDrafts.personality!;
+    expect(draft).toMatchObject({
+      type: "character",
+      kind: "personality",
+      title: "Iona Pell",
+      labels: ["personality", "personality-generator", "imported-draft"],
+    });
+    for (const heading of [
+      "Core Personality",
+      "Speech & Conversational Style",
+      "Mannerism / Tell",
+      "Roleplaying Cues",
+    ]) {
+      expect(draft.content).toContain(`### ${heading}`);
+    }
+    for (const heading of [
+      "Outward Demeanour vs Inner Nature",
+      "Drives",
+      "Virtue and Flaw",
+      "Contradiction",
+      "Under Pressure",
+      "Social Behaviour",
+      "Boundary / Trigger",
+      "Example Reactions",
+    ]) {
+      expect(draft.lore).toContain(`### ${heading}`);
+    }
+    expect(draft.content).not.toContain("altered court transcript");
+    expect(draft.lore).toContain("altered court transcript");
+  });
+
+  it("does not claim that random non-AI profiles use the controls or update existing characters", () => {
+    const answers = slugMeta.personality.faqs
+      ?.map(({ answer }) => answer)
+      .join(" ");
+    expect(answers).toContain(
+      "picks a prewritten personality at random, independent of those choices",
+    );
+    expect(answers).toContain("it does not incorporate the context");
+    expect(answers).toContain("one new Character");
+    expect(answers).toContain("does not automatically add relationships");
+    expect(answers).toContain("rather than importing a second one");
+    expect(answers).toContain("already configured for Guest Character Chat");
+  });
+});
+
+describe("Faction Roster editorial example", () => {
+  it("has a named faction, four distinct complete members and connections to other members only", () => {
+    const draft = slugDrafts["faction-roster"]!;
+    expect(draft).toMatchObject({
+      type: "note",
+      title: "The Lantern Wardens' Notable Members",
+    });
+    const sections = draft.content.split("\n\n");
+    const names = sections.map((section) => section.match(/^### (.+?):/)?.[1]);
+    expect(names).toEqual(["Mara Fen", "Oren Pike", "Lin Voss", "Tess Reed"]);
+    for (const [index, section] of sections.entries()) {
+      for (const field of [
+        "Duty",
+        "Motive",
+        "Stance",
+        "Trait",
+        "Wants right now",
+        "Leverage",
+        "Connection",
+      ]) {
+        expect(section).toContain(`**${field}**:`);
+      }
+      const connection = section.match(
+        /- \*\*Connection\*\*: .+\(([^)]+)\)$/m,
+      )?.[1];
+      expect(names).toContain(connection);
+      expect(connection).not.toBe(names[index]);
+    }
+    expect(draft.lore).toContain("### How This Roster Divides");
+    expect(
+      slugMeta["faction-roster"].faqs?.map(({ answer }) => answer).join(" "),
+    ).toContain("not separate Character entries or graph links");
+  });
+});
+
+describe("RPG Item editorial example", () => {
+  it("illustrates a common ring with its appearance and a bounded property in the GM reference", () => {
+    const draft = slugDrafts.item!;
+    expect(draft).toMatchObject({
+      type: "item",
+      title: "The Tollwarden's Ring",
+      labels: ["rpg-item", "imported-draft"],
+    });
+    expect(draft.content).toContain("three-arched bridge");
+    expect(draft.content).not.toContain("### Magical Properties");
+    expect(draft.lore).toContain("**Type**: Ring");
+    expect(draft.lore).toContain("**Rarity**: Common");
+    expect(draft.lore).toContain("### Magical Properties");
+    expect(draft.lore).toContain("cannot reveal the cause");
+    expect(draft.lore).toContain("### Lore & History");
+  });
+
+  it("describes the shared magic-item engine and does not promise mundane generation or automatic links", () => {
+    const answers = slugMeta.item.faqs?.map(({ answer }) => answer).join(" ");
+    expect(answers).toContain("Common is a rarity, not a non-magical setting");
+    expect(answers).toContain("independently of the chosen rarity");
+    expect(answers).toContain("one Item in your local vault");
+    expect(answers).toContain(
+      "history and offline campaign context appear in the main document",
+    );
+    expect(answers).toContain(
+      "Only sections headed GM Reference Information or Magical Properties are kept separately",
+    );
+    expect(answers).toContain(
+      "AI headings can vary, so check the rendered document before sharing it",
+    );
+    expect(answers).toContain(
+      "do not automatically become graph connections or inventory entries",
+    );
   });
 });

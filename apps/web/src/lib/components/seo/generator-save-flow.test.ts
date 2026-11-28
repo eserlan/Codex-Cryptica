@@ -9,6 +9,8 @@ import {
   saveGeneratorOutput,
   saveSessionHubEntities,
 } from "./generator-save-flow";
+import { getGeneratorDocumentLayout } from "./generator-document-layout";
+import { slugDrafts } from "./generator-page-drafts";
 import { preloadLocalGenerator } from "./generator-page-local-generation.js";
 
 const output: GeneratorOutput = {
@@ -240,6 +242,86 @@ describe("generator save flows", () => {
       relatedEntityCount: 2,
     });
     expect(log).not.toHaveBeenCalled();
+  });
+
+  it("uses the trusted Quest slug to keep mismatched-label lore private in the staged import", async () => {
+    const deps = dependencies();
+    const quest: GeneratorOutput = {
+      ...output,
+      type: "event",
+      title: "The Millrace Ultimatum",
+      content: "### The Hook\nThe village needs water.",
+      lore: "### The Twist\nThe deed is forged.",
+      labels: ["rpg-quest", "npc-generator", "imported-draft"],
+    };
+
+    await saveGeneratorOutput(
+      quest,
+      getGeneratorDocumentLayout(quest),
+      "quest",
+      deps,
+    );
+
+    const payload = JSON.parse(deps.store.mock.calls[0][1]) as {
+      content: string;
+      lore: string;
+    };
+    expect(payload.content).not.toContain("The deed is forged.");
+    expect(payload.lore).toContain("The deed is forged.");
+  });
+
+  it("stages a BBEG as one Character with the entire original GM plan and recovers from a storage failure", async () => {
+    const draft = slugDrafts["bbeg-generator"]!;
+    const deps = dependencies();
+    deps.store.mockImplementationOnce(() => {
+      throw new Error("storage blocked");
+    });
+    const layout = getGeneratorDocumentLayout(draft);
+    expect(layout.content).toContain("The Villain's Plan");
+    await expect(
+      saveGeneratorOutput(draft, layout, "bbeg-generator", deps),
+    ).rejects.toThrow("storage blocked");
+    expect(deps.track).not.toHaveBeenCalled();
+    expect(deps.trackFailure).toHaveBeenCalledWith({
+      generatorType: "bbeg-generator",
+      isHubBatch: false,
+      itemCount: 1,
+    });
+    await saveGeneratorOutput(draft, layout, "bbeg-generator", deps);
+    expect(deps.store).toHaveBeenCalledTimes(2);
+    expect(deps.track).toHaveBeenCalledOnce();
+    const payload = JSON.parse(deps.store.mock.calls[1][1]);
+    expect(payload).toMatchObject({
+      type: "character",
+      title: draft.title,
+      content: draft.content,
+      lore: draft.lore,
+      labels: draft.labels,
+    });
+    expect(payload.content).not.toContain("The Villain's Plan");
+  });
+
+  it("retries an RPG NPC save without exposing the Table Card secret", async () => {
+    const draft = slugDrafts.npc!;
+    const deps = dependencies();
+    deps.store.mockImplementationOnce(() => {
+      throw new Error("storage blocked");
+    });
+    const layout = getGeneratorDocumentLayout(draft);
+    await expect(
+      saveGeneratorOutput(draft, layout, "npc", deps),
+    ).rejects.toThrow("storage blocked");
+    expect(deps.track).not.toHaveBeenCalled();
+    await saveGeneratorOutput(draft, layout, "npc", deps);
+    const payload = JSON.parse(deps.store.mock.calls[1][1]);
+    expect(payload).toMatchObject({
+      type: "character",
+      title: draft.title,
+      labels: draft.labels,
+    });
+    expect(payload.content).not.toContain("second manifest in her boot");
+    expect(payload.lore).toContain("second manifest in her boot");
+    expect(deps.track).toHaveBeenCalledOnce();
   });
 
   it("continues saving when diagram export fails, but rejects storage failures", async () => {

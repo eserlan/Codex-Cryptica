@@ -141,6 +141,12 @@ export const howDoIRunCommonCharacterRolesInASciFiOrSpaceOperaRpg: AnswerConfigI
           "Roll a port authority, envoy, or rival captain with a want and a relationship hook the diplomat or captain can act on.",
         href: "/generators/npc",
       },
+      {
+        title: "Star System Generator",
+        description:
+          "Give the crew named destinations, trade dependencies, competing factions and route hazards to negotiate.",
+        href: "/generators/star-system",
+      },
     ],
     relatedForPages: [
       {

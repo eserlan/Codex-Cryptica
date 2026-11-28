@@ -426,6 +426,21 @@
         </div>
       </div>
 
+      {#snippet continuationCallout()}
+        {#if continuationConfig}
+          <GeneratorContinuationCallout
+            config={continuationConfig}
+            disabled={isGenerationInProgress}
+            {isSaving}
+            {saveError}
+            {onSaveToCodex}
+          />
+        {/if}
+      {/snippet}
+      {#if showContinuationCallout && continuationConfig?.placement === "near-result"}
+        {@render continuationCallout()}
+      {/if}
+
       {#snippet mechanicsPreview()}
         {#if generatedData.mechanics}
           <div class="mb-6">
@@ -524,14 +539,10 @@
         </div>
       {/snippet}
       {@render generatedDocument()}
-      {#if showContinuationCallout && continuationConfig}
-        <GeneratorContinuationCallout
-          config={continuationConfig}
-          disabled={isGenerationInProgress}
-          {isSaving}
-          {saveError}
-          {onSaveToCodex}
-        />
+      {#if showContinuationCallout}
+        {#if continuationConfig?.placement !== "near-result"}
+          {@render continuationCallout()}
+        {/if}
       {:else if saveError}
         <div
           role="alert"

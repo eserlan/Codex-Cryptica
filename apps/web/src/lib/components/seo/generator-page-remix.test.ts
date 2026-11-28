@@ -4,6 +4,8 @@ import {
   createGeneratorRemixLoader,
   type GeneratorRemixLoaderOptions,
 } from "./generator-page-remix";
+import { getGeneratorDocumentLayout } from "./generator-document-layout";
+import { buildGeneratorSavePayload } from "./generator-save";
 
 interface ShareFixture {
   shareId: string;
@@ -56,15 +58,133 @@ describe("loadGeneratorRemixDraft", () => {
 
     expect(result).toEqual({
       draft: {
-        type: "note",
+        type: "character",
         title: "Shared result",
-        summary: "Brief summary",
-        content: "The content.",
-        lore: "",
+        summary: "",
+        content: "",
+        lore: "*Brief summary*\n\nThe content.",
         labels: ["ally"],
         status: "draft",
       },
       theme: "Classic Fantasy",
+    });
+  });
+
+  it("restores a text-only business share as a private Note, not a fabricated batch", async () => {
+    const targetPath = "/generators/business";
+    const share = makeShare({
+      content:
+        "# Shared business\n*The depot*\nLabels: business-generator\n\n## Secret\nThe owner forged the licence.",
+      metadata: { generatorPath: targetPath, labels: ["business-generator"] },
+    });
+    const result = await loadGeneratorRemixDraft(
+      options(vi.fn().mockResolvedValue(share), { targetPath }),
+    );
+    const draft = result!.draft;
+    expect(
+      buildGeneratorSavePayload(
+        draft,
+        getGeneratorDocumentLayout(draft),
+        undefined,
+        "business",
+      ),
+    ).toMatchObject({
+      type: "note",
+      content: "",
+      lore: "*The depot*\n\n## Secret\nThe owner forged the licence.",
+    });
+    expect(draft.business).toBeUndefined();
+  });
+
+  it.each(["/generators/npc", "/tools/rpg-npc-generator"])(
+    "restores %s as a private Character rather than exposing an unrecoverable share split",
+    async (targetPath) => {
+      const share = makeShare({
+        content:
+          "# Shared guard\n*Secret summary*\nLabels: npc-generator\n\n### Secrets & Hooks\nThe manifest is forged.",
+        metadata: { generatorPath: targetPath, labels: ["npc-generator"] },
+      });
+      const result = await loadGeneratorRemixDraft(
+        options(vi.fn().mockResolvedValue(share), { targetPath }),
+      );
+      const draft = result!.draft;
+      const payload = buildGeneratorSavePayload(
+        draft,
+        getGeneratorDocumentLayout(draft),
+        undefined,
+        targetPath.split("/").at(-1),
+      );
+      expect(payload).toMatchObject({
+        type: "character",
+        content: "",
+        lore: "*Secret summary*\n\n### Secrets & Hooks\nThe manifest is forged.",
+      });
+    },
+  );
+
+  it("restores heist share text as one Event with all GM material private", async () => {
+    const targetPath = "/generators/heist";
+    const share = makeShare({
+      content:
+        "# Shared score\n*Briefing*\nLabels: heist, heist-generator\n\n### The Hidden Factor\nThe clerk is an ally.",
+      metadata: {
+        generatorPath: targetPath,
+        labels: ["heist", "heist-generator"],
+      },
+    });
+    const result = await loadGeneratorRemixDraft(
+      options(vi.fn().mockResolvedValue(share), { targetPath }),
+    );
+    const draft = result!.draft;
+    expect(
+      buildGeneratorSavePayload(
+        draft,
+        getGeneratorDocumentLayout(draft),
+        undefined,
+        "heist",
+      ),
+    ).toMatchObject({
+      type: "event",
+      content: "",
+      lore: "*Briefing*\n\n### The Hidden Factor\nThe clerk is an ally.",
+    });
+  });
+
+  it("restores a BBEG share as one Character with concatenated text in GM notes", async () => {
+    const share = makeShare({
+      content:
+        "# Shared villain\n*Secret summary*\nLabels: villain\n\n### Public Face\nA governor.\n\n### True Nature\nThe governor plans a diversion.",
+      metadata: {
+        generatorPath: "/generators/bbeg-generator",
+        labels: ["villain", "bbeg-generator"],
+      },
+    });
+    const result = await loadGeneratorRemixDraft(
+      options(vi.fn().mockResolvedValue(share), {
+        targetPath: "/generators/bbeg-generator",
+      }),
+    );
+    expect(result?.draft).toMatchObject({
+      type: "character",
+      content: "",
+      summary: "",
+      lore: "*Secret summary*\n\n### Public Face\nA governor.\n\n### True Nature\nThe governor plans a diversion.",
+      labels: share.metadata.labels,
+    });
+    const draft = result!.draft;
+    const preview = getGeneratorDocumentLayout(draft);
+    expect(preview.content).toContain("The governor plans a diversion.");
+    const payload = buildGeneratorSavePayload(
+      draft,
+      preview,
+      undefined,
+      "bbeg-generator",
+    );
+    expect(payload).toMatchObject({
+      type: "character",
+      content: "",
+      lore: draft.lore,
+      labels: share.metadata.labels,
     });
   });
 
@@ -167,5 +287,30 @@ describe("successive remix route loads", () => {
     ).resolves.toBeUndefined();
     expect(state.onReset).toHaveBeenCalledOnce();
     expect(state.onLoaded).not.toHaveBeenCalled();
+  });
+});
+
+it("restores a faction share as one Faction without guessing its public/GM split", async () => {
+  const targetPath = "/generators/faction";
+  const share = makeShare({
+    content:
+      "# Shared guild\n*Secret summary*\nLabels: faction-generator\n\n### Secrets & Hooks\nThe charter is forged.",
+    metadata: { generatorPath: targetPath, labels: ["faction-generator"] },
+  });
+  const result = await loadGeneratorRemixDraft(
+    options(vi.fn().mockResolvedValue(share), { targetPath }),
+  );
+  const draft = result!.draft;
+  expect(
+    buildGeneratorSavePayload(
+      draft,
+      getGeneratorDocumentLayout(draft),
+      undefined,
+      "faction",
+    ),
+  ).toMatchObject({
+    type: "faction",
+    content: "",
+    lore: "*Secret summary*\n\n### Secrets & Hooks\nThe charter is forged.",
   });
 });

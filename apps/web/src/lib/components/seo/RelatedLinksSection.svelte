@@ -13,7 +13,7 @@
   >
     <div class="max-w-4xl mx-auto">
       <h2
-        class="font-header font-bold text-xs uppercase tracking-widest text-theme-muted mb-6"
+        class="font-header font-bold text-base md:text-sm uppercase tracking-widest text-theme-text mb-6"
       >
         More RPG Worldbuilding Tools
       </h2>
@@ -21,11 +21,11 @@
         {#each relatedLinks as link (link.href)}
           <a
             href="{cleanBase}{link.href}"
-            class="px-4 py-2 bg-theme-surface/30 border border-theme-border/40 hover:border-theme-primary/60 text-xs font-bold uppercase tracking-wider text-theme-text rounded-full shadow-sm hover:bg-theme-surface/50 transition-all flex items-center gap-1.5"
+            class="px-4 py-2 bg-theme-surface/30 border border-theme-border/40 hover:border-theme-primary/60 text-base md:text-sm leading-snug font-bold uppercase tracking-wider text-theme-text rounded-full shadow-sm hover:bg-theme-surface/50 transition-all flex items-center gap-1.5 min-w-0 max-w-full"
           >
             <span>{link.label}</span>
             <span
-              class="icon-[lucide--arrow-right] w-3.5 h-3.5"
+              class="icon-[lucide--arrow-right] w-3.5 h-3.5 shrink-0"
               aria-hidden="true"
             ></span>
           </a>

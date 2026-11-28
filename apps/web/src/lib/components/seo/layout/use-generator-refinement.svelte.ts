@@ -1,3 +1,4 @@
+import { getCalendarTwistHandoffLayout as getGeneratorHandoffLayout } from "../generator-calendar-twist-handoff";
 import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 import type { RefinementDocument } from "generator-engine/generator-refinement";
 import type { SessionEntity } from "generator-engine/session-hub-helpers";
@@ -6,7 +7,11 @@ import { sessionHubStore } from "#lib/stores/session-hub.svelte.js";
 import { loreMergeStore } from "#lib/stores/ui/lore-merge.svelte.js";
 import { buildLoreMergePlan } from "#lib/utils/lore-sections.js";
 import { trackEvent } from "#lib/services/analytics/zaraz-analytics.js";
-import type { getGeneratorDocumentLayout } from "#lib/components/seo/generator-document-layout.js";
+import {
+  usesPrivateSummaryHandoff,
+  usesSourceHandoff,
+  type getGeneratorDocumentLayout,
+} from "#lib/components/seo/generator-document-layout.js";
 import { getContextSelection } from "generator-engine/session-hub-helpers";
 import { recordGeneratedEntity } from "./record-generated-entity";
 
@@ -74,13 +79,19 @@ export function useGeneratorRefinement(deps: {
   function openForCurrentOutput() {
     const generatedData = deps.getGeneratedData();
     if (!generatedData || !deps.canRefineCurrentOutput()) return;
-    const documentLayout = deps.getDocumentLayout();
+    const documentLayout = getGeneratorHandoffLayout(
+      generatedData,
+      deps.getDocumentLayout(),
+      deps.getGeneratorType(),
+    );
+    const source = usesSourceHandoff(deps.getGeneratorType())
+      ? documentLayout
+      : {
+          content: documentLayout.content || generatedData.content,
+          lore: documentLayout.lore || generatedData.lore,
+        };
     start(
-      {
-        ...generatedData,
-        content: documentLayout.content || generatedData.content,
-        lore: documentLayout.lore || generatedData.lore,
-      },
+      { ...generatedData, ...source },
       "current_output",
       deps.getCurrentEntityId() ?? undefined,
     );
@@ -138,15 +149,30 @@ export function useGeneratorRefinement(deps: {
     const acceptedOrigin = origin ?? "current_output";
     const fromId = sourceId;
     const generatedData = deps.getGeneratedData();
-    const accepted = buildAcceptedOutput(
+    const draft = buildAcceptedOutput(
       document,
       acceptedOrigin === "current_output" ? generatedData : null,
     );
+    // A refinement may repeat the Table Card's secret in its body. Apply
+    // the same handoff boundary before recording it in the Session Hub.
+    const accepted = {
+      ...draft,
+      ...getGeneratorHandoffLayout(
+        draft,
+        { content: draft.content, lore: draft.lore ?? "" },
+        deps.getGeneratorType(),
+      ),
+    };
 
     const derivedId = recordGeneratedEntity(
       sessionHubStore,
       $state.snapshot(deps.getContextSelection()),
-      accepted,
+      {
+        ...accepted,
+        summary: usesPrivateSummaryHandoff(deps.getGeneratorType())
+          ? undefined
+          : accepted.summary,
+      },
       {
         ...(fromId ? { derivedFromEntityId: fromId } : {}),
         derivation: "refine",

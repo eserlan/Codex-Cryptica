@@ -242,7 +242,7 @@ describe("GeneratorOutputCard", () => {
     ).toBe(true);
   });
 
-  it("renders Generate Roster and per-member Open as Character with interpolated aria-labels (#2808)", () => {
+  it("renders Generate Roster and per-member Open as Character with interpolated aria-labels alongside the roster continuation (#2808)", async () => {
     const rosterData: GeneratorOutput = {
       title: "The Compact's Inner Circle",
       type: "note",
@@ -261,12 +261,16 @@ describe("GeneratorOutputCard", () => {
       },
     ];
 
-    render(GeneratorOutputCard, {
+    const onOpenMemberAsCharacter = vi.fn();
+    const onSaveToCodex = vi.fn();
+    const { container } = render(GeneratorOutputCard, {
       props: {
         generatedData: rosterData,
         aiFallbackDismissed: false,
         isBusy: false,
         isExampleDraft: false,
+        generatorType: "faction-roster",
+        canFollowUp: true,
         generatedSingular: "Faction Roster",
         variant: "default",
         worldTheme: "Classic Fantasy",
@@ -276,23 +280,38 @@ describe("GeneratorOutputCard", () => {
         copiedSectionId: null,
         contextTrimmed: false,
         onDismissAiFallback: vi.fn(),
-        onSaveToCodex: vi.fn(),
+        onSaveToCodex,
         onCopyMarkdown: vi.fn(),
         onCopySection: vi.fn(),
         onContainerClick: vi.fn(),
         onContainerKeydown: vi.fn(),
         onSelectHubEntity: vi.fn(),
         onSaveHubToCodex: vi.fn(),
-        onOpenMemberAsCharacter: vi.fn(),
+        onOpenMemberAsCharacter,
       },
     });
 
     // The aria-label must interpolate the actual member heading, not the
     // literal template text — this is the same interpolation pattern the
     // pre-existing "Copy MD" button already uses successfully.
+    const open = screen.getByLabelText(
+      "Open Vess Marrow — Quartermaster as a Character",
+    );
+    const callout = screen.getByTestId("generator-continuation-callout");
     expect(
-      screen.getByLabelText("Open Vess Marrow — Quartermaster as a Character"),
+      callout.compareDocumentPosition(open) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+    expect(container.querySelectorAll("#save-to-codex-btn")).toHaveLength(1);
+    expect(container.querySelector("#copy-markdown-btn")).toBeTruthy();
+    await fireEvent.click(open);
+    expect(onOpenMemberAsCharacter).toHaveBeenCalledWith(
+      rosterSections[0],
+      rosterData,
+    );
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Add to my Codex" }),
+    );
+    expect(onSaveToCodex).toHaveBeenCalledTimes(1);
   });
 
   it("shows Generate Roster for a faction-family draft when onGenerateRoster is provided", () => {
@@ -508,18 +527,23 @@ describe("GeneratorOutputCard", () => {
     expect(onSendToMonsterLabs).toHaveBeenCalledWith(creatureData);
   });
 
-  it("shows Create D&D Magic Item for an item draft when onSendToMonsterLabs is provided", () => {
+  it("preserves Create D&D Magic Item and Copy alongside the near-result Item continuation", async () => {
     const itemData: GeneratorOutput = {
       ...sampleData,
       type: "item",
       labels: ["rpg-item"],
     };
-    render(GeneratorOutputCard, {
+    const onSendToMonsterLabs = vi.fn();
+    const onSaveToCodex = vi.fn();
+    const onCopyMarkdown = vi.fn();
+    const { container } = render(GeneratorOutputCard, {
       props: {
         generatedData: itemData,
         aiFallbackDismissed: false,
         isBusy: false,
         isExampleDraft: false,
+        generatorType: "item",
+        canFollowUp: true,
         generatedSingular: "Item",
         variant: "default",
         worldTheme: "Classic Fantasy",
@@ -529,20 +553,34 @@ describe("GeneratorOutputCard", () => {
         copiedSectionId: null,
         contextTrimmed: false,
         onDismissAiFallback: vi.fn(),
-        onSaveToCodex: vi.fn(),
-        onCopyMarkdown: vi.fn(),
+        onSaveToCodex,
+        onCopyMarkdown,
         onCopySection: vi.fn(),
         onContainerClick: vi.fn(),
         onContainerKeydown: vi.fn(),
         onSelectHubEntity: vi.fn(),
         onSaveHubToCodex: vi.fn(),
-        onSendToMonsterLabs: vi.fn(),
+        onSendToMonsterLabs,
       },
     });
 
+    const handoff = screen.getByRole("button", {
+      name: /create d&d magic item/i,
+    });
+    const callout = screen.getByTestId("generator-continuation-callout");
     expect(
-      screen.getByRole("button", { name: /create d&d magic item/i }),
+      handoff.compareDocumentPosition(callout) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+    expect(container.querySelectorAll("#save-to-codex-btn")).toHaveLength(1);
+    await fireEvent.click(handoff);
+    expect(onSendToMonsterLabs).toHaveBeenCalledWith(itemData);
+    await fireEvent.click(screen.getByRole("button", { name: /^Copy$/ }));
+    expect(onCopyMarkdown).toHaveBeenCalledTimes(1);
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Add to my Codex" }),
+    );
+    expect(onSaveToCodex).toHaveBeenCalledTimes(1);
     expect(
       screen.queryByRole("button", { name: /^create d&d monster$/i }),
     ).toBeNull();
@@ -792,7 +830,9 @@ describe("GeneratorOutputCard", () => {
       expect(callout.querySelector("ul")?.classList.contains("text-lg")).toBe(
         true,
       );
-      expect(callout.textContent).toContain("Keep this system connected");
+      expect(callout.textContent).toContain(
+        "Keep the system ready for the next jump",
+      );
       expect(callout.textContent).toContain(
         "No account needed; stored locally in this browser.",
       );
@@ -810,8 +850,126 @@ describe("GeneratorOutputCard", () => {
       expect(onSaveToCodex).toHaveBeenCalledTimes(1);
     });
 
-    it("hides the callout and keeps Save to Codex on seed/example drafts, unconfirmed runs, busy states, and Wave 2 generators", () => {
+    it("places Personality's callout before the document without changing Copy or the other draft actions", async () => {
+      const characterData: GeneratorOutput = {
+        ...sampleData,
+        type: "character",
+        kind: "personality",
+        title: "Iona Pell",
+        labels: ["personality", "personality-generator", "imported-draft"],
+      };
+      const onCopyMarkdown = vi.fn();
+      const onSendToMonsterLabs = vi.fn();
+      const { container, onSaveToCodex } = renderCard({
+        generatedData: characterData,
+        generatorType: "personality",
+        generatedSingular: "Character",
+        onCopyMarkdown,
+        onSendToMonsterLabs,
+      });
+      const callout = screen.getByTestId("generator-continuation-callout");
+      const copy = screen.getByRole("button", { name: /^Copy$/ });
+      const section = screen.getByText(
+        "Brotherhood of Hollow Crown is a fallen order with real authority.",
+      );
+      expect(
+        copy.compareDocumentPosition(callout) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(
+        callout.compareDocumentPosition(section) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(container.querySelectorAll("#save-to-codex-btn")).toHaveLength(1);
+      expect(callout.textContent).toContain("one new Character");
+      await fireEvent.click(copy);
+      expect(onCopyMarkdown).toHaveBeenCalledTimes(1);
+      await fireEvent.click(
+        screen.getByRole("button", { name: /Create D&D Monster/i }),
+      );
+      expect(onSendToMonsterLabs).toHaveBeenCalledWith(characterData);
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Add to my Codex" }),
+      );
+      expect(onSaveToCodex).toHaveBeenCalledTimes(1);
+    });
+
+    it("puts the quest continuation between draft actions and the document without duplicating Save", async () => {
+      const { container, onSaveToCodex } = renderCard({
+        generatorType: "quest",
+      });
+      const callout = screen.getByTestId("generator-continuation-callout");
+      const copy = container.querySelector("#copy-markdown-btn")!;
+      const section = screen.getByText(
+        "Brotherhood of Hollow Crown is a fallen order with real authority.",
+      );
+      expect(
+        copy.compareDocumentPosition(callout) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(
+        callout.compareDocumentPosition(section) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(container.querySelectorAll("#save-to-codex-btn")).toHaveLength(1);
+      expect(callout.textContent).toContain("GM-only lore");
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Add to my Codex" }),
+      );
+      expect(onSaveToCodex).toHaveBeenCalledTimes(1);
+    });
+
+    it.each(["bbeg-generator", "npc", "rpg-npc-generator"])(
+      "places %s continuation beside the result actions and reuses Save",
+      async (generatorType) => {
+        const onCopyMarkdown = vi.fn();
+        const { container, onSaveToCodex } = renderCard({
+          generatorType,
+          generatedData: {
+            ...sampleData,
+            type: "character",
+            labels: ["villain", "bbeg-generator", "imported-draft"],
+          },
+          generatedSingular: "Character",
+          onCopyMarkdown,
+        });
+        const callout = screen.getByTestId("generator-continuation-callout");
+        const copy = screen.getByRole("button", { name: /^Copy$/ });
+        const section = screen.getByText(
+          "Brotherhood of Hollow Crown is a fallen order with real authority.",
+        );
+        expect(
+          copy.compareDocumentPosition(callout) &
+            Node.DOCUMENT_POSITION_FOLLOWING,
+        ).toBeTruthy();
+        expect(
+          callout.compareDocumentPosition(section) &
+            Node.DOCUMENT_POSITION_FOLLOWING,
+        ).toBeTruthy();
+        expect(container.querySelectorAll("#save-to-codex-btn")).toHaveLength(
+          1,
+        );
+        expect(callout.textContent).toContain("one new Character");
+        await fireEvent.click(copy);
+        expect(onCopyMarkdown).toHaveBeenCalledOnce();
+        await fireEvent.click(
+          screen.getByRole("button", { name: "Add to my Codex" }),
+        );
+        expect(onSaveToCodex).toHaveBeenCalledOnce();
+      },
+    );
+
+    it("hides the callout and keeps Save to Codex on seed/example drafts, unconfirmed runs, busy states, and unconfigured generators", () => {
       for (const overrides of [
+        {
+          generatorType: "faction-roster",
+          canFollowUp: false,
+          isExampleDraft: true,
+        },
+        { generatorType: "faction-roster", canFollowUp: true, isBusy: true },
+        { generatorType: "quest", canFollowUp: false, isExampleDraft: true },
+        { generatorType: "quest", canFollowUp: false, isExampleDraft: false },
+        { generatorType: "quest", canFollowUp: true, isBusy: true },
         { generatorType: "npc", canFollowUp: false, isExampleDraft: true },
         { generatorType: "npc", canFollowUp: false, isExampleDraft: false },
         { generatorType: "npc", canFollowUp: true, isBusy: true },
@@ -820,7 +978,7 @@ describe("GeneratorOutputCard", () => {
           canFollowUp: true,
           isGenerationInProgress: true,
         },
-        { generatorType: "point-crawl", canFollowUp: true },
+        { generatorType: "unknown-generator", canFollowUp: true },
       ]) {
         const { unmount } = renderCard(overrides);
         expect(

@@ -22,6 +22,7 @@ vi.mock("#lib/stores/session-hub.svelte.js", () => ({
 }));
 
 import { useGeneratorSave } from "./use-generator-save.svelte";
+import { InvalidGeneratorOutputError } from "../generator-save";
 
 function setup(
   options: {
@@ -82,6 +83,21 @@ describe("useGeneratorSave", () => {
     expect(setError).toHaveBeenCalledWith(
       "Storage access is blocked. Please copy the Markdown below instead.",
     );
+  });
+
+  it("reports invalid generated content and keeps the draft available", async () => {
+    const error = new InvalidGeneratorOutputError(
+      "This deity draft is missing required public sections. Generate it again or copy the draft manually.",
+    );
+    saveOutput.mockRejectedValue(error);
+    const { save, setError } = setup();
+
+    await save.handleSaveToCodex();
+
+    expect(navigate).not.toHaveBeenCalled();
+    expect(save.isSaving).toBe(false);
+    expect(save.saveError).toBe(error.message);
+    expect(setError).toHaveBeenCalledWith(error.message);
   });
 
   it("stages once when called again while staging is pending", async () => {
