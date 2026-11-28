@@ -137,13 +137,17 @@ function resolveMechanicsSaveExtension(
   return {};
 }
 
+function usesPrivateBodyAndLore(generatorType?: string) {
+  return generatorType === "heist" || usesSourceHandoff(generatorType);
+}
+
 function resolveSaveBodyAndLore(
   data: GeneratorOutput,
   layout: GeneratorSaveLayout,
   generatorType?: string,
 ): { content: string; lore: string } {
   const summaryPrefix = data.summary ? `*${data.summary}*` : "";
-  if (usesSourceHandoff(generatorType)) {
+  if (usesPrivateBodyAndLore(generatorType)) {
     return {
       content: [summaryPrefix, layout.content].filter(Boolean).join("\n\n"),
       lore: layout.lore,
@@ -191,7 +195,7 @@ export function buildGeneratorSavePayload(
   generatorType?: string,
 ): GeneratorSavePayload {
   const isAdventure =
-    !usesSourceHandoff(generatorType) &&
+    !usesPrivateBodyAndLore(generatorType) &&
     (data.kind === "adventure" || data.labels.includes("adventure"));
   const { content, lore: initialLore } = resolveSaveBodyAndLore(
     data,

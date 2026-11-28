@@ -665,6 +665,56 @@ describe("generator save payloads", () => {
     expect(serialized).not.toContain(hiddenProblem!);
   });
 
+  it("keeps the heist's hidden factor and response plan in GM lore despite preview promotion", async () => {
+    const { generateHeistLocal } =
+      await import("generator-engine/public-heist");
+    const draft = generateHeistLocal(
+      {
+        genre: "Classic Fantasy",
+        heistType: "Theft",
+        targetScale: "Major",
+        targetType: "Temple Reliquary",
+        prize: "A fragile royal seal",
+      },
+      () => 0.35,
+    ) as GeneratorOutput;
+    const layout = getGeneratorDocumentLayout(draft);
+    expect(layout.content).toContain("The Hidden Factor");
+    const payload = buildGeneratorSavePayload(
+      draft,
+      layout,
+      undefined,
+      "heist",
+    );
+    expect(payload.type).toBe("event");
+    expect(payload.content).toContain("Casing the Target");
+    for (const section of [
+      "The Hidden Factor",
+      "Security Rings",
+      "Alarm Track",
+      "Complications",
+      "The Getaway",
+      "Flashback Opportunities",
+    ]) {
+      expect(payload.content).not.toContain(section);
+      expect(payload.lore).toContain(section);
+    }
+    expect(payload.lore).toBe(draft.lore);
+    const mislabelled = { ...draft, labels: ["adventure"] };
+    expect(
+      buildGeneratorSavePayload(
+        mislabelled,
+        getGeneratorDocumentLayout(mislabelled),
+        undefined,
+        "heist",
+      ),
+    ).toMatchObject({
+      type: "event",
+      content: payload.content,
+      lore: payload.lore,
+    });
+  });
+
   it("keeps dark-fantasy-faction NPCs, internal conflict, rival, and secret out of guest exports", async () => {
     const { generateDarkFactionLocal } = await import("generator-engine");
     const faction = generateDarkFactionLocal(
