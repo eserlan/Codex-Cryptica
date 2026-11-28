@@ -345,7 +345,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "RPG Puzzle Generator",
     eyebrow: "RPG Puzzle Generator",
     introText:
-      "Build thematic encounter puzzles that give every player a way to contribute. Get layered clues, alternate solutions, and consequences that keep your adventure moving.",
+      "Build a playable obstacle with a purpose, clue ladder, alternative approaches and ways for the whole party to contribute. Decide what a failed attempt costs and what success changes in the next scene.",
     canonicalPath: "/generators/puzzle",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-puzzle.png",
@@ -375,9 +375,14 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
           "Failure pressure decides. With None, a failed attempt only gives feedback. Otherwise it adds a complication, a clock, danger or a fight, and the party still has a way forward.",
       },
       {
-        question: "What makes this the best RPG puzzle generator to try?",
+        question: "How can solving the puzzle affect the next encounter?",
         answer:
-          "Look for three things in any puzzle generator: layered clues instead of a single answer, multiple viable solutions rather than one intended path, and a fail-forward consequence instead of a dead stop. This generator is built around all three, plus a GM reference rail that keeps the solution space visible during play.",
+          "Use Optional downstream consequence to name a meaningful change, such as reinforcements being delayed or a guardian losing its shield. Let the method the party chooses determine whether it earns that benefit.",
+      },
+      {
+        question: "What gets saved in my Codex?",
+        answer:
+          "Add to my Codex saves the generated encounter as one Note in your local browser vault. The setup, clues and alternate approaches remain in the main text; the GM-Only Solution and Escalating Hints are in GM notes. A shared link includes the complete draft, including its solution; text-only remixes should be reviewed before sharing as the combined text is not separated automatically.",
       },
     ],
     relatedLinks: [
@@ -1794,11 +1799,11 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     pageTitle:
       "Heist Generator | RPG Score & Infiltration Creator | Codex Cryptica",
     metaDescription:
-      "Generate a table-ready RPG heist: the score, a prize with a practical catch, casing intel, three security rings, an escalating alarm track, complications, and a compromised getaway.",
+      "Generate a table-ready RPG heist: the score, a prize with a practical catch, casing intel, three security rings, an escalating alarm track, complications, and conditional getaway routes.",
     introTitle: "Heist Generator",
     eyebrow: "Score & Infiltration Generator",
     introText:
-      "Build a playable heist instead of a planning session. You get a concrete objective, a prize that is awkward to move, three layered security rings that each allow more than one approach, a five-state alarm track, and a getaway whose original route has already failed. Works without login, then imports into your local vault.",
+      "Prepare a score the crew can approach in different ways. Draft a concrete objective with a practical catch, casing intel, layered security, an alarm track and exit options that change as defenders respond. Generate without an account and keep the score in your local vault.",
     canonicalPath: "/generators/heist",
     ogImage: "https://assets.codexcryptica.com/screenshots/generator-heist.jpg",
     ogImageAlt:
@@ -1816,7 +1821,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "What does the heist generator create?",
         answer:
-          "A complete score: the objective, the prize and its practical complication, at least three pieces of casing intel, three distinct security rings, a five-state alarm track from Quiet to Lethal Response, three complications with a trigger that fires when the prize is lifted, a compromised getaway with alternate routes, and a menu of flashbacks the players could establish.",
+          "A complete score: the objective, the prize and its practical complication, at least three pieces of casing intel, three distinct security rings, a five-state alarm track from Quiet to Lethal Response, complications, a transition into escape when the objective is achieved, alternate getaway routes and flashback opportunities. Discovery and alarm depend on the situation described in the score.",
       },
       {
         question: "Is there one correct way through the security?",
@@ -1826,17 +1831,22 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "How do the flashback opportunities work?",
         answer:
-          "They are offered, never dictated. The generator lists things the players could plausibly establish after the fact — a bribed guard, forged credentials, cached equipment, an inside contact — so the crew's competence is preserved without the table spending an hour planning for hypotheticals.",
+          "They are options the players could plausibly establish after the fact. Agree the cost under your game’s rules, and use a flashback to make a preparation relevant to a choice the crew has just made.",
       },
       {
         question: "Does it work outside fantasy?",
         answer:
-          "Yes. The target, its security, the alarm flavour, and the pursuit all follow the vibe you pick, so a cyberpunk data fortress, a frontier payroll car, an orbital station vault, and a cathedral undercroft each generate their own kind of score.",
+          "Yes. Choose a vibe and a matching Target, such as a fantasy Temple Reliquary or a cyberpunk Data Fortress. Adapt the score’s security and alarm response to your setting; it is not tied to a specific rules system.",
       },
       {
-        question: "What should I look for in a heist generator?",
+        question: "Does reaching the objective automatically trigger an alarm?",
         answer:
-          "Judge a heist generator on three things: whether every security layer has more than one way through, whether failure escalates instead of ending the scene, and whether the getaway is its own act rather than an afterthought. See the example scores linked below and judge for yourself.",
+          "Not necessarily. Check the transition and Alarm Track: a scheduled inspection, witness or visible evidence may expose the crew later, leaving a window to escape. Change the available routes only when the stated response occurs.",
+      },
+      {
+        question: "What gets saved in my Codex?",
+        answer:
+          "Add to my Codex opens the generated score as one Event, keeping the objective and casing in the main text and its hidden factor, security rings, alarm, complications and getaway in GM notes. Link the Event to existing locations, people and prizes yourself. A text-only shared remix retains the combined score in GM notes of an Event; review before sharing.",
       },
     ],
     relatedLinks: [
@@ -2080,7 +2090,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Creature Generator",
     eyebrow: "Monster & Creature Generator",
     introText:
-      "Create table-ready monsters, beasts, alien fauna, undead, constructs, and mounts across any genre. Generates distinctive appearance, sensory signs, ecological roles, tactical combat behaviour, harvestable remains, and adventure hooks beyond just fighting them.",
+      "Draft a beast, construct, undead creature or alien inhabitant with a place in its ecosystem, signs the party can notice and behaviour they can respond to. Choose how dangerous and intelligent it is, then use its known abilities, hidden traits and hooks to plan an encounter.",
     canonicalPath: "/generators/creature",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-creature.jpg",
@@ -2099,18 +2109,18 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "What does the Creature Generator create?",
         answer:
-          "It produces a complete RPG creature — name, category, size, habitat, threat level, temperament, physical appearance, tracks and sensory signs, ecological role, abilities and defences, exploitable weaknesses, encounter behaviour, harvestable materials, lore and rumours, and 2–4 adventure hooks.",
+          "A creature profile with name, classification, habitat, appearance, ecological role, signs, abilities, weaknesses, encounter behaviour, harvestable materials and GM hooks. It is a narrative profile, not a system-specific combat stat block.",
       },
       {
         question: "Is this only a fantasy monster generator?",
         answer:
-          "No. While it functions as a powerful fantasy monster generator, it natively adapts to all 13 world themes — creating cyberpunk security bioweapons, sci-fi vacuum organisms, post-apocalyptic mutants, cosmic horror aberrations, and gothic undead.",
+          "No. Genre / Theme offers different settings, including cyberpunk, sci-fi, gothic horror and post-apocalyptic worlds. Choose an appropriate Creature Category / Origin and Habitat / Environment to situate it.",
       },
       {
         question:
           "Can it generate non-hostile creatures, mounts, or familiars?",
         answer:
-          "Yes. Select ecological roles like Herbivore / Migratory Grazer, Mount / Domesticated Beast, Familiar / Companion, or Scavenger, and choose appropriate threat levels from Harmless to Apex Predator.",
+          "Yes. Select roles such as Herbivore / Migratory Grazer, Mount / Domesticated Beast or Familiar / Companion and a suitable Threat Level. Decide how the creature reacts to attention, offerings or a threat to its home.",
       },
       {
         question: "How are intelligent or sapient creatures handled?",
@@ -2120,7 +2130,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Does it work without an account?",
         answer:
-          "Yes. Generate, customize, and copy creature notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault with full Markdown notes — no sign-up required.",
+          "Yes. Generate, reroll and copy the full draft without signing in. Add to my Codex opens one Creature in your local browser vault. The AI is asked to put known characteristics and field signs in the main text and hidden ecology, secret weaknesses, surprise abilities and GM hooks in GM notes; review AI-written text before sharing it. Connect it to existing habitats and NPCs yourself. Shared links contain the full draft; text-only remixes need review since they cannot recover the original public/GM split.",
       },
     ],
     relatedLinks: [
@@ -2200,7 +2210,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Business Generator",
     eyebrow: "Business Generator",
     introText:
-      "Create one specific business the party can visit, work for, compete with, investigate or own. Get its people, what it depends on, who it competes with, the pressure it is under and the hooks that bring the party in. Save it to your vault, with its people and its rivals linked on the graph.",
+      "Create a business the party can depend on, compete with or own. Draft the people who keep it running, the suppliers it cannot do without, its competitors and a pressure that could interrupt trade. Bring the enterprise and its staff into your Codex, then connect the outside parties that matter to your campaign.",
     canonicalPath: "/generators/business",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-business.png",
@@ -2233,6 +2243,11 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
           "Yes. Turn on Players own this business and the leader becomes a manager the party employs. You also get starting strengths, liabilities, upgrade paths, recurring obligations and what success attracts. Obligations are named, never priced.",
       },
       {
+        question: "What gets created in my Codex?",
+        answer:
+          "For a generated business, Add to my Codex imports one Faction plus linked Characters for its leader and staff into this browser's local vault. Other suppliers, competitors and outside parties remain named references in the business text. The labelled Secret is stored in GM notes. Shared links contain the complete draft. A text-only remix saves that combined text in GM notes of a Note rather than recreating the business and its connections.",
+      },
+      {
         question: "Does it work without AI?",
         answer:
           "Yes. Every business can be generated from the built-in tables with AI off. With AI on, the business is written in three stages, and any stage that fails falls back to the tables.",
@@ -2246,14 +2261,6 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         href: "/generators/social-hub",
         label: "Social Hub Generator",
-      },
-      {
-        href: "/answers/how-do-i-run-a-campaign-where-the-players-own-a-business",
-        label: "Running a campaign where the players own a business",
-      },
-      {
-        href: "/answers/how-do-i-turn-economic-pressures-into-rpg-adventure-hooks",
-        label: "Turning economic pressure into adventure hooks",
       },
     ],
   },
@@ -2342,7 +2349,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Mystery & Investigation Generator",
     eyebrow: "Mystery & Investigation Generator",
     introText:
-      "Build a case the players can investigate: lock in what really happened, then create suspects, locations, evidence, independent leads and outcomes that agree with that truth. The first version uses a fixed solution and keeps GM-only details separate from player-facing material.",
+      "Create a case your players can approach from more than one direction. Choose the mystery type, how many suspects to investigate, and how much pressure they face. Review the fixed truth and timeline, then check the clues against them. Keep the truth in GM notes and use the evidence to prepare what the players can discover.",
     canonicalPath: "/generators/mystery-investigation",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-mystery-investigation.png",
@@ -2359,17 +2366,27 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Does the generator choose a fixed culprit?",
         answer:
-          "Yes. This version creates one fixed truth and keeps it in a separate GM-only section so the clues and witness accounts can be checked against it.",
+          "Yes. The draft has a fixed GM-only truth. Check the motive, opportunity and timeline before play; do not replace that answer just because the players suspect someone else.",
       },
       {
         question: "Can the players solve the case without one required roll?",
         answer:
-          "The generator is designed to provide multiple independent routes to essential revelations, with clues that state what they support and what they do not prove.",
+          "The generator aims to provide independent leads that state what they support and what they do not prove. Check that a missed witness or clue cannot block an essential inference before running the case.",
       },
       {
         question: "Can I use the case in any role-playing game?",
         answer:
           "Yes. The generator is system-neutral and supports fantasy, noir, investigative horror, modern and science-fiction settings.",
+      },
+      {
+        question: "Can I give the case to my players?",
+        answer:
+          "Copy Player Handout exports the player-facing case material. Review it before sharing, since clues may describe facts the party has not yet discovered. Copy GM Case File includes the fixed truth and GM notes, so keep that copy private.",
+      },
+      {
+        question: "What happens when I add the mystery to Codex?",
+        answer:
+          "After generating, save it as one Note in your local vault with the case material and separate GM notes. The clue diagram is a preview aid when available; the Note preserves the written case, not a board of separate suspects. Link people and places yourself as you develop the case.",
       },
     ],
     relatedLinks: [
