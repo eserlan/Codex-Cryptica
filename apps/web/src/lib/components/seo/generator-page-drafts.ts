@@ -57,11 +57,11 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
   "magic-item": {
     type: "item",
     title: "Frostbite Blade",
-    summary: "A longsword etched with cold runes.",
+    summary: "A pale steel sword marked with the smiths' winter runes.",
     content:
-      "### Properties\nDeals additional cold damage on a critical strike and glows with a faint blue light in the presence of undead.\n\n### Lore\nForged in the northern wastes by the frost smiths of old.",
-    lore: "",
-    labels: ["rpg-item", "Sword", "Runes"],
+      "### Description\nA longsword with a leather-bound grip and a crescent of pale runes near its guard. The steel feels cold even beside a fire. The final rune is chipped where an old owner's crest was struck away.",
+    lore: "### GM Reference Information\n- **Type**: Weapon\n- **Rarity**: Uncommon\n- **Theme**: Classic Fantasy\n\n### Magical Properties\n- **Passive Effect**: The runes emit a faint blue light when an undead creature comes within thirty feet. The glow reveals neither direction nor number and fades when the creature leaves. Ordinary cold does not trigger it.\n\n### Lore & History\nForged for the winter watch of a northern mountain pass whose smiths delivered identical blades to three guard captains. The chipped crest matches a memorial at the abandoned watchtower.",
+    labels: ["rpg-item", "imported-draft"],
     status: "draft",
   },
   faction: {

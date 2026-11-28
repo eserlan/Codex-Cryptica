@@ -1019,28 +1019,43 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "magic-item": {
     summary:
-      "Pick an item type and a rarity, and the generator names the item, describes how it looks and feels, and writes GM notes with a magical property and a line of history. Treat the result as a first draft to tune for your table.",
+      "Give a lasting magical possession one recognisable behaviour and a place in the campaign's history. Before awarding it, decide what players can learn through testing, what it cannot do, and which choices become more interesting once they know how it works.",
     tips: [
       {
-        title: "Match the effect to the rarity you picked",
+        title: "Choose an effect the bearer can test",
         detail:
-          "The rarity you pick does not decide the effect, so check that the two agree. A minor trick on a Legendary item, or a strong power on a Common one, means one of them should change.",
+          "Set Item Type to Weapon and Rarity to Uncommon for Frostbite Blade. In Magical Properties, decide exactly what causes its runes to light up and how the bearer can tell. The glow near undead warns of danger without identifying its direction or removing the threat. Rarity is a starting point, not a calibrated game mechanic; adjust the effect to your rules.",
       },
       {
-        title: "Treat the magical property as a clue first",
+        title: "Give the magic a consistent limit",
         detail:
-          "Effects vary by genre: in a Classic Fantasy setting, a hum that points toward fresh water or a glow near the undead works best as a hint, then becomes a tool once the players trust it. Pick the effect that suits the scene you are running.",
+          "A cold blade that signals undead is interesting only if the bearer can distinguish that signal from ordinary frost. Let the party compare the glow in a frozen room and near a disturbed tomb, then decide how close they must be. Agree the limit before an ambiguous situation arises rather than changing it to force a result.",
       },
       {
-        title: "Put the history on your own map",
+        title: "Tie recovery and identification to earlier play",
         detail:
-          "In a Classic Fantasy setting, the history line names a source such as a red dragon's hoard or a paladin who fell at the Siege of Shadowkeep. Swap those names for places in your world, or keep one as a rumour the players can chase.",
+          "Use Add campaign context to name a known smith or battlefield. Offline drafts display this context in the document, so avoid hidden facts there. Save one Item to Codex with the visible Description and Lore & History, and the Magical Properties in GM notes. Once identified, record what the party has learned, who carries it and any limits you agree.",
       },
     ],
+    linksTitle: "Make magical rewards meaningful beyond damage",
     links: [
       {
         href: "/answers/how-much-loot-and-how-many-magic-items-should-i-give-my-players",
-        label: "How much loot and how many magic items to give players",
+        label: "Judge what the next reward should change",
+        description:
+          "Balance the frequency, value and long-term impact of magical treasure in your campaign.",
+      },
+      {
+        href: "/answers/how-do-i-upgrade-a-player-characters-weapon-without-replacing-it",
+        label: "Let a treasured item grow with its bearer",
+        description:
+          "Use milestones, repairs and discoveries rather than replacing an established signature weapon.",
+      },
+      {
+        href: "/answers/how-do-you-create-a-magic-system",
+        label: "Set limits that fit your world's magic",
+        description:
+          "Give magic consistent costs and boundaries so the group can reason about what it does.",
       },
     ],
   },
