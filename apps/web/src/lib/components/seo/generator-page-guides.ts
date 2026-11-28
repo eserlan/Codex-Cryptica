@@ -151,32 +151,32 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   tome: {
     summary:
-      "Generate an in-world book with its physical format, provenance, a deception, a reading hazard, and the ground truth the GM keeps, so a forbidden text can drive a scene rather than sit on a shelf.",
+      "Turn a dangerous text into a problem investigators can work on. Decide what the book claims, what is actually true, and how a reader could discover the difference through evidence rather than a compulsory reading check.",
     tips: [
       {
-        title: "Choose the Primary Reading Hazard first",
+        title: "Choose a reading hazard the party can anticipate",
         detail:
-          "Primary Reading Hazard sets the main risk in Risks & Costs of Study, and the same hazard appears in the Failure Condition and Safe Handling notes. Pick it before the other fields, since it decides what reading the book costs the party.",
+          "Set Primary Reading Hazard according to the cost you want in play. Read Risks & Costs of Study and Quick Checks & Mechanics. Give the readers a visible warning first, then choose a precaution that reduces the danger, such as a translation done away from the ritual site. Adapt any suggested check or cost to your system.",
       },
       {
-        title: "Use Current Custodian to decide who wants the book",
+        title: "Make obtaining the book a scene",
         detail:
-          "Current Custodian is the place or group that holds the book. It appears in the summary, the provenance, the Connected Entities list, and, in the offline draft, the first adventure hook, where either an agent of the custodian hires the party or a source hires them before the custodian purges access logs. Pick one that gives the party a reason to visit.",
+          "Current Custodian determines who controls access. In Optional Campaign Context, name a patron, a rival and what they each need from the text; use the AI option for this grounding. Decide whether the party can borrow, copy or bargain for the book, and what changes if another reader gets to it first.",
       },
       {
-        title: "Use Campaign Context with the AI draft",
+        title: "Reveal a passage before the interpretation",
         detail:
-          "Optional Campaign Context is not used by the offline draft. It reaches the AI prompt, so use the AI draft when the book has to connect to your campaign's people or places.",
+          "Compare Contents & Revelations with Ground Truth for the GM. Extract the actual quoted passage and one visible physical clue for a player handout. Keep the flaw, objective truth and failure condition in your private prep. Offer a second source that confirms the clue, and let characters choose whether to test the instruction or seek more evidence.",
       },
     ],
     links: [
       {
         href: "/answers/how-do-i-give-players-immersive-handouts-in-an-online-rpg",
-        label: "Giving players immersive handouts and props",
+        label: "Turn an excerpt into a useful player handout",
       },
       {
-        href: "/answers/how-to-write-an-in-world-newspaper-for-an-rpg",
-        label: "Writing an in-world newspaper for an RPG",
+        href: "/answers/how-do-you-run-a-mystery-without-railroading",
+        label: "Give investigations independent routes to the truth",
       },
     ],
   },
@@ -1436,36 +1436,36 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "dungeon-generator": {
     summary:
-      "Generate a multi-sector delve with an original purpose, two rival factions fighting over specific rooms, and a GM reference split between layout, traps, treasures and a central secret.",
+      "Prepare a site the party can explore in more than one order. Use its original purpose to explain the architecture, its current inhabitants to create decisions, and its central secret to change what the party does rather than merely explain the past.",
     tips: [
       {
-        title: "Contrast purpose against current state",
+        title: "Choose a scale and a route problem",
         detail:
-          "Use Choose a vibe, Original Purpose and Current State & Function to build tension between what the builders intended and who occupies the halls now, then pick Complex Scale to set the number of connected sectors.",
+          "Choose a vibe, then contrast Original Purpose with Current State & Function, such as a temple occupied by miners. Set Complex Scale for the available session. Read Key Sectors & Layout and Dungeon Layout; mark an obvious route, an alternative route and the cost of each before the party enters.",
       },
       {
-        title: "Play the two factions against their obstacles",
+        title: "Give occupants goals that change while players explore",
         detail:
-          "Check each faction's Territory, Goal and Obstacle in Faction Situation before the party arrives: offer a shortcut, bargain or rival secret so players can exploit the standoff instead of clearing every room.",
+          "Read each faction's Territory, Goal and Obstacle in Faction Situation. Choose one move they make if the party delays, such as opening a sluice or sealing a passage. Identify something each faction can trade, and let players bargain, bypass the conflict or stir it up rather than requiring a fight in every sector.",
       },
       {
-        title: "Seed local threats before opening the map",
+        title: "Put warnings before hazards and choices after discoveries",
         detail:
-          "Add a nearby settlement, patron or border conflict in World context (optional) so Adventure Hooks & Rumours tie straight into your campaign, then use Build Delve Canvas when you want an editable room map.",
+          "In World context (optional), name the nearby settlement or patron that cares about the delve; use the AI option for that grounding. Pick a visible sign of each serious trap and two ways to reach the central secret. Use Adventure Hooks & Rumours for invitations. Build Delve Canvas is the separate editable-map action; saving the text alone creates a Location.",
       },
     ],
     links: [
       {
         href: "/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
-        label: "Keeping obstacles moving without stalling",
+        label: "Provide more than one way through obstacles",
       },
       {
         href: "/answers/how-do-i-run-exploration-in-a-huge-ruined-city",
-        label: "Running layered sector-to-sector delves",
+        label: "Make routes, factions and landmarks guide exploration",
       },
       {
         href: "/answers/what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl",
-        label: "Matching delve lethality and pacing to a system",
+        label: "Match resource pressure and lethality to your rules",
       },
     ],
   },
