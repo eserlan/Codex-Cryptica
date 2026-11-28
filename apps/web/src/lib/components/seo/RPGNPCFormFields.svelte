@@ -179,7 +179,7 @@
   ></textarea>
   <p
     id="rpgnpc-campaign-context-help"
-    class="text-micro text-theme-text/60 leading-relaxed"
+    class="text-helper text-theme-text leading-relaxed"
   >
     Add a location, faction, villain or active problem for AI to use. Non-AI
     Full Dossiers display this text in their background; Table Cards do not use
