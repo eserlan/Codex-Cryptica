@@ -465,8 +465,43 @@ function isRpgNpcGenerator(generatorType?: string) {
   return generatorType === "npc" || generatorType === "rpg-npc-generator";
 }
 
+export function getSourceHandoffEntityType(generatorType?: string) {
+  if (generatorType === "faction" || generatorType === "faction-generator")
+    return "faction";
+  if (generatorType === "bbeg-generator" || isRpgNpcGenerator(generatorType))
+    return "character";
+  return undefined;
+}
+
 export function usesSourceHandoff(generatorType?: string) {
-  return generatorType === "bbeg-generator" || isRpgNpcGenerator(generatorType);
+  return getSourceHandoffEntityType(generatorType) !== undefined;
+}
+
+function getFactionHandoffLayout(data: GeneratorOutput) {
+  // The faction's danger paragraph can repeat its explicitly labelled secret.
+  // Keep GM-facing sections and source lore together, not the preview layout.
+  // Only the two explicitly public sections are safe to show in the entry body.
+  // Model-added headings (including nested headings) stay in GM notes by default.
+  const publicHeadings = new Set(["what they control", "what they want"]);
+  const publicSections: string[] = [];
+  const gmSections: string[] = [];
+  for (const section of splitMarkdownSections(data.content)) {
+    const heading = section.heading.toLowerCase();
+    const sectionLines = section.body.split(/\r?\n/).slice(1);
+    const hasAdditionalHeading = sectionLines.some((line, index) => {
+      if (/^ {0,3}#{1,6}(?:[ \t]+|$)/.test(line)) return true;
+      const previousLine = sectionLines[index - 1];
+      return Boolean(
+        previousLine?.trim() && /^ {0,3}(?:=+|-+)[ \t]*$/.test(line),
+      );
+    });
+    const isPublic = publicHeadings.has(heading) && !hasAdditionalHeading;
+    (isPublic ? publicSections : gmSections).push(section.body);
+  }
+  return {
+    content: publicSections.join("\n\n"),
+    lore: [...gmSections, data.lore ?? ""].filter(Boolean).join("\n\n"),
+  };
 }
 
 export function usesPrivateSummaryHandoff(generatorType?: string) {
@@ -506,6 +541,8 @@ function getBaseGeneratorHandoffLayout(
   if (generatorType === "heist")
     return { content: data.content, lore: data.lore ?? "" };
   if (isRpgNpcGenerator(generatorType)) return getNpcHandoffLayout(data);
+  if (getSourceHandoffEntityType(generatorType) === "faction")
+    return getFactionHandoffLayout(data);
   return generatorType === "bbeg-generator"
     ? { content: data.content, lore: data.lore ?? "" }
     : layout;

@@ -926,22 +926,43 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   faction: {
     summary:
-      "Each result is a named faction with a type, a scale, a goal, an internal conflict, an immediate hook, two named NPCs and a rival faction. Campaign context goes into the GM notes, and the vibe changes the goal, conflict and hook.",
+      "Create an organisation that has the means to pursue its own agenda, even when the party is elsewhere. Give its representatives something worth bargaining for, a reason to disagree and a rival who can act first.",
     tips: [
       {
-        title: "Choose the type for the base and resources",
+        title: "Make one resource worth negotiating over",
         detail:
-          "In the offline draft, Choose what they are sets the Base and Resource lines in At a Glance. Changing the type changes both lines for most types, so the same vibe can produce a very different base.",
+          "Choose what they are according to what the party will need: a Merchant Guild can offer legal passage for disputed cargo, while a Mercenary Company can escort refugees across a siege line. Decide what favour they demand in return and who will object if the party accepts.",
       },
       {
-        title: "Use the scale to set their reach",
+        title: "Decide where their authority ends",
         detail:
-          "In the offline draft, Choose their scale is repeated in What they control, so a single city and a kingdom-wide network read as different threats.",
+          "Use Choose their scale to draw a boundary players can exploit. A Single city guild can close its docks but not a neighbouring port; a Kingdom-wide network can pursue the party further, but must rely on local agents who may have competing loyalties.",
       },
       {
-        title: "Let the vibe set the goal and the trouble",
+        title: "Prepare a move they will make without the party",
         detail:
-          "In the offline draft, Choose a vibe decides the goal, the internal conflict and the immediate hook. With the type unchanged, a cyberpunk vibe and a cosmic horror vibe still get different goals and hooks.",
+          "In Add campaign context, name an existing dispute or scarce resource. Read the Immediate Hook against the rival's goal, then choose which representative approaches the party first and what the rival takes if the offer is refused. Let the consequences become visible next session.",
+      },
+    ],
+    linksTitle: "Make the organisation an active campaign power",
+    links: [
+      {
+        href: "/answers/how-do-you-create-a-fantasy-faction",
+        label: "Give the faction goals, limits and assets",
+        description:
+          "Decide what it can achieve and what it refuses to sacrifice.",
+      },
+      {
+        href: "/answers/how-do-i-run-political-intrigue-and-faction-play",
+        label: "Create negotiations with meaningful leverage",
+        description:
+          "Put competing offers and visible costs in front of the party.",
+      },
+      {
+        href: "/answers/how-do-you-track-faction-turns-between-rpg-sessions",
+        label: "Resolve the faction's next move between sessions",
+        description:
+          "Track one action, its outcome and its visible consequence.",
       },
     ],
   },

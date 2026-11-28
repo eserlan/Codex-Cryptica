@@ -113,6 +113,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       ctaLabel: CTA_LABEL,
       placement: "near-result",
     },
+    faction: {
+      headline: "Keep this organisation's next move in reach",
+      summary:
+        "Save this organisation as one new Faction in your local Codex vault, so you can record its bargains, rivalries and off-screen actions.",
+      capabilities: [
+        "Keep the secret, internal conflict and GM reference notes together in GM notes",
+        "Link existing representatives, rivals or places and update the faction after it acts",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
     "faction-roster": {
       headline: "Keep the faction's people in play",
       summary:
