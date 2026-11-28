@@ -119,3 +119,18 @@ export function exampleSession(): AdventureSession {
     resourceCounters: [],
   };
 }
+
+export function quietSession(turnCount: number): AdventureSession {
+  const session = exampleSession();
+  const template = session.turns[0];
+  session.worldTime = undefined;
+  session.provisionalFacts = [];
+  session.turns = Array.from({ length: turnCount }, (_, sequence) => ({
+    ...structuredClone(template),
+    id: "turn-" + sequence,
+    sequence,
+    timeAdvance: undefined,
+    provisionalFactIds: [],
+  }));
+  return session;
+}
