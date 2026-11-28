@@ -37,6 +37,7 @@ vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
 describe("CanvasRegistryStore", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vaultRegistry.activeVaultId = "test-vault";
     canvasRegistry.clear();
     canvasRegistry.init({
       enqueue: vi.fn((id, cb) => cb()),
@@ -236,6 +237,37 @@ describe("CanvasRegistryStore", () => {
     finishRead({});
     await pending;
     expect(canvasRegistry.isLoaded).toBe(false);
+  });
+
+  it("aborts an import when its pending registry read crosses a vault switch", async () => {
+    let finishRead!: (canvases: Record<string, never>) => void;
+    vi.mocked(vaultIO.loadCanvasesFromDisk).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishRead = resolve;
+        }),
+    );
+    const pendingRead = canvasRegistry.loadFromVault("test-vault");
+    await vi.waitFor(() => expect(finishRead).toBeDefined());
+
+    const imported = canvasRegistry.importCanvas({
+      id: "generated-before-switch",
+      title: "Generated delve",
+      nodes: [],
+      edges: [],
+    });
+
+    canvasRegistry.clear();
+    vaultRegistry.activeVaultId = "new-vault";
+    finishRead({});
+
+    await expect(imported).rejects.toThrow(
+      "Canvas import was interrupted by a vault switch",
+    );
+    await pendingRead;
+
+    expect(canvasRegistry.canvases["generated-before-switch"]).toBeUndefined();
+    expect(vaultIO.saveCanvasToDisk).not.toHaveBeenCalled();
   });
 
   describe("addEntities", () => {

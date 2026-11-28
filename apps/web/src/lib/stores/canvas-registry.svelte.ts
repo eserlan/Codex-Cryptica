@@ -35,6 +35,13 @@ interface CanvasLoadRequest {
   promise: Promise<void>;
 }
 
+export class CanvasImportInterruptedError extends Error {
+  constructor() {
+    super("Canvas import was interrupted by a vault switch");
+    this.name = "CanvasImportInterruptedError";
+  }
+}
+
 export class CanvasRegistryStore {
   _canvases = $state<Record<string, Canvas>>({});
   get canvases() {
@@ -57,6 +64,7 @@ export class CanvasRegistryStore {
   >([]);
   private saveQueue: KeyedTaskQueue | null = null;
   private loadRequest: CanvasLoadRequest | undefined;
+  private registryGeneration = 0;
   private readonly clock: Clock;
   private idGenerator: IdGenerator;
 
@@ -81,6 +89,7 @@ export class CanvasRegistryStore {
   }
 
   clear() {
+    this.registryGeneration += 1;
     this.loadRequest = undefined;
     this.canvases = {};
     this.isLoaded = false;
@@ -416,7 +425,15 @@ export class CanvasRegistryStore {
   }
 
   async importCanvas(doc: any): Promise<string> {
+    const registryGeneration = this.registryGeneration;
+    const vaultId = vaultRegistry.activeVaultId;
     await this.pendingRegistryRead();
+    if (
+      this.registryGeneration !== registryGeneration ||
+      vaultRegistry.activeVaultId !== vaultId
+    ) {
+      throw new CanvasImportInterruptedError();
+    }
     const id = doc.id || this.idGenerator.uuid();
     const name = doc.name || doc.title || "Delve Canvas Map";
     const slug = doc.slug || this.generateSlug(name, id);
