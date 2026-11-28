@@ -203,12 +203,13 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
   "god-generator": {
     type: "character",
     title: "Oros, the Light of Dawn",
-    summary: "A deity of the rising sun and new beginnings.",
+    summary:
+      "A god of first light and second chances, whose worshippers dispute who deserves sanctuary.",
     content:
-      "### Deity Description\nOros is depicted as a radiant figure carrying a shield of polished bronze. Their altars face the east.",
-    lore: "### At a Glance\n- **Deity Type**: God\n- **Primary Domain**: Light\n- **Worshippers**: State Religion",
+      "### Deity Description\nOros is depicted as a traveller holding a bronze lamp. Shrines stand beside city gates and at east-facing windows.\n\n### Divine Portfolio\nOros governs the first light and the chance to begin again. Pilgrims seek courage to return home, acknowledge a wrong or start a new trade.\n\n### Worship & Cults\nHouseholds light a lamp before dawn and offer a place at the breakfast table to strangers. The gate priests keep lists of people who need shelter, but a wealthy order claims only initiated citizens may receive the blessing.",
+    lore: "### At a Glance\n- **Deity Type**: God\n- **Primary Domain**: Light\n- **Worshippers**: Folk Devotion\n- **Sacred Symbol**: A bronze lamp with a split flame.\n- **Secret**: The oldest shrine's founding oath granted sanctuary to everyone, but the gate order has removed that passage from its copy.\n- **Immediate Hook**: Lamps have begun lighting themselves at the windows of people refused sanctuary.\n\n### Rituals & Taboos\n- **Ritual**: Share the dawn flame with a neighbour or traveller.\n- **Taboo**: Never extinguish the lamp of someone seeking refuge.\n\n### Myths & Legends\nOros lit the first lamp from a traveller's hearth and carried it through the longest night. Every new fire thereafter was borrowed, never owned.\n\n### Adventure Hooks\n- The gate priests hire the party to investigate the unexplained lamps before the next public rite.\n- A household keeper has found the original oath and needs protection while the clergy debate whether to read it aloud.",
     labels: ["rpg-deity", "deity-generator", "imported-draft"],
-    status: "draft",
+    status: "active",
   },
   "ship-generator": {
     type: "location",

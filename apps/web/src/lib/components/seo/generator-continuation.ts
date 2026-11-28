@@ -163,6 +163,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    "god-generator": {
+      headline: "Keep the faith connected to its worshippers",
+      summary:
+        "Save a single deity as one Character or a pantheon as one Faction in your local Codex vault. Record how its worship, promises and rivalries change after play.",
+      capabilities: [
+        "Keep a single deity's rites, secret, myths and hooks in GM notes, or a pantheon's hidden problem and rumours",
+        "Link the entry to its temples, cults, communities and rival powers as you create them",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
     "pantheon-generator": {
       headline: "Bring this pantheon into your world",
       summary:

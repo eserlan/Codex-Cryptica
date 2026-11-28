@@ -673,23 +673,42 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "god-generator": {
     summary:
-      "Deities feel real in a campaign when you see how ordinary people bargain with them—shrines, taboos, rival priesthoods, and small daily prayers.",
+      "Give a god, saint or spirit a place in ordinary life before it appears in a myth. Use its domain, worshippers, rite and taboo to show who seeks its help, what the faith demands and where its clergy disagree.",
     tips: [
       {
-        title: "Focus on worship, not cosmic stats",
+        title: "Choose who calls on this power and why",
         detail:
-          "Define one visible shrine custom and one taboo that players notice when entering a temple town.",
+          "Choose Single Deity / Spirit under Generate target, then set Divine Type and Primary Domain for the role the power plays. A Saint of Knowledge might attract apprentices seeking permission to read forbidden texts, while a God of War could be invoked by people hoping to keep a battle away from their homes.",
       },
       {
-        title: "Give domains human friction",
+        title: "Turn the faith into a visible custom",
         detail:
-          "Two sects of the same god often disagree harder than rival pantheons.",
+          "Set Worshippers to Folk Devotion for rituals at ordinary thresholds, or State Religion for a rite enforced by officials. Read Rituals & Taboos and show one practice when the party enters a shrine or household. Decide what help someone offers when the party observes it, and who is excluded if they refuse.",
+      },
+      {
+        title: "Make two interpretations create a decision",
+        detail:
+          "Set Tone to Dark / Grim for a promise with a troubling price, or Heroic when people look to the power for courage. Name an existing institution or community in Campaign context (optional), then turn the Secret or Immediate Hook into an observable omen two clergy factions interpret differently.",
       },
     ],
+    linksTitle: "From a single power to a living faith",
     links: [
       {
+        href: "/answers/how-do-you-create-a-believable-fictional-religion",
+        label: "Make worship part of everyday life",
+        description:
+          "Give worshippers habits, institutions and disputes rather than only a list of gods.",
+      },
+      {
         href: "/answers/can-multiple-gods-share-a-domain",
-        label: "Sharing divine domains",
+        label: "Turn overlapping domains into competing claims",
+        description: "Decide what each power promises that the others cannot.",
+      },
+      {
+        href: "/answers/how-do-you-create-a-pantheon",
+        label: "Connect the deity to a larger pantheon",
+        description:
+          "Give neighbouring gods alliances and rivalries with mortal consequences.",
       },
     ],
   },
