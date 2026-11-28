@@ -7,6 +7,7 @@ import {
 } from "./generator-continuation";
 import { getGeneratorDocumentLayout } from "./generator-document-layout";
 import { buildGeneratorSavePayload } from "./generator-save";
+import { slugMeta } from "./generator-page-meta";
 
 describe("Creature editorial and vault contract", () => {
   it("teaches real controls, progresses from encounter motivation to balancing and shows a coherent creature", () => {
@@ -38,10 +39,23 @@ describe("Creature editorial and vault contract", () => {
   });
 
   it("shows only one contextual continuation after a successful explicit generation", () => {
-    expect(getGeneratorContinuationConfig("creature")).toMatchObject({
+    const continuation = getGeneratorContinuationConfig("creature");
+    expect(continuation).toMatchObject({
       placement: "near-result",
       ctaLabel: "Add to my Codex",
     });
+    expect(continuation?.capabilities.join(" ")).toContain(
+      "AI is asked to keep hidden ecology",
+    );
+    expect(continuation?.capabilities.join(" ")).toContain(
+      "review AI text before sharing",
+    );
+    expect(slugMeta.creature?.faqs?.[4]?.answer).toContain(
+      "The AI is asked to put known characteristics",
+    );
+    expect(slugMeta.creature?.faqs?.[4]?.answer).toContain(
+      "review AI-written text before sharing it",
+    );
     const input = {
       generatorType: "creature",
       userGenerationSucceeded: true,

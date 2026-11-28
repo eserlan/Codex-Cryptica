@@ -409,7 +409,7 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       summary:
         "Save this generated creature as one Creature entry in your local Codex vault, so you can revisit its signs, behaviour and encounters.",
       capabilities: [
-        "Keep hidden ecology, surprises and secret weaknesses in GM notes",
+        "The AI is asked to keep hidden ecology, surprises and secret weaknesses in GM notes; review AI text before sharing",
         "Link the Creature to habitats, hunters or campaign events and update its behaviour as play changes the region",
       ],
       localFirstNotice: LOCAL_FIRST_NOTICE,
