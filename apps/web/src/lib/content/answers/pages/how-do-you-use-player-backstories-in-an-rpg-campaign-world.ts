@@ -123,6 +123,12 @@ export const howDoYouUsePlayerBackstoriesInAnRpgCampaignWorld: AnswerConfigInput
           "A fast way to give a backstory character a want and a role once you decide they need one.",
         href: "/generators/npc",
       },
+      {
+        title: "Superhero Origin Generator",
+        description:
+          "Prepare a concrete incident, a present-day request and a consequence the hero cannot resolve merely by revealing the truth.",
+        href: "/generators/origin-generator",
+      },
     ],
     relatedAnswers: [
       "how-do-i-get-players-to-engage-with-my-campaign-world",
