@@ -23,6 +23,44 @@ const baseOutput: GeneratorOutput = {
 };
 
 describe("generator save payloads", () => {
+  it.each(["dungeon-generator", "tome"] as const)(
+    "keeps the untouched %s Example out of guest exports",
+    (key) => {
+      const output = slugDrafts[key]!;
+      const payload = buildGeneratorSavePayload(
+        output,
+        getGeneratorDocumentLayout(output),
+        undefined,
+        key,
+      );
+
+      expect(payload.status).toBe("draft");
+
+      const bundle = GuestExporter.export({
+        entities: [
+          {
+            id: `${key}-example`,
+            type: payload.type,
+            title: payload.title,
+            content: payload.content,
+            lore: payload.lore,
+            labels: payload.labels,
+            status: payload.status,
+            aliases: [],
+            connections: [],
+          } satisfies Entity,
+        ],
+        defaultVisibility: "visible",
+        activeTheme: { primaryColor: "#000000" },
+        publishId: `${key}-export-test`,
+        vaultTitle: "Test Vault",
+        publisherVersion: "test",
+      });
+
+      expect(bundle.entities).toHaveLength(0);
+    },
+  );
+
   it("keeps a quest's hidden beats out of the saved Event's public content even when the preview moves them into its main column", () => {
     const output: GeneratorOutput = {
       ...baseOutput,
