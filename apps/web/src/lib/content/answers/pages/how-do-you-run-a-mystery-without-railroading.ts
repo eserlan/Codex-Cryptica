@@ -105,6 +105,12 @@ export const howDoYouRunAMysteryWithoutRailroading: AnswerConfigInput = {
   ],
   relatedTools: [
     {
+      title: "Tome and Forbidden Book Generator",
+      description:
+        "Prepare a dangerous book's visible excerpt, contradictory evidence and private ground truth.",
+      href: "/generators/tome",
+    },
+    {
       title: "Mystery and investigation generator",
       description:
         "Generate a fixed-truth GM solution with distinct suspects, independent clue paths, and ticking pressure that keeps the case moving without railroading.",
