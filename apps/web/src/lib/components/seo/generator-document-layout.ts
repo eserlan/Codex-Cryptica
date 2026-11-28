@@ -104,6 +104,7 @@ const LAYOUT_RULES: LayoutRule[] = [
   },
   {
     label: "nation-generator",
+    unrecognizedLoreToRail: true,
     railSections: new Set([
       "At a Glance",
       "Power Blocs",
@@ -508,7 +509,11 @@ export function getGeneratorDocumentLayout(
   const rawContent = routedTableCard.content;
   const content = deduplicateMarkdownSections(rawContent, seenHeadings);
 
-  const rule = LAYOUT_RULES.find((r) => labels.includes(r.label));
+  // Nation output keeps unrecognised lore private. Its stricter routing must
+  // win even when the model also supplies another generator's label.
+  const rule = labels.includes("nation-generator")
+    ? LAYOUT_RULES.find((r) => r.label === "nation-generator")
+    : LAYOUT_RULES.find((r) => labels.includes(r.label));
   if (!rule) {
     return {
       content,

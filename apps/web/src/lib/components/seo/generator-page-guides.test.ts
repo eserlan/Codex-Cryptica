@@ -393,14 +393,17 @@ describe("generator guide distinctness", () => {
     expect(guide.summary).not.toContain("Nation Generator");
     expect(guide.tips).toHaveLength(3);
     const tipText = guide.tips.map((tip) => tip.detail).join(" ");
-    expect(guide.summary).toContain("two or three power blocs");
-    expect(tipText).toContain("In offline drafts");
-    expect(tipText).toContain(
-      "AI results may structure those seeds differently",
-    );
-    for (const label of ["Conflict level", "Scale", "Power Blocs"]) {
+    expect(guide.summary).toContain("competing power blocs");
+    for (const label of [
+      "Conflict level",
+      "Scale",
+      "Government style",
+      "Power Blocs",
+      "Hidden Problem",
+    ]) {
       expect(tipText).toContain(label);
     }
+    expect(tipText).not.toContain("In offline drafts");
     expect(guide.linksTitle).toBe("Bring your nation to life");
     expect(guide.links).toHaveLength(3);
     expect(guide.links?.map((link) => link.href)).toEqual([

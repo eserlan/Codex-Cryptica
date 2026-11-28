@@ -407,16 +407,17 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       placement: "near-result",
     },
     nation: {
-      headline: "Keep building this nation",
+      headline: "Keep the state's decisions and rival powers connected",
       summary:
-        "Save this nation as a Faction entry in your local Codex vault so its government, tensions, and power blocs stay together across sessions.",
+        "Save this nation as one Faction entry in your local Codex vault, so you can record changes in its leadership, borders and political pressures.",
       capabilities: [
         "Store the state overview, power structure, and society in one Faction entry",
-        "Keep power blocs, rumours, and entity seeds as GM-only lore",
+        "Keep power blocs, rumours, the hidden problem and entity seeds as GM-only lore",
         "Develop the leader, rival blocs, and centre of power into linked entries inside your vault",
       ],
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
+      placement: "near-result",
     },
     business: {
       headline: "Keep the enterprise and its people together",
