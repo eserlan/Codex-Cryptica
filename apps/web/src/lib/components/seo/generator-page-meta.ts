@@ -852,7 +852,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Vampire Clan Generator",
     eyebrow: "Vampire Clan Generator",
     introText:
-      "Create undead factions with bloodlines, feeding habits, dark agendas, and table-ready hooks. Works without login, then imports into your local Codex vault.",
+      "Create a vampire court, coven or brood whose feeding habits shape the people and places it touches. Choose its nature, bloodline, feeding pattern and weakness, then work out which mortal face the players meet first and what the clan wants from them. No account needed.",
     canonicalPath: "/generators/vampire-clan",
     labels: ["vampire"],
     ogImage:
@@ -865,6 +865,36 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "occult coven creator",
       "gothic horror faction",
       "vampire faction",
+    ],
+    faqs: [
+      {
+        question: "What does a vampire clan draft include?",
+        answer:
+          "It gives you a named Faction, an overview and public facade, its bloodline, feeding habit and weakness, a dark agenda, internal conflict, notable NPCs, a rival and an adventure hook. Use those references to decide what the party encounters first.",
+      },
+      {
+        question: "Can the clan be an ally rather than a villain?",
+        answer:
+          "Yes. Give the clan a goal the party can temporarily share and a cost they can refuse. Choose a feeding habit and weakness that make negotiation, investigation or sanctuary viable rather than forcing a fight.",
+      },
+      {
+        question: "Does this include rules for a particular vampire RPG?",
+        answer:
+          "No. It is a system-neutral faction draft, not a stat block or official bloodline rules. Adapt the clan's powers and weakness to the system you run.",
+      },
+      {
+        question: "What happens when I add the clan to Codex?",
+        answer:
+          "The generated clan becomes one Faction in your local vault. The overview and public facade remain in the main text; the clan's GM reference, secret agenda, conflict, NPCs, rival and hook stay in GM notes. Review the overview and facade before sharing, and create or link individual members yourself.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/faction", label: "Faction Generator" },
+      {
+        href: "/generators/dark-fantasy-faction",
+        label: "Dark Fantasy Faction Generator",
+      },
+      { href: "/generators/secret-society", label: "Secret Society Generator" },
     ],
   },
   "nomad-clan": {
@@ -925,7 +955,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Dark Fantasy Faction Generator",
     eyebrow: "Dark Fantasy Faction Generator",
     introText:
-      "Create fallen orders, cursed noble houses, plague cults, witch-hunters, corpse guilds, and desperate powers with agendas, secrets, NPCs, and table-ready hooks. Works without login, then imports into your local Codex vault.",
+      "Create a fallen order, plague cult, cursed house or other power that the people need despite what it does. Choose the crisis, faction type, territory and moral posture, then use its resources and internal conflict to decide what the party can bargain for, expose or change. No account needed.",
     canonicalPath: "/generators/dark-fantasy-faction",
     labels: ["fantasy"],
     ogImage:
@@ -965,7 +995,12 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Can I aim the faction at my current campaign?",
         answer:
-          "Yes. Add optional campaign context and the generator will fit the faction to your table rather than producing a generic result.",
+          "Name a place, crisis or existing faction in Add campaign context. The draft records that context; review the result and connect its resources and internal conflict to that place before play.",
+      },
+      {
+        question: "What happens when I add the faction to Codex?",
+        answer:
+          "Save one new Faction in your local vault. What they control and want remain in the main text; the danger, table guidance, secrets, people, conflict and rival stay in GM notes. Link individual people or places as you develop them.",
       },
     ],
     relatedLinks: [

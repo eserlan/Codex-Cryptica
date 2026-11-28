@@ -1004,22 +1004,22 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "dark-fantasy-faction": {
     summary:
-      "Make your faction dangerous, necessary, and difficult to destroy. Each result is shaped by the mode, type, scope and moral posture you pick, giving you what it wants, what is tearing it apart, named NPCs, a rival and a hook.",
+      "Build a power the party cannot simply remove without risking the people it protects. Give it a useful service, an unacceptable price and an internal division that offers more than one way to challenge it.",
     tips: [
       {
         title: "Start with the price of survival",
         detail:
-          "Combine Dark fantasy mode and Moral posture to produce a faction that solves a real crisis at a troubling price, such as a plague cult that genuinely contains disease. Openly cruel marks institutions that no longer hide their methods, while Fallen idealists leaves room to bargain.",
+          "Combine Dark fantasy mode set to Plague City with Faction type set to Plague Cult to give a faction something people need. Set Moral posture to Necessary evil if it has public supporters despite its methods, or Fallen idealists if members might be persuaded to return to their original oath.",
       },
       {
         title: "Make the players need them first",
         detail:
-          "Use Operating scope to place a guarded road, cure, shelter or archive under their control before the hidden cost surfaces in Why they are dangerous. When the party relies on what the faction protects, opposing them carries immediate consequences.",
+          "Set Operating scope to A haunted border march if the faction protects the road the party must travel, or A single plague-stricken village for a crisis that can be confronted in one evening. Offer the service first; let an observable sign reveal what people sacrifice to keep it.",
       },
       {
         title: "Give the faction a breaking point",
         detail:
-          "Pair Internal Conflict, Rival Faction, Notable NPCs and Immediate Hook with Add campaign context so schemes and fractures keep advancing between sessions. In offline drafts, anything entered in Add campaign context appears at the end of How to use them at the table.",
+          "Name an affected person or settlement in Add campaign context. Use Internal Conflict to decide which NPC would break with the faction if the party offered a better way to protect that place; use Rival Faction to determine what happens if the party does nothing.",
       },
     ],
     linksTitle: "Make your faction matter at the table",
@@ -1494,22 +1494,43 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "vampire-clan": {
     summary:
-      "Each result is a vampire clan with a public front, a feeding habit that shows where its members hunt, and a weakness you can turn into a plot point. The GM Reference block holds the clan's dark agenda, its internal conflict, a rival and an adventure hook.",
+      "Create a vampire clan with a face the mortals know, a feeding network that leaves traces and a hidden conflict the party can exploit. Let the clan need something from the characters as much as the characters need it.",
     tips: [
       {
-        title: "Choose how they feed first",
+        title: "Place the feeding network in an ordinary scene",
         detail:
-          "Choose how they feed becomes the Feeding Habit line in the GM Reference block, which tells the table where the clan hunts. Pick the habit that puts them in scenes your party already visits.",
+          "Set Choose how they feed to Street Predation for a trail of disappearances or High-Society Salons for favours and access to elite gatherings. Read Feeding Habit and give the party an observable sign, such as a missing porter or an invitation issued only after sunset.",
       },
       {
-        title: "Turn the weakness into a lever",
+        title: "Make the weakness a lever, not a surprise kill",
         detail:
-          "Choose their weakness appears as Clan Weakness in the GM Reference block. Pick one the party can realistically reach, then build the adventure hook around it.",
+          "Set Choose their weakness to Mirror & Reflection Absence for a way to test a suspicion, or Consecrated Ground Aversion for a refuge the party can reach. Use Clan Weakness to plan a fair clue before it becomes a weapon or bargaining chip.",
       },
       {
-        title: "Ground the clan in your setting",
+        title: "Give the court a reason to need outsiders",
         detail:
-          "In offline drafts, Add campaign context inserts a Campaign Fit section that reads Use [clan name] in [your text]. Name a real city, guild or threat there so the overview points the clan at your table.",
+          "Set Choose their nature to Aristocratic Court when influence and favours matter, or Rebel Anarchs for competing loyalties. Name an existing city or investigator in Add campaign context and use the Campaign Fit, Dark Agenda and Internal Conflict to decide which clan member offers the party a deal the sire will oppose.",
+      },
+    ],
+    linksTitle: "Build the clan, then run its hidden politics",
+    links: [
+      {
+        href: "/answers/how-do-you-create-a-fantasy-faction",
+        label: "Give the clan a resource and a credible weakness",
+        description:
+          "Build a faction that needs something and cannot simply take it.",
+      },
+      {
+        href: "/answers/how-do-i-run-political-intrigue-and-faction-play",
+        label: "Turn feeding rights and debts into playable intrigue",
+        description:
+          "Give players competing offers and options rather than a prescribed alliance.",
+      },
+      {
+        href: "/answers/how-do-you-track-faction-turns-between-rpg-sessions",
+        label: "Advance the clan's hidden agenda between sessions",
+        description:
+          "Decide what the clan and its enemies do if the party ignores them.",
       },
     ],
   },
