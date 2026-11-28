@@ -256,6 +256,12 @@ export const howMuchLootAndHowManyMagicItemsShouldIGiveMyPlayers: AnswerConfigIn
     ],
     relatedTools: [
       {
+        title: "Artifact & Relic Generator",
+        description:
+          "Draft a rare, campaign-shaping relic only after deciding how its powers, costs and competing claimants will affect the campaign.",
+        href: "/generators/artifact-generator",
+      },
+      {
         title: "Magic item generator",
         description:
           "Draft a candidate item with rarity, properties and history once you have decided the pace and band a hoard should serve.",
