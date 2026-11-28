@@ -81,8 +81,13 @@ describe("RPG NPC guide", () => {
 
 describe("generator guide distinctness", () => {
   it("has no copy shared across specific guides", () => {
+    // The retired adventure slug is an alias of the same canonical generator,
+    // not a second generator that should have independently authored copy.
+    const { "adventure-idea-generator": legacyAdventure, ...canonicalGuides } =
+      SLUG_GUIDES;
+    expect(legacyAdventure).toBe(canonicalGuides["adventure-generator"]);
     expect(
-      findSharedGuideCopy(SLUG_GUIDES as Record<string, GeneratorGuide>),
+      findSharedGuideCopy(canonicalGuides as Record<string, GeneratorGuide>),
     ).toEqual([]);
   });
 
@@ -574,6 +579,9 @@ describe("generator guide distinctness", () => {
       "Adventure Idea Generator",
     );
     expect(guide).toBe(SLUG_GUIDES["adventure-idea-generator"]);
+    expect(
+      getGeneratorGuide("adventure-generator", "Adventure Idea Generator"),
+    ).toBe(guide);
     expect(guide).not.toEqual(
       defaultGuideForSlug(
         "adventure-idea-generator",

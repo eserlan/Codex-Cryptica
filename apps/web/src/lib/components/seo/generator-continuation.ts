@@ -50,6 +50,19 @@ const RPG_NPC_CONTINUATION: GeneratorContinuationConfig = {
   placement: "near-result",
 };
 
+const ADVENTURE_CONTINUATION: GeneratorContinuationConfig = {
+  headline: "Turn this scenario into an active thread",
+  summary:
+    "Save one adventure prep Note in your local Codex vault, with the scenario in GM notes and a short summary in the main text.",
+  capabilities: [
+    "Link the Note to existing characters, locations and factions as you prepare the next session",
+    "Record which clues the party found, how the clock advanced and what changed after play",
+  ],
+  localFirstNotice: LOCAL_FIRST_NOTICE,
+  ctaLabel: CTA_LABEL,
+  placement: "near-result",
+};
+
 const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
   {
     "star-system": {
@@ -187,17 +200,19 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
-    "adventure-idea-generator": {
-      headline: "Turn this scenario into an active thread",
+    "adventure-generator": ADVENTURE_CONTINUATION,
+    "adventure-idea-generator": ADVENTURE_CONTINUATION,
+    rumour: {
+      headline: "Keep these rumours in circulation",
       summary:
-        "Stage this adventure idea for your local Codex vault so its public situation, clues, and GM-only outcomes stay separate and ready to open in Adventure Canvas.",
+        "Save all six rumours as one Note in your local Codex vault, with the gossip in the main text and the hidden truth in GM notes.",
       capabilities: [
-        "Keep initial situation, key locations, and clues separate from GM-only complications and outcomes",
-        "Open the scenario in Adventure Canvas to link scenes, actors, and secrets visually",
-        "Connect the thread to existing campaign factions, NPCs, and locations in your vault",
+        "Keep the leads and sources together for the next visit to the settlement",
+        "Mark each rumour as checked or disproved and link the Note to the places and people already in your vault",
       ],
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
+      placement: "near-result",
     },
     "one-shot-adventure-generator": {
       headline: "Save this run sheet for tonight's table",
