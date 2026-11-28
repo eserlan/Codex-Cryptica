@@ -11,6 +11,7 @@ import type {
 import {
   deduplicateMarkdownSections,
   getGeneratorHandoffLayout,
+  getInhabitedPlaceHandoffLayout,
   usesSourceHandoff,
 } from "./generator-document-layout";
 
@@ -195,7 +196,11 @@ export function buildGeneratorSavePayload(
     (data.kind === "adventure" || data.labels.includes("adventure"));
   const { content, lore: initialLore } = resolveSaveBodyAndLore(
     data,
-    vaultSaveLayout(data, layout, generatorType),
+    vaultSaveLayout(
+      data,
+      getInhabitedPlaceHandoffLayout(data, layout, generatorType),
+      generatorType,
+    ),
     generatorType,
   );
   let lore = initialLore;
