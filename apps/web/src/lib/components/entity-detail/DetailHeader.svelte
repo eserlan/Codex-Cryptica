@@ -228,8 +228,10 @@
                 : undefined}
             >
               {entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
-                  aria-hidden="true">*</sup
-                ><span class="sr-only"> (past)</span>{/if}
+                  aria-hidden="true"
+                >
+                  *
+                </sup><span class="sr-only"> (past)</span>{/if}
             </h2>
             <SaveStatusIndicator />
           </div>
@@ -237,8 +239,9 @@
             <div class="flex flex-wrap gap-1 md:gap-1.5 mt-0.5">
               <span
                 class="text-nano md:text-nano font-bold text-theme-text uppercase tracking-widest self-center mr-0.5 md:mr-1"
-                >aka:</span
               >
+                aka:
+              </span>
               {#each entity.aliases as alias}
                 <div
                   class="px-1.5 py-0.5 rounded bg-theme-primary/5 border border-theme-primary/10 text-nano md:text-nano font-bold text-theme-text uppercase tracking-wider"
@@ -263,17 +266,19 @@
                 <button
                   type="button"
                   onclick={handleOpenParent}
-                  class="text-theme-text hover:text-theme-primary/80 hover:underline font-semibold focus:outline-none transition-all"
+                  class="touch-target text-theme-text hover:text-theme-text hover:underline font-semibold focus:outline-none transition-all"
                 >
                   {parentEntity.title}{#if parentEntity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
-                      aria-hidden="true">*</sup
-                    ><span class="sr-only"> (past)</span>{/if}
+                      aria-hidden="true"
+                    >
+                      *
+                    </sup><span class="sr-only"> (past)</span>{/if}
                 </button>
                 {#if canEditParent}
                   <button
                     type="button"
                     onclick={() => modalUIStore.openParentPicker(entity.id)}
-                    class="p-0.5 text-theme-text hover:text-theme-primary transition-colors"
+                    class="touch-target flex items-center justify-center p-0.5 text-theme-text hover:bg-theme-primary/10 hover:text-theme-text transition-colors"
                     aria-label="Change parent"
                     title="Change parent"
                     data-testid="change-parent-button"
@@ -290,7 +295,7 @@
                 <button
                   type="button"
                   onclick={() => modalUIStore.openParentPicker(entity.id)}
-                  class="flex items-center gap-1.5 text-xs text-theme-text hover:text-theme-primary transition-colors focus:outline-none"
+                  class="touch-target flex items-center gap-1.5 text-xs text-theme-text hover:text-theme-text hover:underline transition-colors focus:outline-none"
                   title="Nest this under another entity"
                   data-testid="set-parent-button"
                 >
