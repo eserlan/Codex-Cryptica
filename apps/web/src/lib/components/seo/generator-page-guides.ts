@@ -1133,45 +1133,73 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   business: {
     summary:
-      "Player-run or NPC businesses shine when they generate leads, debts, and rival pressures—not just bookkeeping spreadsheets.",
+      "Build an enterprise that matters because people depend on what it supplies, not because it has a long inventory. Turn its staff, dependencies and competitors into immediate costs and opportunities for the party, whether they are customers or owners.",
     tips: [
       {
-        title: "Tie suppliers to adventure hooks",
+        title: "Choose something the settlement cannot do without",
         detail:
-          "A delayed shipment or rival guild tariff gives the party a personal reason to investigate.",
+          "Use Business type and Location (optional) to choose a service with local stakes: a blacksmith beside a ferry crossing could repair the last working winch. Read Suppliers and Dependencies and decide what stops working first if a delivery fails.",
       },
       {
-        title: "Name two staff members",
+        title: "Put the competitor's offer on the table",
         detail:
-          "A loyal clerk and an ambitious apprentice keep the business alive while the party is out of town.",
+          "Use Legitimacy to decide whether resolving the Current Pressure means asking an inspector for a licence, bargaining with a criminal protector or exposing a rival. Give the party two ways to help the business survive, each benefiting a different named relationship.",
+      },
+      {
+        title: "Make ownership a recurring decision",
+        detail:
+          "Select Players own this business if the party wants to build an enterprise. Use its manager's goal, Recurring obligations and Upgrade paths to offer a choice before their next expedition: hire another worker to protect a contract, or fund an expansion that creates a new obligation.",
       },
     ],
+    linksTitle: "Turn trade into recurring adventure",
     links: [
       {
+        href: "/answers/how-do-i-turn-economic-pressures-into-rpg-adventure-hooks",
+        label: "Build an adventure from a broken dependency",
+        description:
+          "Trace the shortage to people, choices and consequences rather than a price list.",
+      },
+      {
         href: "/answers/how-do-i-run-a-campaign-where-the-players-own-a-business",
-        label: "Running player-owned businesses",
+        label: "Run an owned business between adventures",
+        description:
+          "Use lightweight business turns, investment choices and recurring obligations.",
       },
     ],
   },
   heist: {
     summary:
-      "A great RPG heist gives players a clear target, layered security they can scout in advance, and a complication that forces improvisation once they are inside.",
+      "Prepare a score whose objective, security and escalating response give the crew choices instead of a single intended plan. Use casing to establish what they know, the practical catch to shape how they act, and the getaway to reward or complicate those choices.",
     tips: [
       {
-        title: "Reward reconnaissance",
+        title: "Make success mean more than reaching the target",
         detail:
-          "Let every guard shift, delivery schedule, or blueprint detail be discoverable before the job begins.",
+          "Choose Heist Type according to what must change by the end of the score. Rescue means bringing someone out alive, while Information means getting knowledge the crew can use. In The Prize (optional), name an objective whose condition matters, such as a fragile royal seal or a witness who refuses to leave without their child.",
       },
       {
-        title: "Keep the exit harder than the entry",
+        title: "Make casing reveal a real alternative",
         detail:
-          "Triggering an alarm or rival crew during extraction creates tension without stalling the opening.",
+          "Use Target and Target Scale to set how much of the location needs to be negotiated or infiltrated. For each Security Ring, choose one discoverable fact that makes an alternative plausible, such as a trusted escort instead of a risky crossing. Reveal useful intel before asking the players how they enter.",
+      },
+      {
+        title: "Escalate when the fiction changes",
+        detail:
+          "Read the Alarm Track and The Getaway together. Decide what evidence would actually alert the defenders, when their response changes the exit options, and which alternative remains costly but possible. Offer a flashback when a player's idea needs a plausible prior preparation, not as a requirement.",
       },
     ],
+    linksTitle: "Build and run the score",
     links: [
       {
-        href: "/answers/how-do-i-run-a-stealth-mission-in-a-tabletop-rpg",
-        label: "Running stealth & heist missions",
+        href: "/answers/what-makes-a-good-heist-target-in-a-tabletop-rpg",
+        label: "Give the objective a practical catch and lasting stakes",
+        description:
+          "Choose why it matters, who keeps it and what makes getting it out difficult.",
+      },
+      {
+        href: "/answers/how-do-you-run-a-heist-in-a-tabletop-rpg",
+        label: "Run casing, infiltration, escalation and escape",
+        description:
+          "Move through the four beats without forcing a plan or a fixed solution.",
       },
     ],
   },
@@ -1199,28 +1227,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   puzzle: {
     summary:
-      "Each draft puts an obstacle between the party and the Puzzle purpose you choose, then gives you clues, spotlight prompts, alternate solutions and what a failed attempt does. The intended solution and the escalating hints sit in the GM notes, so you can read the setup aloud and keep the answer back.",
+      "Put an obstacle between the party and a goal, then use visible clues, distinct approaches and feedback to keep everyone involved. Prepare what the characters can learn and what a failed attempt changes instead of asking them to guess a single answer.",
     tips: [
       {
-        title: "Let Puzzle style pick the obstacle",
+        title: "Make the obstacle answer a question the players can test",
         detail:
-          "Offline drafts choose the obstacle from the Puzzle style: Social gives a suspicious gatekeeper or two guards who disagree, Mechanical a locked mechanism or a panel of gears. A style you type yourself gets a plain obstacle, so describe it in your own words.",
+          "Choose Puzzle purpose and Puzzle style for the action the characters need to take. A Mechanical Sealed door might respond when they balance a counterweight; a Social Cross obstacle might require two disagreeing bridgekeepers to accept a compromise. Give a visible clue before the first check and show what changes after a partial success.",
       },
       {
-        title: "Use Complexity to set the solution length",
+        title: "Give abilities a spotlight, not a lock",
         detail:
-          "In offline drafts, Complexity sets how many linked actions the GM-only solution needs: two for Simple, three for Moderate and four for Elaborate. Pair a long chain with Failure pressure set to None if you want players to experiment without cost.",
+          "In PC capabilities to make matter, name abilities the actual party enjoys using, such as a familiar or a smith's tools. Use Participation style to decide who gets a moment to contribute. For every specialist opening, leave another character a credible way to achieve the same step at a different cost.",
       },
       {
-        title: "Name what your party can actually do",
+        title: "Choose what a wrong attempt changes",
         detail:
-          "Abilities listed in PC capabilities to make matter are treated as openings, never requirements: an offline draft names them in the spotlight section, and the AI draft is told to make them useful. Participation style then says whether one character, two or three, or the whole party leads the solve.",
+          "Pair Complexity with Failure pressure so the scene fits your session. None lets the party experiment safely; Time pressure can threaten the downstream objective while the mechanism remains solvable. Decide which alternate solution becomes attractive as the cost rises, and reveal another hint only once new attempts have stopped.",
       },
     ],
+    linksTitle: "Make the puzzle fair and keep it moving",
     links: [
       {
         href: "/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
-        label: "Designing puzzles that do not stall",
+        label: "Design alternate routes and meaningful feedback",
+        description:
+          "Replace a guessing gate with partial progress, useful information and a costlier way through.",
+      },
+      {
+        href: "/answers/how-do-you-give-hints-for-an-rpg-puzzle-without-giving-away-the-answer",
+        label: "Deliver the next hint without solving it for the party",
+        description:
+          "Step from sensory reminder to changed component to immediate goal when play stalls.",
       },
     ],
   },
