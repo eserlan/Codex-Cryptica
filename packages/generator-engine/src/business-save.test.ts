@@ -193,6 +193,23 @@ describe("buildBusinessImportDrafts (public handoff)", () => {
     expect(drafts.some((x) => x.title === "Unknown Guild")).toBe(false);
   });
 
+  it("keeps the explicit secret in GM lore without changing the business preview or exposing image URLs", () => {
+    const d = doc({
+      secret:
+        "The licence is forged. ![tracking](https://example.invalid/pixel.png)",
+    });
+    const drafts = buildBusinessImportDrafts(d) as Array<{
+      type: string;
+      content: string;
+      lore?: string;
+    }>;
+    const business = drafts.find((draft) => draft.type === "faction")!;
+    expect(business.content).toContain("Suppliers and Dependencies");
+    expect(business.content).not.toContain("The licence is forged.");
+    expect(business.content).not.toContain("## Secret");
+    expect(business.lore).toBe("## Secret\nThe licence is forged. tracking");
+  });
+
   it("leaves out people who are not ticked", () => {
     const d = doc();
     const drafts = buildBusinessImportDrafts(d, []) as Array<{ type: string }>;
