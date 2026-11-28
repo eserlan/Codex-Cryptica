@@ -212,7 +212,9 @@ export function buildGeneratorSavePayload(
     content,
     lore,
     labels: data.labels,
-    status: data.status,
+    // An explicit public Mystery save is the acceptance action; preserving its
+    // preview draft status hides the case from the normal vault table.
+    status: generatorType === "mystery-investigation" ? "active" : data.status,
     systemId: data.systemId ?? data.mechanics?.systemId,
     ...(mapImageDataUrl ? { mapImageDataUrl } : {}),
     ...(metadata ? { metadata } : {}),
