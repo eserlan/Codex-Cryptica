@@ -962,7 +962,7 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       {
         title: "Keep the hidden network behind the screen",
         detail:
-          "Start with the power outage from Immediate Hook and offer a choice between speaking to patients, checking the meter logs or bargaining with a rival. Add to my Codex saves a Faction with a brief overview and the full supernatural operation, internal conflict, contacts and secret in GM notes. Decide what the party learns before moving any of it into public-facing records.",
+          "Start with the power outage from Immediate Hook and offer a choice between speaking to patients, checking the meter logs or bargaining with a rival. Add to my Codex saves a Faction; its model-produced summary, supernatural operation, internal conflict, contacts and secret stay in GM notes. Decide what the party learns before moving any of it into public-facing records.",
       },
     ],
     linksTitle: "Make hidden factions matter through ordinary institutions",

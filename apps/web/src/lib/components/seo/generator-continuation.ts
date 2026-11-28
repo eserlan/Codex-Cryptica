@@ -289,7 +289,7 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
     "urban-fantasy-faction": {
       headline: "Keep the hidden network behind the screen",
       summary:
-        "Save one Faction in your local Codex vault. Its brief overview stays in main text, while its operation, contacts, agenda and secrets are GM notes.",
+        "Save one Faction in your local Codex vault. Its model-produced summary, operation, contacts, agenda and secrets stay in GM notes.",
       capabilities: [
         "Track what the party has discovered about the faction and how its rival responds",
         "Link the Faction to existing city locations, contacts and institutions",

@@ -5,6 +5,13 @@ import {
 } from "./generator-continuation";
 
 describe("generator-continuation", () => {
+  it("describes the Urban Faction summary as GM notes", () => {
+    const config = getGeneratorContinuationConfig("urban-fantasy-faction");
+    expect(config?.summary).toContain("summary");
+    expect(config?.summary).toContain("GM notes");
+    expect(config?.summary).not.toContain("main text");
+  });
+
   it("offers the heist continuation next to completed results", () => {
     const config = getGeneratorContinuationConfig("heist");
     expect(config).toMatchObject({

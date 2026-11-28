@@ -978,7 +978,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Can I use it without AI or an account?",
         answer:
-          "Yes. Generate and copy without an account. Add to my Codex opens one Faction in your browser-local vault, with a short summary and the full operating details, NPCs, secret and rival in GM notes. Named contacts do not automatically create separate entities.",
+          "Yes. Generate and copy without an account. Add to my Codex opens one Faction in your browser-local vault, with its model-produced summary and full operating details, NPCs, secret and rival in GM notes. Named contacts do not automatically create separate entities.",
       },
       {
         question: "Which RPG systems does it support?",
