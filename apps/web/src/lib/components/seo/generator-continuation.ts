@@ -211,6 +211,30 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    "urban-fantasy-faction": {
+      headline: "Keep the hidden network behind the screen",
+      summary:
+        "Save one Faction in your local Codex vault. Its brief overview stays in main text, while its operation, contacts, agenda and secrets are GM notes.",
+      capabilities: [
+        "Track what the party has discovered about the faction and how its rival responds",
+        "Link the Faction to existing city locations, contacts and institutions",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
+    "social-hub": {
+      headline: "Give the party a place to come back to",
+      summary:
+        "Save one Location in your local Codex vault, with the venue and its people in main text and hidden trouble and rumours in GM notes.",
+      capabilities: [
+        "Keep the regulars, entity seeds and table hooks together without creating new Characters automatically",
+        "Link the Location to existing contacts and districts and record what changes on the next visit",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
     "comic-book-event-generator": {
       headline: "Track this crisis across your campaign",
       summary:

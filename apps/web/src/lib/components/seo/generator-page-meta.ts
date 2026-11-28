@@ -598,7 +598,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Social Hub Generator",
     eyebrow: "Social Hub Generator",
     introText:
-      "Create a campaign-ready social venue for any genre. Pick the setting, venue type, atmosphere, wealth level and clientele, and get a named location with an operator, regulars, rumours and a hidden problem.",
+      "Prepare a place where the party can meet contacts, trade information and return between jobs. Pick a genre, venue, atmosphere, wealth level and clientele. Draft the operator, regulars, rumours and hidden trouble, then save one Location with its GM notes in your local Codex vault.",
     canonicalPath: "/generators/social-hub",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-social-hub.jpg",
@@ -610,6 +610,27 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "cyberpunk noodle bar",
       "spaceport cantina",
       "gathering place creator",
+    ],
+    faqs: [
+      {
+        question: "How is this different from the Tavern Generator?",
+        answer:
+          "Use the Tavern Generator for a fantasy inn or drinking house. Social Hub lets the venue and clientele follow Genre / Setting, from a saloon to a cyberpunk noodle bar or a spaceport gathering place.",
+      },
+      {
+        question: "How do I make the venue useful more than once?",
+        answer:
+          "Give it an ordinary service and regulars with different loyalties. Let the party hear one rumour on a first visit, then change the owner's reaction and the available leads when they return.",
+      },
+      {
+        question: "Where do the hidden problem and rumours go when I save?",
+        answer:
+          "Add to my Codex opens one Location in your browser-local vault. The Place and The People stay in main text. The trouble, table guidance, hidden problem, rumours, campaign context and entity seeds stay in GM notes. Review the full draft before copying or sharing it; named people do not become separate entities automatically.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/tavern", label: "Tavern Generator" },
+      { href: "/generators/rumour", label: "Rumour Generator" },
     ],
   },
   world: {
@@ -842,7 +863,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Urban Fantasy Faction Generator",
     eyebrow: "Urban Fantasy Faction Generator",
     introText:
-      "Build supernatural city factions, not cities: mage cabals, monster courts, paranormal agencies, occult crews and modern institutions with agendas, NPCs and playable conflicts. Generate locally without an account, then save a faction draft to your browser-local Codex.",
+      "Build hidden-world groups, not cities, that depend on recognisable services or institutions. Choose its mode, faction type, operating scope and moral posture, then decide what its members want to protect and how the party encounters them. Save one Faction with its secret operation in GM notes.",
     canonicalPath: "/generators/urban-fantasy-faction",
     keywords: [
       "urban fantasy faction generator",
@@ -867,7 +888,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Can I use it without AI or an account?",
         answer:
-          "Yes. Local generation works with AI disabled or unavailable. You can generate and copy the result without an account, then save a draft to a browser-local Codex vault.",
+          "Yes. Generate and copy without an account. Add to my Codex opens one Faction in your browser-local vault, with a short summary and the full operating details, NPCs, secret and rival in GM notes. Named contacts do not automatically create separate entities.",
       },
       {
         question: "Which RPG systems does it support?",

@@ -294,6 +294,12 @@ export const howDoIRunPoliticalIntrigueAndFactionPlay: AnswerConfigInput = {
       href: "/generators/dark-fantasy-faction",
     },
     {
+      title: "Urban Fantasy Faction Generator",
+      description:
+        "Build a hidden-world group with competing goals and a city resource to contest.",
+      href: "/generators/urban-fantasy-faction",
+    },
+    {
       title: "Nation Generator",
       description:
         "Named states with a leader, competing power blocs and a hidden problem.",

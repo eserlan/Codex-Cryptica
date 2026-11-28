@@ -98,6 +98,11 @@ export const howDoYouMakeNpcsMemorableWithoutLotsOfPrep: AnswerConfigInput = {
   },
   relatedTools: [
     {
+      title: "Social Hub Generator",
+      description: "Give recurring contacts a recognisable meeting place.",
+      href: "/generators/social-hub",
+    },
+    {
       title: "NPC generator",
       description:
         "Generate characters with instant motives, distinct mannerisms, and regional hooks.",
