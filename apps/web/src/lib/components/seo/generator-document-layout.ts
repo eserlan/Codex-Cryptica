@@ -431,6 +431,34 @@ export function deduplicateMarkdownSections(
     : markdown;
 }
 
+/** Preserve the factions' source secrecy boundary rather than promoting
+ * GM reference prose from the generator reading layout into vault content. */
+function getDarkOrVampireHandoffLayout(
+  data: GeneratorOutput,
+  generatorType: string,
+) {
+  const publicHeadings = new Set(
+    generatorType === "dark-fantasy-faction"
+      ? ["what they control", "what they want"]
+      : ["", "overview", "public facade"],
+  );
+  const content: string[] = [];
+  const gm: string[] = [];
+  const sections = splitMarkdownSections(data.content);
+  if (sections.length === 0 && data.content.trim()) {
+    (generatorType === "vampire-clan" ? content : gm).push(data.content);
+  }
+  for (const section of sections) {
+    (publicHeadings.has(section.heading.toLowerCase()) ? content : gm).push(
+      section.body,
+    );
+  }
+  return {
+    content: content.join("\n\n"),
+    lore: [...gm, data.lore ?? ""].filter(Boolean).join("\n\n"),
+  };
+}
+
 /** Canonical RPG NPC routes share one generator and import contract. */
 function isRpgNpcGenerator(generatorType?: string) {
   return generatorType === "npc" || generatorType === "rpg-npc-generator";
@@ -471,7 +499,10 @@ export function getGeneratorHandoffLayout(
   if (isRpgNpcGenerator(generatorType)) return getNpcHandoffLayout(data);
   return generatorType === "bbeg-generator"
     ? { content: data.content, lore: data.lore ?? "" }
-    : layout;
+    : generatorType === "dark-fantasy-faction" ||
+        generatorType === "vampire-clan"
+      ? getDarkOrVampireHandoffLayout(data, generatorType)
+      : layout;
 }
 
 export function getGeneratorDocumentLayout(

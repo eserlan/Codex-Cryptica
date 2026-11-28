@@ -271,7 +271,8 @@ describe("generator guide distinctness", () => {
     ]) {
       expect(tipText).toContain(label);
     }
-    expect(tipText).toContain("In offline drafts, Add campaign context");
+    expect(tipText).toContain("observable sign");
+    expect(guide.links).toHaveLength(3);
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 

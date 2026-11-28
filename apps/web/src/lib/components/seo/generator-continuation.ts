@@ -284,16 +284,28 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       ctaLabel: CTA_LABEL,
     },
     "dark-fantasy-faction": {
-      headline: "Keep this faction in play",
+      headline: "Keep the faction's bargain and its cost in play",
       summary:
-        "Save this faction as a Faction entry in your local Codex vault so its agenda, secrets, internal conflict, and rival stay ready across sessions.",
+        "Save one new Faction in your local Codex vault so you can revisit what it protects, what it demands, and how the party changes that bargain.",
       capabilities: [
-        "Store what they control, want, and risk in one Faction entry",
-        "Keep notable NPCs, internal conflict, rival faction, and immediate hook in GM-only lore",
-        "Develop the people and places connected to it into linked entries inside your vault",
+        "Keep danger, table guidance, secret, conflict, notable people and rival in GM-only lore",
+        "Link the Faction entry to existing people and places, and record how it responds after play",
       ],
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
+    "vampire-clan": {
+      headline: "Keep the clan's mortal face and hidden agenda together",
+      summary:
+        "Save one new Faction in your local Codex vault and record which feeding habits, weaknesses and alliances the party has discovered.",
+      capabilities: [
+        "Keep GM reference, agenda, conflict, notable NPCs, rival and hook in GM notes",
+        "Link the Faction to its mortal contacts, rivals and haunts as you develop them",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
     },
     nation: {
       headline: "Keep building this nation",

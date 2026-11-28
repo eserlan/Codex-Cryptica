@@ -264,6 +264,12 @@ export const howDoIRunPoliticalIntrigueAndFactionPlay: AnswerConfigInput = {
   },
   relatedTools: [
     {
+      title: "Vampire Clan Generator",
+      description:
+        "Build an undead court with competing allegiances, feeding habits and an internal conflict for the party to exploit.",
+      href: "/generators/vampire-clan",
+    },
+    {
       title: "Faction Generator",
       description:
         "Groups with goals, resources and rivalries to serve as the situation's actors.",
