@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import {
   contextChain,
   rumourGroundingRule,
@@ -1945,16 +1945,16 @@ describe("story generator concept block", () => {
   });
 
   it("uses the adventure theme when rolling concepts without explicit genre or vault context", () => {
-    const random = vi.spyOn(Math, "random").mockReturnValue(0.85);
-    try {
-      const prompt = getGenerator("adventure").buildPrompt(
-        run("adventure", { themeId: "pirate" }),
-      );
-      expect(prompt).toContain("Active Theme / Genre: Pirate");
-      expect(prompt).toContain("Concept constraints for this case");
-    } finally {
-      random.mockRestore();
-    }
+    let rngCalls = 0;
+    const prompt = contextChain(run("adventure", { themeId: "pirate" }), () => {
+      rngCalls += 1;
+      return 0.85;
+    });
+
+    expect(rngCalls).toBeGreaterThan(0);
+    expect(prompt).toContain(
+      "- Distinctive element: a water-powered mill that the whole valley depends on and quarrels over",
+    );
   });
 
   it("leaves generators that make a thing or a person without a concept", () => {
@@ -1984,15 +1984,22 @@ describe("story generator concept block", () => {
   it("returns the same concept for repeated calls on one request", () => {
     const request = run("heist", { options: { genre: "Cosmic Horror" } });
     // Pin the random source so a fresh roll would pick different entries.
-    const random = vi.spyOn(Math, "random").mockReturnValue(0);
-    try {
-      const first = contextChain(request);
-      expect(first).toContain("Concept constraints for this case");
-      random.mockReturnValue(0.99);
-      expect(contextChain(request)).toBe(first);
-    } finally {
-      random.mockRestore();
-    }
+    let value = 0;
+    let rngCalls = 0;
+    const rng = () => {
+      rngCalls += 1;
+      return value;
+    };
+    const first = contextChain(request, rng);
+    const callsAfterFirst = rngCalls;
+    expect(callsAfterFirst).toBeGreaterThan(0);
+    expect(first).toContain(
+      "- Situation: someone the party trusts is not who they claim to be",
+    );
+
+    value = 0.99;
+    expect(contextChain(request, rng)).toBe(first);
+    expect(rngCalls).toBe(callsAfterFirst);
   });
 
   it("adds no concept to a refinement of an existing entity", () => {

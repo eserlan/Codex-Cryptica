@@ -4,6 +4,7 @@ import {
   PendingDelveTransferService,
   createPendingDelveTransfer,
 } from "./pending-delve-transfer";
+import { CanvasImportInterruptedError } from "#lib/stores/canvas-registry.svelte.js";
 
 function createMemoryStorage(initialValue?: unknown) {
   const values = new Map<string, string>();
@@ -208,6 +209,36 @@ describe("PendingDelveTransferService", () => {
       storage.getItem(PENDING_DELVE_CANVAS_KEY) as string,
     );
     expect(pending.sourceEntityId).toBe("location-bruneth");
+    expect(storage.removeItem).not.toHaveBeenCalled();
+  });
+
+  it("recreates the source entity after a vault switch interrupts import", async () => {
+    const storage = createMemoryStorage(
+      createPendingDelveTransfer(canvas, sourceEntity),
+    );
+    const entityStore = {
+      allEntities: [],
+      createEntity: vi.fn().mockResolvedValue("location-bruneth"),
+    };
+    const canvasImporter = {
+      importCanvas: vi
+        .fn()
+        .mockRejectedValue(new CanvasImportInterruptedError()),
+    };
+    const service = new PendingDelveTransferService(
+      entityStore as never,
+      canvasImporter,
+      storage,
+    );
+
+    await expect(service.importPending()).rejects.toBeInstanceOf(
+      CanvasImportInterruptedError,
+    );
+
+    const pending = JSON.parse(
+      storage.getItem(PENDING_DELVE_CANVAS_KEY) as string,
+    );
+    expect(pending.sourceEntityId).toBeUndefined();
     expect(storage.removeItem).not.toHaveBeenCalled();
   });
 

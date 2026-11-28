@@ -1,3 +1,4 @@
+import { getCalendarPreviewLayout } from "./generator-calendar-twist-handoff";
 import { describe, expect, it } from "vitest";
 import { GuestExporter } from "@codex/vault-engine";
 import type { Entity } from "schema";
@@ -232,6 +233,148 @@ describe("generator save payloads", () => {
     expect(payload.lore.match(/second manifest in her boot/g)).toHaveLength(1);
     expect(payload.content).toContain("Table Delivery");
     expect(payload.lore).toContain("Faction Connection");
+  });
+
+  it("preserves every observance's repeated headings in preview and Vault handoff", () => {
+    const output = generateHolidayLocal(
+      {
+        setSize: "A calendar of 6 observances",
+        includeControversial: true,
+      },
+      () => 0.21,
+    ) as GeneratorOutput;
+    const layout = getCalendarPreviewLayout(output);
+    expect(layout.content.match(/^### Origin$/gm)).toHaveLength(6);
+    expect(layout.content.match(/^### Traditions$/gm)).toHaveLength(6);
+    const payload = buildGeneratorSavePayload(
+      output,
+      layout,
+      undefined,
+      "holiday",
+    );
+    expect(payload.content).toContain(output.content);
+    expect(payload.content.match(/^### At the table$/gm)).toHaveLength(6);
+    for (const day of output.observances ?? []) {
+      expect(payload.content).toContain(day.traditions);
+      if (day.hiddenTruth) {
+        expect(payload.content).not.toContain(day.hiddenTruth);
+        expect(payload.lore).toContain(day.hiddenTruth);
+      }
+    }
+  });
+
+  it("routes Table Card secrets out of Holiday previews and saved Note content", () => {
+    const secret = "The midsummer rite conceals the vanished heir.";
+    const output: GeneratorOutput = {
+      ...baseOutput,
+      type: "note",
+      title: "The Lantern Calendar",
+      content:
+        "### Observance One\n- **Knowledge & Secrets**: " +
+        secret +
+        "\n\n### Observance Two\n- **Traditions**: Ring the bells.",
+      lore: "### GM Reference\nThe heir's route is still unknown.",
+      labels: ["holiday-generator", "table-card"],
+    };
+
+    const preview = getCalendarPreviewLayout(output);
+    expect(preview.content).toContain("### Observance One");
+    expect(preview.content).toContain("### Observance Two");
+    expect(preview.content).not.toContain(secret);
+    expect(preview.lore).toContain(secret);
+
+    const payload = buildGeneratorSavePayload(
+      output,
+      preview,
+      undefined,
+      "holiday",
+    );
+    expect(payload.content).not.toContain(secret);
+    expect(payload.lore).toContain(secret);
+  });
+
+  it("preserves Holiday public bullets and routes indented secrets through preview and save", () => {
+    const secret = "The captain sank the relief ship.";
+    const publicDetail = "Traditions: ring the bells";
+    const output: GeneratorOutput = {
+      ...baseOutput,
+      type: "note",
+      title: "The Bell Calendar",
+      content: `### Observance One\n  - **Knowledge & Secrets**: ${secret}\n- ${publicDetail}`,
+      lore: "The inscription uses - **Knowledge & Secrets** as a label.",
+      labels: ["holiday-generator", "table-card"],
+    };
+
+    const preview = getCalendarPreviewLayout(output);
+    expect(preview.content).toContain(publicDetail);
+    expect(preview.content).not.toContain(secret);
+    expect(preview.lore).toContain(secret);
+
+    const payload = buildGeneratorSavePayload(
+      output,
+      preview,
+      undefined,
+      "holiday",
+    );
+    expect(payload.content).toContain(publicDetail);
+    expect(payload.content).not.toContain(secret);
+    expect(payload.lore).toContain(secret);
+  });
+
+  it("keeps fenced Holiday secrets private in preview and saved Note", () => {
+    const secret = [
+      "- **Knowledge & Secrets**: The hidden history.",
+      "```text",
+      "- Witness: the missing heir is alive.",
+      "### Secret evidence",
+      "A forged ledger.",
+      "```",
+      "The watch is compromised.",
+    ].join("\n");
+    const output: GeneratorOutput = {
+      ...baseOutput,
+      type: "note",
+      content: `### Observance One\n${secret}\n- Public tradition: Bells.\n\n### Observance Two\nPublic feast.`,
+      lore: "### GM Reference\nPrevious notes.",
+      labels: ["holiday-generator", "table-card"],
+    };
+    const preview = getCalendarPreviewLayout(output);
+    const payload = buildGeneratorSavePayload(
+      output,
+      preview,
+      undefined,
+      "holiday",
+    );
+    for (const result of [preview, payload]) {
+      expect(result.content).toContain("Public tradition: Bells.");
+      expect(result.content).toContain("Public feast.");
+      expect(result.content).not.toContain("missing heir");
+      expect(result.content).not.toContain("Secret evidence");
+      expect(result.content).not.toContain("forged ledger");
+      expect(result.content).not.toContain("watch is compromised");
+      expect(result.lore).toContain(secret);
+    }
+  });
+
+  it("preserves the plot twist preparation in GM notes, including the generated summary", () => {
+    const output = {
+      ...slugDrafts["plot-twist-generator"]!,
+      summary: "The clerk paid the smugglers.",
+      labels: ["adventure", "npc-generator", "imported-draft"],
+    };
+    const layout = getGeneratorDocumentLayout(output);
+    const payload = buildGeneratorSavePayload(
+      output,
+      layout,
+      undefined,
+      "plot-twist-generator",
+    );
+    expect(payload.type).toBe("note");
+    expect(payload.content).not.toContain("The Reveal");
+    expect(payload.content).not.toContain(output.summary);
+    expect(payload.lore).toContain(output.summary);
+    expect(payload.lore).toContain(output.content);
+    expect(payload.lore).toContain(output.lore);
   });
 
   it("keeps controversial holiday history out of saved content and guest exports", () => {
@@ -665,6 +808,54 @@ describe("generator save payloads", () => {
     expect(serialized).not.toContain(hiddenProblem!);
   });
 
+  it.each([
+    ["Nation label", ["nation-generator"]],
+    ["competing Kingdom label", ["kingdom-generator", "nation-generator"]],
+  ])(
+    "keeps a Hidden Problem under an unexpected Nation lore heading private with %s",
+    (_case, labels) => {
+      const hiddenProblem = "The ruler concealed the failed pumps.";
+      const nation: GeneratorOutput = {
+        ...baseOutput,
+        type: "faction",
+        title: "The Brasswater Compact",
+        content: "### The State\nThe compact controls the river gates.",
+        lore: `### Hidden Problem\n${hiddenProblem}`,
+        labels,
+        status: "active",
+      };
+      const layout = getGeneratorDocumentLayout(nation);
+      const payload = buildGeneratorSavePayload(nation, layout);
+
+      expect(layout.content).not.toContain(hiddenProblem);
+      expect(layout.lore).toContain(hiddenProblem);
+      expect(payload.content).not.toContain(hiddenProblem);
+      expect(payload.lore).toContain(hiddenProblem);
+
+      const entity = {
+        id: "nation-malformed-lore",
+        type: payload.type,
+        title: payload.title,
+        content: payload.content,
+        lore: payload.lore,
+        labels: payload.labels,
+        status: payload.status,
+        aliases: [],
+        connections: [],
+      } satisfies Entity;
+      const bundle = GuestExporter.export({
+        entities: [entity],
+        defaultVisibility: "visible",
+        activeTheme: { primaryColor: "#000000" },
+        publishId: "nation-malformed-lore-export-test",
+        vaultTitle: "Test Vault",
+        publisherVersion: "test",
+      });
+
+      expect(JSON.stringify(bundle)).not.toContain(hiddenProblem);
+    },
+  );
+
   it("keeps the heist's hidden factor and response plan in GM lore despite preview promotion", async () => {
     const { generateHeistLocal } =
       await import("generator-engine/public-heist");
@@ -983,4 +1174,92 @@ describe("generator save payloads", () => {
       "- **Doom Guidance:** Spend 2 Doom to summon a Shadow Minion. *(Homebrew)*",
     );
   });
+});
+
+it("keeps the faction's secret, hook and GM-facing prose private despite preview promotion and untrusted labels", async () => {
+  const { generateFactionLocal } = await import("generator-engine");
+  const draft = generateFactionLocal(
+    {
+      theme: "Classic Fantasy",
+      type: "Merchant Guild",
+      scope: "Single city",
+      campaignContext: "An embargo on Grey Quay",
+    },
+    () => 0.35,
+  ) as GeneratorOutput;
+  const secret = draft.lore.match(/- \*\*Secret\*\*: ([^\n]+)/)?.[1];
+  expect(secret).toBeTruthy();
+  expect(draft.content).toContain(secret!);
+  for (const output of [draft, { ...draft, labels: ["npc-generator"] }]) {
+    const payload = buildGeneratorSavePayload(
+      output,
+      getGeneratorDocumentLayout(output),
+      undefined,
+      "faction",
+    );
+    expect(payload.type).toBe("faction");
+    expect(payload.content).toContain("What they control");
+    expect(payload.content).toContain("What they want");
+    expect(payload.content).not.toContain(secret!);
+    expect(payload.content).not.toContain("How to use them at the table");
+    for (const value of [
+      secret!,
+      "Immediate Hook",
+      "Internal Conflict",
+      "Notable NPCs",
+      "Rival Faction",
+      "An embargo on Grey Quay",
+      "Why they are dangerous",
+      "How to use them at the table",
+    ])
+      expect(payload.lore).toContain(value);
+  }
+});
+
+it("keeps nested and unrecognized faction headings in GM notes", async () => {
+  const { generateFactionLocal } = await import("generator-engine");
+  const draft = generateFactionLocal(
+    { theme: "Classic Fantasy", type: "Merchant Guild", scope: "Single city" },
+    () => 0.35,
+  ) as GeneratorOutput;
+  const malformedContents = [
+    "### What they control\nPublic holdings.\n### What they want\nPublic plans.\n#### Secret\nNESTED_SECRET_MARKER",
+    "### What they control\nPublic holdings.\n### What they want\nPublic plans.\n### Secret\nTOP_LEVEL_SECRET_MARKER",
+    "### What they control\nPublic holdings.\n### What they want\nPublic plans.\n# Secret\nLEVEL_ONE_SECRET_MARKER",
+    "### What they control\nPublic holdings.\n### What they want\nPublic plans.\nSecret\n======\nSETEXT_SECRET_MARKER",
+  ];
+
+  for (const content of malformedContents) {
+    const output = { ...draft, content };
+    const payload = buildGeneratorSavePayload(
+      output,
+      getGeneratorDocumentLayout(output),
+      undefined,
+      "faction",
+    );
+
+    expect(payload.content).toContain("Public holdings.");
+    expect(payload.content).not.toMatch(
+      /(?:NESTED|TOP_LEVEL|LEVEL_ONE|SETEXT)_SECRET_MARKER/,
+    );
+    if (
+      content.includes("NESTED") ||
+      content.includes("LEVEL_ONE") ||
+      content.includes("SETEXT")
+    ) {
+      expect(payload.content).not.toContain("Public plans.");
+      expect(payload.lore).toContain("Public plans.");
+    } else {
+      expect(payload.content).toContain("Public plans.");
+    }
+    expect(payload.lore).toContain(
+      content.includes("NESTED")
+        ? "NESTED_SECRET_MARKER"
+        : content.includes("LEVEL_ONE")
+          ? "LEVEL_ONE_SECRET_MARKER"
+          : content.includes("SETEXT")
+            ? "SETEXT_SECRET_MARKER"
+            : "TOP_LEVEL_SECRET_MARKER",
+    );
+  }
 });

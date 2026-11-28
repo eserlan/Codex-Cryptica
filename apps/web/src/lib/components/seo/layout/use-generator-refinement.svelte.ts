@@ -1,3 +1,4 @@
+import { getCalendarTwistHandoffLayout as getGeneratorHandoffLayout } from "../generator-calendar-twist-handoff";
 import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 import type { RefinementDocument } from "generator-engine/generator-refinement";
 import type { SessionEntity } from "generator-engine/session-hub-helpers";
@@ -7,7 +8,7 @@ import { loreMergeStore } from "#lib/stores/ui/lore-merge.svelte.js";
 import { buildLoreMergePlan } from "#lib/utils/lore-sections.js";
 import { trackEvent } from "#lib/services/analytics/zaraz-analytics.js";
 import {
-  getGeneratorHandoffLayout,
+  usesPrivateSummaryHandoff,
   usesSourceHandoff,
   type getGeneratorDocumentLayout,
 } from "#lib/components/seo/generator-document-layout.js";
@@ -166,7 +167,12 @@ export function useGeneratorRefinement(deps: {
     const derivedId = recordGeneratedEntity(
       sessionHubStore,
       $state.snapshot(deps.getContextSelection()),
-      accepted,
+      {
+        ...accepted,
+        summary: usesPrivateSummaryHandoff(deps.getGeneratorType())
+          ? undefined
+          : accepted.summary,
+      },
       {
         ...(fromId ? { derivedFromEntityId: fromId } : {}),
         derivation: "refine",
