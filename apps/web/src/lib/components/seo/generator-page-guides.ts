@@ -343,32 +343,32 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "star-system": {
     summary:
-      "Treat a star system as a playable region map rather than an astronomy textbook: every orbit should exist because a faction, resource, or travel hazard gives the crew a reason to go there.",
+      "Prepare a playable region map with a resource, a travel cost and competing groups whose needs reach across named bodies. Give each major destination a reason to visit, and let the crew decide which route and employer they trust.",
     tips: [
       {
-        title: "Start with the stakes, not every rock",
+        title: "Choose what the crew relies on",
         detail:
-          "Pick two or three bodies where rival factions or scarce resources collide, and leave the remaining orbits as landmarks or refueling stops.",
+          "Set Genre, Civilisation Level and System Character together: for example, a Contested Frontier in Hard Sci-Fi. Read Major Bodies and Resources & Strategic Importance, then identify one place supplying food, fuel or repairs and one place dependent on it. Decide what the crew can trade when the regular supply fails.",
       },
       {
-        title: "Use travel hazards to pace scenes",
+        title: "Make distance and hazards into meaningful routes",
         detail:
-          "Radiation belts, debris fields, and sensor-blind Lagrange points create natural complications between stations without needing scripted ambushes.",
+          "Use System Type and Scientific Realism to decide how strongly stellar conditions shape your travel. Read The Star(s), Major Bodies and Travel Hazards, then mark a safe but slow route and a faster risky one. The diagram shows orbital structure, but does not calculate travel times. Choose those according to your RPG's rules.",
       },
       {
-        title: "Expand key worlds on demand",
+        title: "Use existing factions to turn the system into a campaign",
         detail:
-          "Click Develop This World on any named body in the result to spin up a full planetary profile that inherits the system's tension.",
+          "Name existing powers and a disputed route in Add campaign context and use the AI option to ground the draft. Read Settlements & Factions and System-Wide Conflict or Mystery, then choose one demand from each side and what happens if the crew refuses both. Develop This World opens a separate world draft with a body's context; save and link it yourself if the crew visits.",
       },
     ],
     links: [
       {
         href: "/answers/how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg",
-        label: "Running sci-fi party roles",
+        label: "Give a crew different ways to solve travel and trade problems",
       },
       {
         href: "/answers/how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
-        label: "Differentiating sci-fi civilisations",
+        label: "Give competing powers distinct resources and dependencies",
       },
     ],
   },
@@ -410,28 +410,32 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "origin-generator": {
     summary:
-      "Strong character origins explain why a hero or villain stepped into danger today—not just what happened to them years ago.",
+      "An origin explains what the hero can do and why the consequences keep arriving. Separate the witnessed incident, the public explanation and the truth, then choose a current demand the hero can accept, refuse or investigate.",
     tips: [
       {
-        title: "Tie the incident to an active faction",
+        title: "Choose how the event creates an obligation",
         detail:
-          "Swap generic disaster details for a named guild, lab, or bloodline already present in your campaign so the backstory creates immediate allies or rivals.",
+          "Set Origin Type to Technology for an artefact or device that someone wants back, or Scientific Experiment for an institution that may have records and witnesses. Choose Tone for the hero's response to that pressure. Read The Origin and What the World Knows separately; ask the player which details their hero is willing to disclose.",
       },
       {
-        title: "Keep one unresolved cost",
+        title: "Tie the first hook to someone already in play",
         detail:
-          "The best origin leaves behind a debt, a witness, or a physical tell that the GM can bring back mid-arc.",
+          "Name a city, team or rival in Campaign context (optional) and use the AI option to ground it. Read Campaign Hook and give the patron a concrete request that follows from the incident. Let the hero decline or follow a different lead, without undoing their origin or taking control of their decisions.",
       },
       {
-        title: "Pair with a personality profile",
+        title: "Keep one cost that survives the revelation",
         detail:
-          "Use the generated flaw or vow as the character's default reaction under pressure.",
+          "Read The Full Truth, Who Knows and Ongoing Consequence together. Choose an observable warning before the complication returns, such as a stolen device sending a signal. Record who learns the truth after the next session. The origin should still create a problem even if the hero reveals everything to the public.",
       },
     ],
     links: [
       {
-        href: "/answers/how-do-i-improvise-npcs-in-dnd",
-        label: "Improvising memorable characters",
+        href: "/answers/how-do-you-use-player-backstories-in-an-rpg-campaign-world",
+        label: "Turn backstory people and debts into campaign consequences",
+      },
+      {
+        href: "/answers/how-do-i-plan-story-arcs-for-an-rpg-campaign",
+        label: "Build recurring pressures without scripting the hero's choices",
       },
     ],
   },
@@ -1044,29 +1048,33 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "fantasy-names": {
     summary:
-      "Each batch gives ten names of one type (person, place, faction or item). Built-in cultures shape offline names; custom culture labels use generic fantasy tables. AI results include a short style note for each name; offline results list names only. Use it to fill a cast list, a set of map labels or a shop board, then keep the names that suit your table and adapt the rest.",
+      "Each detailed batch gives ten names of one type, for people, places, factions or items. Built-in cultures shape offline names; custom culture labels use generic fantasy tables. AI results include a short style note for each name; offline results list names only. Use Quick names to build a shortlist for the next session, then copy the selected names into your notes or existing Character entries.",
     tips: [
       {
         title: "Choose the culture for the sound",
         detail:
-          "Built-in Culture / Style options shape the sound of the whole batch. Dwarven gives stone and forge compounds such as Balrin Granitefist, while Norse / Viking gives person names ending in -son or -dottir. A custom culture or style label uses generic fantasy tables on the offline roll. Name Type changes the shape, so a Place adds endings such as Keep, Downs or Hollow, and a Faction often starts with The or uses of the.",
+          "Built-in Culture / Style options shape the batch. Choose Dwarven for a guild hall or border settlement and use Name Type to make a Place or Faction list; use Person for its inhabitants. A custom culture or style label uses generic fantasy tables on the offline roll. Keep one shared sound pattern and vary the first syllable so players do not confuse important names.",
       },
       {
         title:
           "Set Gender / Presentation for full Norse and Celtic person names",
         detail:
-          "On offline full person names, Gender / Presentation changes the surname only in Norse / Viking (-dottir for Feminine, -son for Masculine) and Celtic / Gaelic (Nic or Mac before the surname). It has no effect on first-name-only rolls or names in other cultures, so Any is fine for those.",
+          "On offline full person names, Gender / Presentation changes the surname only in Norse / Viking and Celtic / Gaelic names. It has no effect on first-name-only rolls or names in other cultures, so Any is fine for those. Choose names that distinguish household members or rivals when spoken aloud rather than treating a naming style as a personality.",
       },
       {
-        title: "Add campaign context when AI is on",
+        title: "Pin names for play, then paste into the campaign",
         detail:
-          "Add campaign context is sent to the AI path, which can tie names to the setting you describe, such as an Assyrian trading port. The offline roll does not read it, so the same batch comes back whatever you type there.",
+          "In Quick names, pin a name you like, use New names to refresh the rest, then Copy pinned or Copy all. Use a separate list for each community. Generate names with notes if you need a style explanation; Add campaign context can ground the AI draft, not the offline roll. Paste the names into existing NPCs, map labels or notes rather than creating a Character for every spare name.",
       },
     ],
     links: [
       {
         href: "/answers/how-do-i-improvise-npcs-in-dnd",
-        label: "Improvising NPCs in D&D",
+        label: "Keep a shortlist for characters the party meets unexpectedly",
+      },
+      {
+        href: "/answers/how-do-you-create-a-fictional-language-for-an-rpg",
+        label: "Create shared naming sounds for a culture",
       },
     ],
   },

@@ -5,63 +5,49 @@ import type { ValidSlug } from "./generator-page-meta";
 export const extendedSlugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
   "star-system": {
     type: "location",
-    title: "Corvane",
+    title: "Lantern Verge",
     summary:
-      "Corvane is a single star star system, isolated and core system, built around a rare mineral deposit found nowhere else on the known trade lanes.",
+      "A contested frontier system where water, machinery and metal shipments keep three settlements dependent on one another.",
     content:
-      "## Core Concept\nCorvane is a hard sci-fi single star system, isolated in character and core system in reach. It matters because of a rare mineral deposit found nowhere else on the known trade lanes, and every faction present here knows it.\n\n## The Star(s)\nA single stable star — a hot, brilliant A-type white star — anchors the system, its habitable zone the one variable every faction here has learned to fight over.\n\n## Major Bodies\n#### [Corvane I](/generators/world?developSystem=Corvane&developBody=Corvane+I&developBodyType=Ringed+World&developContext=its+rings+are+both+a+navigation+hazard+and+a+mining+claim+nobody+can+fully+police.+5.1+AU+from+the+star%2C+in+the+Corvane+system.) (Ringed World)\nits rings are both a navigation hazard and a mining claim nobody can fully police — 5.1 AU from the star.\n\n#### [Corvane II](/generators/world?developSystem=Corvane&developBody=Corvane+II&developBodyType=Gas+Giant&developContext=its+storms+hide+extraction+rigs+whose+owners+guard+their+coordinates+jealously.+8.3+AU+from+the+star%2C+in+the+Corvane+system.) (Gas Giant)\nits storms hide extraction rigs whose owners guard their coordinates jealously — 8.3 AU from the star.\n- **[New Varga](/generators/world?developSystem=Corvane&developBody=New+Varga&developBodyType=Barren+Moon&developContext=an+airless+rock+kept+alive+only+by+imported+water+and+stubborn+engineering.+orbiting+Corvane+II%2C+in+the+Corvane+system.)** (Barren Moon) — an airless rock kept alive only by imported water and stubborn engineering.\n\n#### [Corvane IV](/generators/world?developSystem=Corvane&developBody=Corvane+IV&developBodyType=Ocean+World&developContext=a+world+of+open+water+dotted+with+floating+platforms+and+submerged+claims.+8.7+AU+from+the+star%2C+in+the+Corvane+system.) (Ocean World)\na world of open water dotted with floating platforms and submerged claims — 8.7 AU from the star.\n\n#### [Corvane V](/generators/world?developSystem=Corvane&developBody=Corvane+V&developBodyType=Scorched+Rockball&developContext=a+sunward+world+too+hot+for+permanent+habitation%2C+valuable+only+for+what+can+be+extracted+quickly.+9.7+AU+from+the+star%2C+in+the+Corvane+system.) (Scorched Rockball)\na sunward world too hot for permanent habitation, valuable only for what can be extracted quickly — 9.7 AU from the star.\n\n#### [Corvane VI](/generators/world?developSystem=Corvane&developBody=Corvane+VI&developBodyType=Asteroid+Belt&developContext=a+scattered+claim+of+rocks+worked+by+independent+crews+who+answer+to+no+single+authority.+10.1+AU+from+the+star%2C+in+the+Corvane+system.) (Asteroid Belt)\na scattered claim of rocks worked by independent crews who answer to no single authority — 10.1 AU from the star.\n\n## Lifeforms\nBeyond its settlers, Corvane shows no complex native life, only scattered microbial mats in sheltered pockets on its harsher bodies.\n\n## Settlements & Factions\nEstablished authority runs deep here — shipping lanes, tariffs, and jurisdiction are all settled questions, at least on paper.\nAt least two competing interests operate here — one favouring stability and the existing order, the other willing to disrupt it for a better position.\n\n## Resources & Strategic Importance\nThe system's leverage comes from a rare mineral deposit found nowhere else on the known trade lanes. Whoever controls access to it controls the system's politics.\n\n## Travel Hazards\nGetting through the system safely means accounting for gravitational tides between the system's major bodies that scramble navigation near closest approach.",
-    lore: "## History\nCorvane's current balance of power is recent; the system's earlier era ended when the situation behind its central conflict first came to light, and nobody has fully settled the aftermath.\n\n## System-Wide Conflict or Mystery\nA structure on one of the system's bodies predates every recorded settlement here, and nobody currently in the system built it.\n\n## Adventure Hooks\n- A faction operating in Corvane needs outside help investigating a structure on one of the system's bodies predates every recorded settlement here.\n- A supply run through the system's hazards (gravitational tides between the system's major bodies that scramble navigation near closest approach) goes wrong at the worst possible time.\n- Someone on Corvane II is quietly trying to change who controls a rare mineral deposit found nowhere else on the known trade lanes, and needs deniable help to do it.",
+      "## Core Concept\nLantern Verge is a contested frontier in a grounded hard sci-fi setting. Water ice from its outer moon keeps the independent belt mines alive, while their metal shipments feed the inner world's machine shops.\n\n## The Star(s)\nA stable K-type orange dwarf anchors the system. Pell orbits near the inner edge of its habitable zone.\n\n## Major Bodies\n#### [Pell](/generators/world?developSystem=Lantern+Verge&developBody=Pell&developBodyType=Temperate+World&developContext=the+settled+inner+world+supplies+food+and+exports+replacement+machinery+to+the+outer+mines.+0.8+AU+from+the+star%2C+in+the+Lantern+Verge+system.) (Temperate World)\nthe settled inner world supplies food and exports replacement machinery to the outer mines; 0.8 AU from the star.\n\n#### [Cinder Belt](/generators/world?developSystem=Lantern+Verge&developBody=Cinder+Belt&developBodyType=Asteroid+Belt&developContext=independent+miners+sell+nickel+and+iron+for+Pell's+machine+shops+but+need+imported+water.+2.7+AU+from+the+star%2C+in+the+Lantern+Verge+system.) (Asteroid Belt)\nindependent miners sell nickel and iron for Pell's machine shops but need imported water; 2.7 AU from the star.\n\n#### [Harrow](/generators/world?developSystem=Lantern+Verge&developBody=Harrow&developBodyType=Ice+Giant&developContext=the+outer+giant+anchors+the+ice-hauling+corridor+used+by+all+settlements.+6.1+AU+from+the+star%2C+in+the+Lantern+Verge+system.) (Ice Giant)\nthe outer giant anchors the ice-hauling corridor used by all settlements; 6.1 AU from the star.\n\n- **[White Lock](/generators/world?developSystem=Lantern+Verge&developBody=White+Lock&developBodyType=Frozen+Moon&developContext=water+ice+mines+supply+the+belt+and+retain+reserves+for+the+outer+settlements.+orbiting+Harrow%2C+in+the+Lantern+Verge+system.)** (Frozen Moon): water ice mines supply the belt and retain reserves for the outer settlements.\n\n## Lifeforms\nPell supports native algae and hardy shoreline plants; beyond Pell the system is uninhabited except for constructed settlements and sealed mine stations.\n\n## Settlements & Factions\nThe Pell Port Authority operates the inner world's machine shops and inspection docks. It wants predictable shipments to maintain irrigation pumps and worker safety. The White Lock Co-operative controls the outer moon's ice extraction; it insists on reserve quotas for its members before exporting water. Independent crews in Cinder Belt rely on both groups and are trying to negotiate a shared transport agreement.\n\n## Resources & Strategic Importance\nWhite Lock exports water ice for drinking, life support and propellant production. Without belt metal, Pell cannot replace its worn pumps, and without Pell's machinery, White Lock's mine compressors cannot be repaired. No side can impose a permanent embargo without a cost.\n\n## Travel Hazards\nThe Cinder Drift is a shifting sheet of mining debris along the belt's usual transfer corridor. A charted lane adds two days to a typical shipment in this campaign; a shorter route requires fresh survey data and trained navigators.",
+    lore: "## History\nPell funded the first outer mines and received preferential shipping rates for a generation. When the last mining lease ended, the White Lock workers established their own co-operative. The old rates remain on the port's books but no longer reflect the actual cost of extraction.\n\n## System-Wide Conflict or Mystery\nWhite Lock has reduced shipments to build reserves after a compressor failure. Pell wants emergency priority, while the belt crews have just enough water for one more shipping cycle. The repair parts exist on Pell, but the Port Authority refuses to release them without written supply guarantees. Each side can prevent shortages if the other trusts it.\n\n## Adventure Hooks\n- Escort the compressor parts through Cinder Drift and negotiate a temporary water release before the belt's reserves run low.\n- Recover survey data from a damaged navigation beacon so a bypass route becomes viable; the beacon's custodian wants access to the next shipment.\n- Mediate a shared reserve agreement among the two powers and independent captains, or arrange an alternative source. If ignored, the belt suspends production and Pell delays irrigation repairs.",
     bodies: [
       {
-        name: "Corvane I",
-        type: "Ringed World",
+        name: "Pell",
+        type: "Temperate World",
         description:
-          "its rings are both a navigation hazard and a mining claim nobody can fully police",
-        distanceAU: 5.1,
+          "the settled inner world supplies food and exports replacement machinery to the outer mines",
+        distanceAU: 0.8,
       },
       {
-        name: "Corvane II",
-        type: "Gas Giant",
-        description:
-          "its storms hide extraction rigs whose owners guard their coordinates jealously",
-        distanceAU: 8.3,
-      },
-      {
-        name: "New Varga",
-        type: "Barren Moon",
-        description:
-          "an airless rock kept alive only by imported water and stubborn engineering",
-        parentName: "Corvane II",
-      },
-      {
-        name: "Corvane IV",
-        type: "Ocean World",
-        description:
-          "a world of open water dotted with floating platforms and submerged claims",
-        distanceAU: 8.7,
-      },
-      {
-        name: "Corvane V",
-        type: "Scorched Rockball",
-        description:
-          "a sunward world too hot for permanent habitation, valuable only for what can be extracted quickly",
-        distanceAU: 9.7,
-      },
-      {
-        name: "Corvane VI",
+        name: "Cinder Belt",
         type: "Asteroid Belt",
         description:
-          "a scattered claim of rocks worked by independent crews who answer to no single authority",
-        distanceAU: 10.1,
+          "independent miners sell nickel and iron for Pell's machine shops but need imported water",
+        distanceAU: 2.7,
+      },
+      {
+        name: "Harrow",
+        type: "Ice Giant",
+        description:
+          "the outer giant anchors the ice-hauling corridor used by all settlements",
+        distanceAU: 6.1,
+      },
+      {
+        name: "White Lock",
+        type: "Frozen Moon",
+        description:
+          "water ice mines supply the belt and retain reserves for the outer settlements",
+        parentName: "Harrow",
       },
     ],
-    starType: "A",
+    starType: "K",
     labels: [
       "star-system",
       "single-star",
       "hard-sci-fi",
-      "core-system",
-      "isolated",
+      "frontier",
+      "contested",
       "grounded",
     ],
     status: "active",
@@ -70,10 +56,10 @@ export const extendedSlugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
     type: "character",
     title: "Nightglass",
     summary:
-      "A paranoid superhero origin: technology, with a live campaign hook and a consequence that the origin story itself never resolves.",
+      "A rescue engineer whose damaged phase-lantern lets them carry survivors through rubble.",
     content:
-      "### The Origin\nSalvaged hardware from a decommissioned programme activated the first time they touched it, and it has not fully powered down since.\n\n### What the World Knows\nThere is no public account of this at all. As far as anyone outside a very small circle is concerned, Nightglass simply appeared one day with no explanation offered or asked for.\n\n### Campaign Hook\nThe technology's original manufacturer has noticed the pattern of energy signatures it emits and has started tracking them.",
-    lore: '### The Full Truth\nThe account in "### The Origin" is accurate to what actually happened, in a paranoid register — but the version circulating publicly leaves out exactly the details that would let someone trace it back to its source.\n\n### Ongoing Consequence\nThe technology degrades, drains, or malfunctions under specific conditions, and the hero has not found a permanent fix.\n\n### Who Knows\nA tight handful of people know the full account — and at least one of them has never been asked to keep it secret, only assumed to.\n\n### Further Hooks\n- Someone researching the origin type technology in general has stumbled close enough to the hero\'s specific case to ask uncomfortable questions.\n- A person or organisation connected to the origin event resurfaces, unaware or uncaring that the hero has since moved on.',
+      "### The Origin\nA municipal rescue engineer was inside a collapsed tram tunnel when a prototype phase-lantern fractured. The fragments fused into their rescue harness, allowing them to see through smoke and move briefly through solid debris. They used the ability to carry three passengers to safety before the tunnel flooded.\n\n### What the World Knows\nThe passengers saw the engineer emerge through a concrete wall carrying an injured conductor. City news reports credit the private contractor's emergency equipment, but nobody has published the engineer's name.\n\n### Campaign Hook\nThe conductor approaches Nightglass after a second tunnel inspection is cancelled. He has a copied maintenance log showing another prototype is due to be activated beneath the central station tonight. He asks Nightglass to inspect the site or bring the log to someone who can stop the trial.",
+    lore: "### The Full Truth\nThe original collapse was not planned, but the contractor knew the prototype could destabilise the tunnel's support lattice and authorised the trial anyway. The engineer did not know that they were carrying experimental equipment. A technician retained the original approval order.\n\n### Ongoing Consequence\nEvery time Nightglass phases through dense material, the damaged lantern transmits a location pulse. Each pulse heats the harness and alerts the contractor's recovery network. Destroying the original trial records will not stop the signal; the engineer must find a way to repair, shield or replace the harness without losing the ability to rescue people.\n\n### Who Knows\nThe injured conductor knows the rescue happened and has the maintenance log. A technician knows the approval order and pulse signature. The contractor's recovery team knows how to trace the signal but not Nightglass's civilian identity.\n\n### Further Hooks\n- The technician offers a shielded replacement in exchange for protection for their family.\n- A recovery agent follows a pulse to a hospital; the hero must secure the patients without exposing their identity.",
     labels: [
       "origin-generator",
       "superhero",

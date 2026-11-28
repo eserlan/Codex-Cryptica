@@ -1112,11 +1112,11 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     pageTitle:
       "Fantasy Name Generator for Characters & Places | Codex Cryptica",
     metaDescription:
-      "Create fantasy character, place, faction and item names. Choose from ten cultural styles, add campaign context, then copy or save your favourites.",
+      "Create fantasy character, place, faction and item names. Pin your favourites, copy a shortlist or generate detailed names with notes.",
     introTitle: "Fantasy Name Generator",
     eyebrow: "Fantasy Name Generator",
     introText:
-      "Name your characters, settlements, factions and items across ten cultural styles. Add your campaign context to guide the result, then copy names or save them to your local vault. No account required.",
+      "Choose a fantasy naming style for your characters, settlements, factions or artefacts. Pin favourites from Quick names, refresh the rest and copy the shortlist. Generate names with notes when you need a more coherent culture or naming explanation.",
     canonicalPath: "/generators/fantasy-names",
     labels: ["fantasy"],
     ogImage:
@@ -1129,6 +1129,24 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "worldbuilding name tool",
       "fantasy place names",
       "ttrpg names",
+    ],
+    faqs: [
+      {
+        question: "Can I keep my favourites while trying new names?",
+        answer:
+          "Yes. Pin a name in Quick names, choose New names to refresh the unpinned choices, then Copy pinned or Copy all. This is useful for building a cast list while the party explores.",
+      },
+      {
+        question:
+          "What is the difference between quick names and names with notes?",
+        answer:
+          "Quick names gives you a copyable list. Generate names with notes provides a detailed draft; use the AI option and Add campaign context for style explanations tied to your setting, or generate an offline name list using the built-in styles.",
+      },
+      {
+        question: "Does this create Character entries in my Vault?",
+        answer:
+          "No. This generator is copy-first. Copy the shortlist or detailed draft and paste the names into whichever Character, Location, Faction or Item entries you choose.",
+      },
     ],
   },
   "dnd-npc": {
@@ -1848,7 +1866,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Superhero Origin Generator",
     eyebrow: "Superhero Origin Story Generator",
     introText:
-      "Build a superhero origin that is more than a backstory paragraph: a concrete origin event, at least one campaign hook a GM can use tonight, and an ongoing consequence that stays unresolved. Works without login, then imports into your local vault.",
+      "Prepare an origin that creates ongoing play: what happened, what the public believes, a concrete request connected to the incident, and a cost that stays unresolved. Choose who knows the truth and decide how the hero can respond.",
     canonicalPath: "/generators/origin-generator",
     keywords: [
       "superhero origin generator",
@@ -1873,6 +1891,11 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
         question: "Is this generator specific to the superhero genre?",
         answer:
           "Yes. Unlike most Codex Cryptica generators, this one is Superhero / Comic Book only by design — origins are an inherently superhero-genre concept, so there is no genre selector.",
+      },
+      {
+        question: "What goes into my vault?",
+        answer:
+          "Add to my Codex saves one new Character with The Origin, What the World Knows and Campaign Hook in the main text. The Full Truth, Ongoing Consequence, Who Knows and Further Hooks belong in GM notes. Review the main text and title before sharing; link the character to existing people and groups yourself.",
       },
     ],
     relatedLinks: [
@@ -2158,7 +2181,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Star System Generator",
     eyebrow: "Star System Generator",
     introText:
-      "Create a coherent sci-fi star system for your campaign — not just an astronomical inventory. Choose its system type, genre, civilisation level, character, and scientific realism, then generate a star (or stars), major bodies, factions, resources, hazards, and a system-wide conflict or mystery worth building a campaign around.",
+      "Prepare a sci-fi system as a region the crew can explore and bargain in. Choose its stellar arrangement, civilisation and character, then connect named bodies, resources, hazards and faction interests to a conflict that gives the crew a reason to travel.",
     canonicalPath: "/generators/star-system",
     labels: ["sci-fi"],
     ogImage:
@@ -2181,18 +2204,18 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Is this just a list of planets?",
         answer:
-          "No. The generator is built to answer why anyone cares about the system, not just what orbits the star — every major body, faction, and hazard ties back to the system's central stakes.",
+          "No. Each major body has a role in travel, trade, survival or conflict. Start with two destinations that need each other, then decide what makes travel between them costly or risky.",
       },
       {
         question:
           "Can I turn a generated planet or moon into a full World Generator entry?",
         answer:
-          "Yes — select Develop This World on any named body in the result to open the Sci-Fi World Generator with that body's context pre-filled, so the world you build fits the system it came from.",
+          "Yes. Select Develop This World for a named body to open a separate Sci-Fi World Generator draft with its context. Save the developed world separately, then link it to the saved system yourself.",
       },
       {
         question: "Does it work without an account?",
         answer:
-          "Yes. Generate and copy star systems on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
+          "Yes. Generate and copy the system without an account. Add to my Codex saves one Location with its body list and campaign reference; the diagram is attached if export succeeds. The bodies are not automatically created as separate Locations or connected to your existing entities.",
       },
     ],
     relatedLinks: [

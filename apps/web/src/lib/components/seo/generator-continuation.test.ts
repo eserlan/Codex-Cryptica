@@ -29,7 +29,7 @@ describe("generator-continuation", () => {
     });
     const starSystem = getGeneratorContinuationConfig("star-system");
     expect(starSystem).toMatchObject({
-      headline: "Keep this system connected",
+      headline: "Keep the system ready for the next jump",
       ctaLabel: "Add to my Codex",
       localFirstNotice: "No account needed; stored locally in this browser.",
     });
@@ -49,7 +49,7 @@ describe("generator-continuation", () => {
 
     const origin = getGeneratorContinuationConfig("origin-generator");
     expect(origin).toMatchObject({
-      headline: "Keep developing this origin",
+      headline: "Keep the hero's origin in play",
       ctaLabel: "Add to my Codex",
       localFirstNotice: "No account needed; stored locally in this browser.",
     });

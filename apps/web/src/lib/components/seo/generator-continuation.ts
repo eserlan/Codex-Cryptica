@@ -90,16 +90,16 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       placement: "near-result",
     },
     "star-system": {
-      headline: "Keep this system connected",
+      headline: "Keep the system ready for the next jump",
       summary:
-        "Turn this star system into a working campaign hub in your local Codex vault.",
+        "Save one new Location in your local Codex vault with the named bodies, factions and travel hazards. Record the crew's route, discoveries and changing control of resources.",
       capabilities: [
-        "Preserve all orbital bodies and the system diagram in one Location entry",
-        "Develop individual worlds in depth while keeping them tied to this system",
-        "Link competing factions, locations, hazards, and campaign notes",
+        "Keep the body list and system reference together, with the orbital diagram attached when export succeeds",
+        "Develop individual bodies as separate world drafts; save and link them to the system yourself, and review the main text before sharing",
       ],
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
+      placement: "near-result",
     },
     quest: {
       headline: "Keep this quest alive between sessions",
@@ -153,16 +153,16 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
     "rpg-npc-generator": RPG_NPC_CONTINUATION,
     "dnd-npc": NPC_CONTINUATION,
     "origin-generator": {
-      headline: "Keep developing this origin",
+      headline: "Keep the hero's origin in play",
       summary:
-        "Save this origin as a Character entry in your local Codex vault so its truth and fallout stay connected to your campaign.",
+        "Save one new Character in your local Codex vault with the origin and its immediate campaign hook, then track who learns the truth and what the unresolved cost changes.",
       capabilities: [
-        "Store the origin event, public story, and GM-only truth in one Character entry",
-        "Track ongoing consequences and unresolved hooks across sessions",
-        "Connect this hero to campaign characters, factions, and threats",
+        "Keep the full truth, ongoing consequence and further hooks in GM notes; review the main text and title before sharing",
+        "Link the Character to existing witnesses, teams and rivals yourself, then record consequences after play",
       ],
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
+      placement: "near-result",
     },
     personality: {
       headline: "Keep this character recognisable between sessions",

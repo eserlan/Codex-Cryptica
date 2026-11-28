@@ -830,7 +830,9 @@ describe("GeneratorOutputCard", () => {
       expect(callout.querySelector("ul")?.classList.contains("text-lg")).toBe(
         true,
       );
-      expect(callout.textContent).toContain("Keep this system connected");
+      expect(callout.textContent).toContain(
+        "Keep the system ready for the next jump",
+      );
       expect(callout.textContent).toContain(
         "No account needed; stored locally in this browser.",
       );
@@ -957,7 +959,7 @@ describe("GeneratorOutputCard", () => {
       },
     );
 
-    it("hides the callout and keeps Save to Codex on seed/example drafts, unconfirmed runs, busy states, and Wave 2 generators", () => {
+    it("hides the callout and keeps Save to Codex on seed/example drafts, unconfirmed runs, busy states, and unconfigured generators", () => {
       for (const overrides of [
         {
           generatorType: "faction-roster",
@@ -976,7 +978,7 @@ describe("GeneratorOutputCard", () => {
           canFollowUp: true,
           isGenerationInProgress: true,
         },
-        { generatorType: "point-crawl", canFollowUp: true },
+        { generatorType: "unknown-generator", canFollowUp: true },
       ]) {
         const { unmount } = renderCard(overrides);
         expect(

@@ -99,6 +99,17 @@ describe("RPG NPC surrounding copy", () => {
 });
 
 describe("generator-page-meta completeness and social preview tags", () => {
+  it("shows the Superhero Origin Vault explanation as a FAQ, not a related link", () => {
+    const meta = slugMeta["origin-generator"];
+    expect(meta.faqs).toContainEqual({
+      question: "What goes into my vault?",
+      answer: expect.stringContaining("one new Character"),
+    });
+    expect(meta.relatedLinks?.every((link) => link.href && link.label)).toBe(
+      true,
+    );
+  });
+
   it("uses the Mystery & Investigation Generator's rendered social screenshot", () => {
     expect(slugMeta["mystery-investigation"].ogImage).toBe(
       "https://assets.codexcryptica.com/screenshots/generator-mystery-investigation.png",

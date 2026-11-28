@@ -285,6 +285,12 @@ export const howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses: Ans
           "Build the guilds, houses, or administrations that maintain routes, records, and alliances.",
         href: "/generators/faction",
       },
+      {
+        title: "Star System Generator",
+        description:
+          "Design a system whose worlds depend on each other's resources and competing authorities.",
+        href: "/generators/star-system",
+      },
     ],
     relatedForPages: [
       {
