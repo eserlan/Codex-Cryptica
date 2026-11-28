@@ -2320,7 +2320,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Mystery & Investigation Generator",
     eyebrow: "Mystery & Investigation Generator",
     introText:
-      "Build a case the players can investigate: lock in what really happened, then create suspects, locations, evidence, independent leads and outcomes that agree with that truth. The first version uses a fixed solution and keeps GM-only details separate from player-facing material.",
+      "Create a case your players can approach from more than one direction. Choose the mystery type, how many suspects to investigate, and how much pressure they face. Review the fixed truth and timeline, then check the clues against them. Keep the truth in GM notes and use the evidence to prepare what the players can discover.",
     canonicalPath: "/generators/mystery-investigation",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-mystery-investigation.png",
@@ -2337,17 +2337,27 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Does the generator choose a fixed culprit?",
         answer:
-          "Yes. This version creates one fixed truth and keeps it in a separate GM-only section so the clues and witness accounts can be checked against it.",
+          "Yes. The draft has a fixed GM-only truth. Check the motive, opportunity and timeline before play; do not replace that answer just because the players suspect someone else.",
       },
       {
         question: "Can the players solve the case without one required roll?",
         answer:
-          "The generator is designed to provide multiple independent routes to essential revelations, with clues that state what they support and what they do not prove.",
+          "The generator aims to provide independent leads that state what they support and what they do not prove. Check that a missed witness or clue cannot block an essential inference before running the case.",
       },
       {
         question: "Can I use the case in any role-playing game?",
         answer:
           "Yes. The generator is system-neutral and supports fantasy, noir, investigative horror, modern and science-fiction settings.",
+      },
+      {
+        question: "Can I give the case to my players?",
+        answer:
+          "Copy Player Handout exports the player-facing case material. Review it before sharing, since clues may describe facts the party has not yet discovered. Copy GM Case File includes the fixed truth and GM notes, so keep that copy private.",
+      },
+      {
+        question: "What happens when I add the mystery to Codex?",
+        answer:
+          "After generating, save it as one Note in your local vault with the case material and separate GM notes. The clue diagram is a preview aid when available; the Note preserves the written case, not a board of separate suspects. Link people and places yourself as you develop the case.",
       },
     ],
     relatedLinks: [

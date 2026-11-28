@@ -283,6 +283,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    "mystery-investigation": {
+      headline: "Keep the truth fixed as the case unfolds",
+      summary:
+        "Save this case as one Note in your local Codex vault and record which clues the party has found and which accounts they have tested.",
+      capabilities: [
+        "Keep the case material separate from the fixed truth, timeline and next NPC moves in GM notes",
+        "Link the Note to people and places already in your vault and record the outcome after play",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
     "dark-fantasy-faction": {
       headline: "Keep this faction in play",
       summary:
