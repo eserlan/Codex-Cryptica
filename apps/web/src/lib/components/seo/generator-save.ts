@@ -12,6 +12,7 @@ import type {
 import {
   deduplicateMarkdownSections,
   getGeneratorHandoffLayout,
+  getInhabitedPlaceHandoffLayout,
   usesSourceHandoff,
 } from "./generator-document-layout";
 
@@ -42,6 +43,13 @@ export interface HubSaveDraft {
   labels: string[];
   status: SessionEntity["status"];
   references?: string[];
+}
+
+export class InvalidGeneratorOutputError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidGeneratorOutputError";
+  }
 }
 
 function formatTovMagicItemMarkdown(item: TovMagicItemMechanics): string {
@@ -148,6 +156,13 @@ function resolveSaveBodyAndLore(
   generatorType?: string,
 ): { content: string; lore: string } {
   const summaryPrefix = data.summary ? `*${data.summary}*` : "";
+  if (generatorType === "tavern" || generatorType === "kingdom") {
+    return {
+      content: layout.content,
+      lore: [summaryPrefix, layout.lore].filter(Boolean).join("\n\n"),
+    };
+  }
+
   if (usesPrivateBodyAndLore(generatorType)) {
     return {
       content: [summaryPrefix, layout.content].filter(Boolean).join("\n\n"),
@@ -178,6 +193,37 @@ function resolveSaveBodyAndLore(
   return { content, lore };
 }
 
+/** Single Deity mode has the same GM-reference boundary on both routes. */
+function singleDeitySaveLayout(
+  data: GeneratorOutput,
+  layout: GeneratorSaveLayout,
+  generatorType?: string,
+): GeneratorSaveLayout {
+  if (
+    data.type !== "character" ||
+    (generatorType !== "god-generator" &&
+      generatorType !== "pantheon-generator")
+  ) {
+    return layout;
+  }
+
+  const requiredSections = [
+    "Deity Description",
+    "Divine Portfolio",
+    "Worship & Cults",
+  ];
+  const missingSections = requiredSections.filter(
+    (section) => !new RegExp(`^### ${section}\\s*$`, "m").test(data.content),
+  );
+  if (missingSections.length > 0) {
+    throw new InvalidGeneratorOutputError(
+      `This deity draft is missing required public sections (${missingSections.join(", ")}). Generate it again or copy the draft manually.`,
+    );
+  }
+
+  return { content: data.content, lore: data.lore ?? "" };
+}
+
 /** The preview's reading layout is not always the vault's secrecy boundary. */
 function vaultSaveLayout(
   data: GeneratorOutput,
@@ -195,7 +241,11 @@ function vaultSaveLayout(
   }
   return generatorType === "quest"
     ? { content: data.content, lore: data.lore ?? "" }
-    : getGeneratorHandoffLayout(data, layout, generatorType);
+    : getGeneratorHandoffLayout(
+        data,
+        singleDeitySaveLayout(data, layout, generatorType),
+        generatorType,
+      );
 }
 
 export function buildGeneratorSavePayload(
@@ -209,7 +259,11 @@ export function buildGeneratorSavePayload(
     (data.kind === "adventure" || data.labels.includes("adventure"));
   const { content, lore: initialLore } = resolveCalendarTwistSaveBodyAndLore(
     data,
-    vaultSaveLayout(data, layout, generatorType),
+    vaultSaveLayout(
+      data,
+      getInhabitedPlaceHandoffLayout(data, layout, generatorType),
+      generatorType,
+    ),
     generatorType,
   );
   let lore = initialLore;

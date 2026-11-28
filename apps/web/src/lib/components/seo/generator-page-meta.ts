@@ -4,7 +4,7 @@ export type { ValidSlug, SlugMetaEntry };
 const ADVENTURE_CANVAS_FAQ: NonNullable<SlugMetaEntry["faqs"]>[number] = {
   question: "Can I turn this into an interactive adventure canvas?",
   answer:
-    "Yes — select Open Adventure Canvas on any generated scenario to create an interactive relationship map of its situation, locations, NPCs and factions, threats, clues, and possible outcomes. You can rearrange the nodes, edit their connections, and create linked vault entities as the adventure develops. The Adventure Canvas is exclusive to Codex Cryptica, but it is still free and needs no account — just open your world in the app.",
+    "Yes. Open Adventure Canvas is separate from saving the prep Note. It creates a map of the situation, locations, NPCs and factions, threats, clues and possible outcomes in your local vault. You can rearrange the nodes and edit their connections. If the new canvas first opens as an empty workspace, reload it to restore the saved map.",
   image: "/images/adventure-canvas.png",
   imageAlt:
     "An interactive Adventure Canvas showing a non-linear scenario with situations, locations, factions, threats, clues, and outcomes connected by labeled relationships",
@@ -81,7 +81,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Settlement Generator",
     eyebrow: "Settlement Generator",
     introText:
-      "Generate an inhabited place that answers three questions: why does it exist, who really controls it, and what is about to go wrong. Works for any genre — fantasy, cyberpunk, sci-fi, horror, post-apocalyptic, and more.",
+      "Create a settlement the party can visit and return to. Choose its scale, environment, purpose, tone and dominant tension; then use its daily life, named places, contacts and factions to prepare the next scene.",
     canonicalPath: "/generators/settlement",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-settlement.jpg",
@@ -93,6 +93,23 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "town generator",
       "worldbuilding location creator",
       "district generator",
+    ],
+    faqs: [
+      {
+        question: "What does a settlement draft include?",
+        answer:
+          "A named inhabited place with an overview, first impression, inhabitants, daily life and history, plus a tension, points of interest, notable people, factions and hooks in GM reference.",
+      },
+      {
+        question: "Can I use this outside fantasy?",
+        answer:
+          "Yes. The available settlement choices follow the selected setting. Use the controls for the kind of town, city, outpost or district your party will actually visit.",
+      },
+      {
+        question: "What happens when I add the settlement to Codex?",
+        answer:
+          "Save one Location in your local vault with the settlement overview in main text and source GM reference, points of interest, people, factions and hooks in GM notes. They are textual references, not separately created entries.",
+      },
     ],
   },
   "magic-item": {
@@ -468,7 +485,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "RPG Rumour Generator",
     eyebrow: "Rumour Generator",
     introText:
-      "Create a d6 table of six local rumours the party can overhear and choose to chase. Four are essentially true, one is exaggerated, and one is a dangerous misconception. Every rumour names a real lead; the truth stays hidden in GM notes until someone investigates.",
+      "Prepare a d6 table of local gossip the party can follow from a tavern, market or settlement. Each draft is designed for four essentially true claims, one exaggeration and one dangerous misconception, with a source, a lead and a separate GM reference. Save all six in a single Note and track what the party learns.",
     canonicalPath: "/generators/rumour",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-rumour.jpg",
@@ -494,12 +511,12 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Are the rumours always true?",
         answer:
-          "No. Each table of six rolls a fixed hidden distribution: four rumours are essentially true, one is an exaggeration of something real, and one is a dangerous misconception that sounds plausible but is materially wrong. Which is which is never shown to players -- it lives in the GM-only notes beneath each entry.",
+          "No. The six-entry table is designed to contain four essentially true rumours, one exaggeration and one dangerous misconception. Check the Reality and If Investigated fields before play, and keep them separate from the gossip you share with players.",
       },
       {
         question: "Will every rumour actually be useful at the table?",
         answer:
-          "Yes. Every rumour names at least one concrete, pursuable lead -- a specific person, place, faction, or item the players can seek out, question, or investigate. Vague ominous statements with nothing to act on are treated as a quality failure, not a feature.",
+          "Each entry is meant to name a person, place, faction or object the party can pursue. Before using the table, replace any vague lead with a named contact, location or time. Even a false rumour should have evidence that reveals the mistake.",
       },
       {
         question: "Does this work for genres other than fantasy?",
@@ -509,7 +526,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Do I have to save all six rumours as separate entities?",
         answer:
-          "No. The whole table copies and saves as a single lightweight note, so you're not forced to create six new entities in your campaign vault every time you roll a table of local gossip.",
+          "No. Add to my Codex opens a single Note with the six rumours, leads and sources in main text and the truth and investigation consequences in GM notes. Link it to the relevant settlement yourself; no separate contacts or locations are created automatically.",
       },
     ],
     relatedLinks: [
@@ -646,7 +663,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Kingdom Generator",
     eyebrow: "Kingdom Generator",
     introText:
-      "Create a campaign-ready fantasy realm with a ruler, major factions, internal tensions, and adventure hooks. Works without login, then imports into your local vault.",
+      "Create a fantasy realm whose laws, resources and conflicts give your party reasons to deal with its ruler and factions. Choose the polity, government, geography, scale, conflict and magic, then decide what pressures reach the places the party visits.",
     canonicalPath: "/generators/kingdom",
     labels: ["fantasy"],
     ogImage:
@@ -660,16 +677,33 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "worldbuilding kingdoms",
       "rpg realm generator",
     ],
+    faqs: [
+      {
+        question: "What does a kingdom draft include?",
+        answer:
+          "A named realm, ruler, capital, government, society, two or three major factions, a hidden problem, rumours, hooks and entity seeds.",
+      },
+      {
+        question: "Does it need to be a hereditary monarchy?",
+        answer:
+          "No. Polity type and Government style let you choose different kinds of realm and how power is exercised. Decide who actually has authority when the party asks for help.",
+      },
+      {
+        question: "What happens when I add the realm to Codex?",
+        answer:
+          "Save one Faction in your local vault with the realm and society in main text. Government details, secrets, factions, rumours, hooks and seeds stay in GM notes. Create or link the ruler, capital and factions yourself as you develop them.",
+      },
+    ],
   },
   nation: {
     pageTitle:
       "Nation Generator | RPG Political Entity Creator for Any Genre | Codex Cryptica",
     metaDescription:
-      "Generate a political entity for any RPG genre — fantasy kingdoms, cyberpunk megacorp-states, sci-fi federations, post-apoc warlord territories. Works without login.",
+      "Create a named RPG state with a government, power blocs, a centre of authority and a hidden crisis. Prepare political choices in fantasy, sci-fi and other settings.",
     introTitle: "Nation Generator",
     eyebrow: "Nation Generator",
     introText:
-      "Create a campaign-ready political entity for any genre. Pick your setting and polity type — get a named state with power blocs, internal tensions, and adventure hooks.",
+      "Build the state behind the party’s next border crossing, rebellion or political bargain. Select a polity, government, scale and level of conflict to draft a ruler, power blocs, centre of authority, tensions and a crisis to bring into play.",
     canonicalPath: "/generators/nation",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-nation.jpg",
@@ -682,6 +716,39 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "worldbuilding nation",
       "federation generator",
     ],
+    faqs: [
+      {
+        question:
+          "What is the difference between a polity type and government style?",
+        answer:
+          "Polity type describes what the state is, such as a City-State or Megacorp-State. Government style describes how authority is organised. Combine them to decide who can make a decision and which institution can obstruct it.",
+      },
+      {
+        question: "Does the generator create a map of the nation?",
+        answer:
+          "No. It drafts a political entity with a named centre of power and a scale. Use those to decide where borders, routes and regional powers lie in your own setting.",
+      },
+      {
+        question: "How can I fit the state into a current conflict?",
+        answer:
+          "Use Campaign context (optional) to identify the setting or ongoing dispute. Offline drafts refer to that context in The State; AI drafts can adapt the political situation around it.",
+      },
+      {
+        question: "What gets saved in my Codex?",
+        answer:
+          "Add to my Codex opens one new Faction entry in your local browser vault, without an account. Power Blocs, Rumours & Hooks, the Hidden Problem and Entity Seeds are stored in GM notes. Seeds are references you can develop into linked entries, not automatically created people, factions or locations.",
+      },
+    ],
+    relatedLinks: [
+      {
+        href: "/generators/council-vote",
+        label: "Prepare a contested government decision",
+      },
+      {
+        href: "/generators/faction",
+        label: "Develop an individual power bloc",
+      },
+    ],
   },
   tavern: {
     pageTitle:
@@ -691,7 +758,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Tavern Generator",
     eyebrow: "Tavern Generator",
     introText:
-      "Create a campaign-ready tavern with atmosphere, owner, notable patrons, rumours, and a hidden problem. Works without login, then imports into your local vault.",
+      "Create an inn, alehouse or gathering place with a recognisable atmosphere, an owner, regular patrons and rumours. Choose the crowd and kind of settlement, then use its hidden trouble to decide what happens when the party comes in for a drink.",
     canonicalPath: "/generators/tavern",
     labels: ["fantasy"],
     ogImage:
@@ -704,6 +771,24 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "fantasy tavern creator",
       "alehouse generator",
       "dnd tavern",
+    ],
+    faqs: [
+      {
+        question: "What does the tavern draft contain?",
+        answer:
+          "A named tavern, room and hospitality, owner, two or three notable regulars, signature food or drink, hidden problem, immediate hook, rumours and entity seeds.",
+      },
+      {
+        question:
+          "Can it be a recurring safe place rather than an adventure site?",
+        answer:
+          "Yes. Let the party encounter familiar regulars and ordinary comforts first. Treat the trouble as a possible lead, and decide how it changes when the party visits again.",
+      },
+      {
+        question: "What happens when I add the tavern to Codex?",
+        answer:
+          "Save one Location in your local vault. The place and people overview remain in main text; the trouble, table guidance, owner and patron reference, rumours, hook and entity seeds stay in GM notes. The named contacts are not separate Characters until you create or link them.",
+      },
     ],
   },
   "vampire-clan": {
@@ -898,7 +983,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "RPG Name Generator",
     eyebrow: "Name Generator",
     introText:
-      "Generate names for characters, places, factions, and items in any genre. Pick a vibe and culture, steer with optional context, and copy your favourites.",
+      "Use Quick names to roll a shortlist of character, place, faction or item names. Tap to copy a name, pin favourites or copy the whole list. Pick a vibe and naming style, then choose Generate names with notes when you want more context. No account is needed.",
     canonicalPath: "/generators/names",
     ogImage: "https://assets.codexcryptica.com/screenshots/generator-names.jpg",
     ogImageAlt:
@@ -909,6 +994,30 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "scifi character names",
       "place name generator",
       "faction name tool",
+    ],
+    faqs: [
+      {
+        question: "How can I make a shortlist that is easy to remember?",
+        answer:
+          "Choose the culture and Name Type, say the names out loud, and avoid near-identical names for people in the same scene. Pin a few unused names in Quick names before selecting New names.",
+      },
+      {
+        question: "Can I generate names for a non-fantasy setting?",
+        answer:
+          "Choose a vibe to see the available styles. Some non-fantasy styles have no offline tables and fall back to generic fantasy syllables; check the Usage Suggestions. AI generation can use the chosen style and optional campaign context.",
+      },
+      {
+        question: "How do I use the names in Codex?",
+        answer:
+          "Tap a name in Quick names to copy it, use Copy all for one name per line or Copy pinned for your favourites. Open Codex and paste a selected name into the appropriate existing or new Character, Location, Faction or Item. Generate names with notes has its own Copy action; neither mode creates a batch of vault entries.",
+      },
+    ],
+    relatedLinks: [
+      {
+        href: "/generators/language-generator",
+        label: "Fictional Language Generator",
+      },
+      { href: "/generators/npc", label: "RPG NPC Generator" },
     ],
   },
   "fantasy-names": {
@@ -1037,7 +1146,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "RPG God & Deity Generator",
     eyebrow: "Deity Generator",
     introText:
-      "Design detailed single deities, ancestors, or abstract forces with portfolio, rituals, and myths. Works without login, then imports into your local vault.",
+      "Create a god, spirit, saint, ancestor or abstract power for your setting. Choose its type, domain, tone and worshippers, then use the portfolio, symbol, rituals and taboo to decide how mortals encounter the faith. Choose Pantheon under Generate target if you need a group of competing gods instead.",
     canonicalPath: "/generators/god-generator",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-god-generator.jpg",
@@ -1049,6 +1158,33 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "rpg god creator",
       "mythic deity tool",
       "domain and taboos generator",
+    ],
+    faqs: [
+      {
+        question: "What does a single deity draft include?",
+        answer:
+          "A named deity with its description, divine portfolio, worship and cults, sacred symbol, rite, taboo, myth, secret and adventure hooks. The draft is system-neutral; decide how much divine power is actually available in your campaign.",
+      },
+      {
+        question: "Do I need a pantheon first?",
+        answer:
+          "No. Start with the god or spirit a particular community invokes. Give its worshippers a practical reason to seek help, then decide whether other gods share its domain or disagree with its cult.",
+      },
+      {
+        question: "Can I make a pantheon instead?",
+        answer:
+          "Yes. Switch Generate target from Single Deity / Spirit to Pantheon to choose its size, focus and conflict. The result describes the divine group, not a collection of separately created Characters.",
+      },
+      {
+        question: "What happens when I add the result to Codex?",
+        answer:
+          "A single deity becomes one Character with divine description and worship in the main text and source reference, rites, secret, myths and hooks in GM notes. A pantheon becomes one Faction with its hidden problem and rumours in GM notes. Link temples, cults and individual gods yourself as you develop them. No account needed.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/pantheon-generator", label: "Pantheon Generator" },
+      { href: "/generators/faction", label: "Faction Generator" },
+      { href: "/generators/holiday", label: "Holiday & Festival Generator" },
     ],
   },
   "ship-generator": {
@@ -1108,7 +1244,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "RPG Fictional Language Generator",
     eyebrow: "Language Generator",
     introText:
-      "Create a campaign-ready language profile for your world, culture, or species. Choose fantasy, cyberpunk, gothic noir, space opera, modern conspiracy, post-apocalyptic, or pirate foundations, then customize the result.",
+      "Draft a small language profile that supports names, greetings, signs and clues in play. Choose its genre, sounds, role and naming structure, then check that recurring words and sample phrases have consistent meanings. Save your evolving glossary as one Note in your local Codex vault.",
     canonicalPath: "/generators/language-generator",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-language-generator.jpg",
@@ -1125,12 +1261,17 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "What does the fictional language generator create?",
         answer:
-          "It generates a fictional language profile with pronunciation guidance, naming structures, example names, phrases, and a starter glossary. AI generation adds richer cultural and linguistic detail; the offline fallback produces a smaller coherent profile from built-in tables.",
+          "It drafts pronunciation, cultural role, word formation, example names, a glossary and sample phrases. Start with a few words and check that the naming rules and translations agree. It is a reference for worldbuilding, not a complete language or translation service.",
       },
       {
         question: "Does it work without an account?",
         answer:
-          "Yes. Generate and copy language notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
+          "Yes. Generate and copy the language notes without an account. Add to my Codex opens one Note with pronunciation, word formation, vocabulary and phrases in main text, and example names and At the Table reference in GM notes. Connect it to existing cultures and speakers yourself.",
+      },
+      {
+        question: "How should I use the language in a session?",
+        answer:
+          "Pick two or three roots and a greeting, and reuse them in signs, titles and dialogue. Give players a way to learn their meanings; avoid requiring them to guess an invented translation to progress.",
       },
     ],
     relatedLinks: [
@@ -1255,7 +1396,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Adventure Idea Generator",
     eyebrow: "Adventure Generator",
     introText:
-      "Create rich, multi-layered adventure scenarios across any RPG genre or world theme. Generates initial situations, primary pressures, key locations, key actors, threats, discoveries, complications, stakes, and non-linear possible outcomes — a situation, not a plot.",
+      "Prepare an adventure around a problem the party can approach in different ways. Choose the type, length and tone, add a seed or existing campaign context, and draft locations, opposition, clues, time pressure and possible outcomes. Save it as a private prep Note or open a separate Adventure Canvas.",
     canonicalPath: "/generators/adventure-generator",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-adventure-generator.jpg",
@@ -1272,22 +1413,22 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "What does the adventure generator create?",
         answer:
-          "It creates complete, campaign-ready adventure situations including initial situation, primary objective & pressure, key locations, important NPCs & factions, threats, discoveries, complications, rewards, and multiple possible outcomes.",
+          "It drafts an initial situation, objective and pressure, locations, NPCs and factions, threats, clues, complications, stakes, possible outcomes and hooks. Turn those into scene choices before play rather than treating the draft as a finished adventure.",
       },
       {
         question: "Does it force a linear plot?",
         answer:
-          "No. The generator produces a dynamic situation with multiple non-linear resolutions and key actors, giving players full agency rather than railroading them through a fixed sequence of events.",
+          "No fixed sequence is required. Give the party at least two ways to reach the objective and decide which clue or consequence remains available if an approach fails.",
       },
       {
         question: "Is it only for fantasy games?",
         answer:
-          "No. The generator dynamically adapts to all Codex Cryptica world themes — fantasy, sci-fi, cyberpunk, dark fantasy, gothic horror, post-apocalyptic, pirate, western, steampunk, modern conspiracy, and Lancer.",
+          "No. Choose a vibe to set the world theme, from Classic Fantasy to science fiction and horror. The situation, stakes and opposition can then be adapted to your campaign.",
       },
       {
         question: "Does it work without an account?",
         answer:
-          "Yes. Generate and copy adventure ideas on this page without logging in. Save drafts directly into a browser-local Codex Cryptica vault — no sign-up required.",
+          "Yes. Generate and copy adventure ideas without an account. Add to my Codex opens one Note in your browser-local vault, with the summary in main text and the scenario details in GM notes. Open Adventure Canvas is a separate way to prepare a relationship map.",
       },
       ADVENTURE_CANVAS_FAQ,
     ],
@@ -1663,7 +1804,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Adventure Idea Generator",
     eyebrow: "Adventure Generator",
     introText:
-      "Create rich, multi-layered adventure scenarios across any RPG genre or world theme. Generates initial situations, primary pressures, key locations, key actors, threats, discoveries, complications, stakes, and non-linear possible outcomes — a situation, not a plot.",
+      "Prepare an adventure around a problem the party can approach in different ways. Choose the type, length and tone, add a seed or existing campaign context, and draft locations, opposition, clues, time pressure and possible outcomes. Save it as a private prep Note or open a separate Adventure Canvas.",
     canonicalPath: "/generators/adventure-generator",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-adventure-idea-generator.jpg",
@@ -1680,7 +1821,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "What does the adventure generator create?",
         answer:
-          "It creates complete, campaign-ready adventure situations including initial situation, primary objective & pressure, key locations, important NPCs & factions, threats, discoveries, complications, rewards, and multiple possible outcomes.",
+          "It drafts an initial situation, objective and pressure, locations, NPCs and factions, threats, clues, complications, stakes, possible outcomes and hooks. Turn those into scene choices before play rather than treating the draft as a finished adventure.",
       },
       ADVENTURE_CANVAS_FAQ,
     ],
@@ -2269,7 +2410,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Point Crawl Generator",
     eyebrow: "Point Crawl Generator",
     introText:
-      "Generate an interconnected network of 6–15 locations with explicit travel routes, signposts, loops, hidden shortcuts, and key-before-lock gates. Inspect and rearrange the live node-and-edge graph, then save all or selected points directly into your Codex Cryptica vault.",
+      "Prepare a network of 6 to 15 locations for an expedition, a city investigation or a dungeon. Compare travel times and risks, inspect hidden shortcuts and check where the party learns how to open locked routes. Save the chosen points and an overview Note in your local Codex vault.",
     canonicalPath: "/generators/point-crawl",
     labels: ["exploration", "hexcrawl", "dungeon", "adventure"],
     ogImage: "https://assets.codexcryptica.com/og/generator-point-crawl.jpg",
@@ -2299,13 +2440,13 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
         question:
           "Can I use it for cities, wilderness, or sci-fi star systems?",
         answer:
-          "Yes. Choose from six scales — Dungeon, Settlement, City, Wilderness, Region, or Planet / System — across all 13 genres. Route travel times, terrain types, and hazards automatically adapt to your chosen scale and theme.",
+          "Yes. Choose from Dungeon, Settlement, City, Wilderness, Region or Planet / System and select a Genre / Theme, or enter your own. Set travel costs in terms the party can use to decide whether to take a detour.",
       },
       {
         question:
           "How does saving a point crawl to my Codex Cryptica vault work?",
         answer:
-          "When you click 'Save to Codex', you can save all generated points or toggle a subset on the interactive graph. Each selected point is imported as a Location entity with automatic route connections and a 'Routes & Exits' lore section, alongside a master overview Note entity that links the entire crawl together.",
+          "Before clicking Add to my Codex, use Select All, Core Only or Include in Vault Save in the location inspector. Each selected point becomes a Location with Routes & Exits in GM notes. Routes are created only between selected endpoints. One overview Note opens, with links to the saved Locations; its full map and write-up are GM prep, not a spoiler-free handout. Check the selected points include any required keys or clues.",
       },
     ],
     relatedLinks: [

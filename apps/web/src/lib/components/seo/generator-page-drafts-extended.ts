@@ -155,10 +155,10 @@ export const extendedSlugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
     kind: "rumour",
     title: "Word Around Town",
     summary:
-      "Six local rumours for a settlement, tavern, or social hub — every one names a concrete lead, and exactly one is a dangerous misconception.",
+      "Six local rumours from a busy river market, each with a lead and a source.",
     content:
-      "### Rumour 1\n- **Rumour**: Morggar has reportedly been courting Morggar's clerks with quiet favours before next season's council vote.\n- **Lead**: Morggar, Morggar\n- **Source**: a child\n\n### Rumour 2\n- **Rumour**: Word going around is that Aeldar bribes the night watch to look the other way at Morgon's warehouse — three shipments have gone through unlogged this month.\n- **Lead**: Aeldar, Morgon's warehouse\n- **Source**: a caravaner\n\n### Rumour 3\n- **Rumour**: Caelwen and Vaelthas were once inseparable business partners — now Caelwen won't say Vaelthas's name, and Vaelthas has stopped coming to market entirely.\n- **Lead**: Caelwen, Vaelthas\n- **Source**: a shrine pilgrim\n\n### Rumour 4\n- **Rumour**: The Brandar Compact has been meeting at the district's back room at odd hours, and members who leave early won't discuss what was decided.\n- **Lead**: The Brandar Compact, the district's back room\n- **Source**: a market trader\n\n### Rumour 5\n- **Rumour**: A labourer working near the old district's abandoned counting-house claims he turned up a strongbox stamped with a foreign seal — then sold his silence to someone before he could say more.\n- **Lead**: the old district's abandoned counting-house\n- **Source**: a caravaner\n\n### Rumour 6\n- **Rumour**: Thorthas swears the village's shrine bell rang, hummed, or moved on its own last night — and insists it happens whenever someone nearby is about to die.\n- **Lead**: Thorthas, the village's shrine bell\n- **Source**: a caravaner",
-    lore: "### At a Glance\n- **Genre**: Classic Fantasy\n- **Tone**: Everyday\n- **Danger Level**: Low\n\n### GM Notes — Rumour 1\n- **Reality**: essentially true\n- **What's Actually Happening**: Morggar is indeed bribing Morggar's clerks to swing procedural votes ahead of the council session.\n- **If Investigated**: One bribed clerk is willing to testify in exchange for protection from Morggar's retaliation.\n\n### GM Notes — Rumour 2\n- **Reality**: essentially true\n- **What's Actually Happening**: Aeldar is smuggling contraband through Morgon's warehouse and bribing a specific watch sergeant to keep the manifests clean.\n- **If Investigated**: Following the bribed sergeant leads straight to the next shipment, still in transit.\n\n### GM Notes — Rumour 3\n- **Reality**: exaggeration\n- **What's Actually Happening**: There was a falling-out, but it was mutual and financial, not the betrayal the gossip implies.\n- **If Investigated**: Mediating the dispute reveals both were manipulated by a third party neither has named yet.\n\n### GM Notes — Rumour 4\n- **Reality**: essentially true\n- **What's Actually Happening**: The Brandar Compact is preparing a real move — a takeover, a vote, or an expansion — that will affect the wider settlement soon.\n- **If Investigated**: A sympathetic member will describe the plan in exchange for a favour or protection.\n\n### GM Notes — Rumour 5\n- **Reality**: dangerous misconception\n- **What's Actually Happening**: Nothing was found; the labourer invented the story to explain a sudden windfall from an unrelated, less flattering source.\n- **If Investigated**: Digging at the old district's abandoned counting-house wastes time, but turns up evidence of the labourer's actual (and more interesting) secret.\n\n### GM Notes — Rumour 6\n- **Reality**: essentially true\n- **What's Actually Happening**: the village's shrine bell genuinely responds to a real, localised phenomenon tied to nearby deaths, though not by supernatural will.\n- **If Investigated**: Studying the pattern reveals a specific, actionable trigger the party can use or disrupt.",
+      "### Rumour 1\n- **Rumour**: The night watch lets a cart through the east gate after closing.\n- **Lead**: The east gate at midnight\n- **Source**: A baker carrying the last delivery\n\n### Rumour 2\n- **Rumour**: The Ropewalk has been paying double wages for the night shift.\n- **Lead**: The Ropewalk paymaster\n- **Source**: A cooper\n\n### Rumour 3\n- **Rumour**: The old watchtower contains a chest of silver.\n- **Lead**: The boarded watchtower stairs\n- **Source**: A returning shepherd\n\n### Rumour 4\n- **Rumour**: A guild delegate is seeking signatures against the new market toll.\n- **Lead**: The fishmongers' stall at noon\n- **Source**: A stallholder\n\n### Rumour 5\n- **Rumour**: The well beside the south market is poisoned by the herbalist.\n- **Lead**: The south market well and the herbalist's shop\n- **Source**: A water seller\n\n### Rumour 6\n- **Rumour**: A lantern appears in the abandoned tollhouse before the ferry arrives.\n- **Lead**: The tollhouse window\n- **Source**: A ferry pilot",
+    lore: "### At a Glance\n- **Genre**: Classic Fantasy\n- **Tone**: Everyday\n- **Danger Level**: Low\n\n### GM Notes — Rumour 1\n- **Reality**: essentially true\n- **What's Actually Happening**: The grain clerk is secretly bringing relief sacks to families struck off the ration rolls.\n- **If Investigated**: The stamped sacks identify the clerk; the party can ask why the council removed those families.\n\n### GM Notes — Rumour 2\n- **Reality**: essentially true\n- **What's Actually Happening**: A shipment of rotten rope is being replaced before the ferry inspection.\n- **If Investigated**: Inspect the rejected rope to find the supplier's marks and negotiate with the paymaster.\n\n### GM Notes — Rumour 3\n- **Reality**: exaggeration\n- **What's Actually Happening**: A silver-painted tin box of old signal codes was found there; no coin.\n- **If Investigated**: The codes show a disused crossing that enables safe travel during high water.\n\n### GM Notes — Rumour 4\n- **Reality**: essentially true\n- **What's Actually Happening**: The delegate wants to delay the vote until the affected traders can attend.\n- **If Investigated**: The petition lists the traders excluded from the meeting and the date of the vote.\n\n### GM Notes — Rumour 5\n- **Reality**: dangerous misconception\n- **What's Actually Happening**: The well is muddy from a broken sluice. The water seller blames the herbalist to encourage customers to buy his barrels.\n- **If Investigated**: Inspect the sluice and compare the sediment upstream. Repairing it exposes the profiteer without accusing the herbalist.\n\n### GM Notes — Rumour 6\n- **Reality**: essentially true\n- **What's Actually Happening**: A retired ferryman signals to his grandchild so they can meet before the crossing.\n- **If Investigated**: The ferryman knows where the old ferry records are stored and can provide access if asked respectfully.",
     labels: [
       "rumour-generator",
       "local-rumours",
@@ -1100,10 +1100,10 @@ export const extendedSlugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
     kind: "language",
     title: "Iofielefana",
     summary:
-      "A Lyrical & Vowel-rich Common Speech spoken in the Classic Fantasy setting.",
-    lore: '### At a Glance\n- **Genre / Setting:** Classic Fantasy\n- **Tone:** Lyrical & Vowel-rich\n- **Role:** Common Speech\n- **Name Structure:** Compound Words\n\n\n### Example Names\n- **Shisiiafea** — defender (person)\n- **Manavealeashana** — moon walker (person)\n- **Felelelemanayia** — fire seeker (lineage)\n\n### At the Table\n- Use "Mioshana vae" as a greeting meaning "friend of light."\n- Lean on the lyrical & vowel-rich sound profile when voicing speakers.',
+      "A lyrical common speech used by traders and ferry crews in the river towns.",
+    lore: '### At a Glance\n- **Genre / Setting:** Classic Fantasy\n- **Tone:** Lyrical & Vowel-rich\n- **Role:** Common Speech\n- **Name Structure:** Compound Words\n\n\n### Example Names\n- **Mioshanavae** — friend of light (person)\n- **Aeviliofi** — city of water (place)\n- **Nanaaevi** — leader of the city (title)\n\n### At the Table\n- Use "Mioshana vae" as a greeting meaning "friend of light."\n- Lean on the lyrical & vowel-rich sound profile when voicing speakers.',
     content:
-      "## Pronunciation & Phonology\n**Consonants:** l, m, n, s, v, y, f, r, sh\n\n**Vowels:** ae, ia, ea, io, ele, ana, i\n\n**Phonotactics:** CV, CVCV, VCV\n\n\n\n## Cultural Role & Usage\nCommon Speech.\n\n**Register:** Common Speech\n\n\n## Word Formation & Naming Conventions\nNo additional morphology notes.\n\nNo additional naming rules.\n\n### Demonstrated Rules\n- No structured rules.\n\n## Common Vocabulary & Word Bank\n| Word | Pronunciation | Meaning | Part of Speech |\n| --- | --- | --- | --- |\n| mioshana | MIOSHANA | friend |  |\n| elerea | ELEREA | enemy |  |\n| liofi | LIOFI | water |  |\n| vifia | VIFIA | fire |  |\n| iafia | IAFIA | shadow |  |\n| vae | VAE | light |  |\n| aevi | AEVI | city |  |\n| vio | VIO | journey |  |\n| lanavana | LANAVANA | sword-oath |  |\n| nana | NANA | leader |  |\n\n## Sample Phrases\n- **Mioshana iafia** (*Mioshana iafia*) — A friend in shadows. — friend + shadow\n- **Nana aevi** (*Nana aevi*) — The leader of the city. — leader + city\n- **Mioshana vae** (*Mioshana vae*) — Friend of light. — friend + light",
+      "## Pronunciation & Phonology\n**Consonants:** l, m, n, s, v, y, f, r, sh\n\n**Vowels:** ae, ia, ea, io, ele, ana, i\n\n**Phonotactics:** CV, CVCV, VCV\n\n\n\n## Cultural Role & Usage\nUsed for ferry fares, market agreements and greetings between speakers in the river towns.\n\n**Register:** Common Speech\n\n\n## Word Formation & Naming Conventions\n**Word formation:** Combine two known words without reversing their meanings.\n\n**Compounding:** The main word comes first, then the qualifier.\n\n**Personal names:** Name a quality or relationship, followed by a qualifier.\n\n**Place names:** Use the type of place, followed by its distinguishing feature.\n\n**Titles:** Role followed by its domain.\n\n### Demonstrated Rules\n- **Head first (morphology):** Put the head word before the qualifier; join the words when forming names.\n\n## Common Vocabulary & Word Bank\n| Word | Pronunciation | Meaning | Part of Speech |\n| --- | --- | --- | --- |\n| mioshana | MIOSHANA | friend |  |\n| elerea | ELEREA | enemy |  |\n| liofi | LIOFI | water |  |\n| vifia | VIFIA | fire |  |\n| iafia | IAFIA | shadow |  |\n| vae | VAE | light |  |\n| aevi | AEVI | city |  |\n| vio | VIO | journey |  |\n| lanavana | LANAVANA | sword-oath |  |\n| nana | NANA | leader |  |\n\n## Sample Phrases\n- **Mioshana iafia** (*Mioshana iafia*) — A friend in shadows. — friend + shadow\n- **Nana aevi** (*Nana aevi*) — The leader of the city. — leader + city\n- **Mioshana vae** (*Mioshana vae*) — Friend of light. — friend + light",
     labels: ["language", "classic-fantasy", "conlang"],
     status: "active",
     languageProfile: {
@@ -1118,22 +1118,42 @@ export const extendedSlugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
         vowels: ["ae", "ia", "ea", "io", "ele", "ana", "i"],
         phonotactics: ["CV", "CVCV", "VCV"],
       },
+      rules: [
+        {
+          id: "head-first",
+          domain: "morphology",
+          description:
+            "Put the head word before the qualifier; join the words when forming names.",
+        },
+      ],
+      morphology: {
+        wordFormation:
+          "Combine two known words without reversing their meanings.",
+        compounding: "The main word comes first, then the qualifier.",
+      },
       naming: {
+        personalNamePatterns: [
+          "Name a quality or relationship, followed by a qualifier.",
+        ],
+        placeNamePatterns: [
+          "Use the type of place, followed by its distinguishing feature.",
+        ],
+        titlePatterns: ["Role followed by its domain."],
         examples: [
           {
-            name: "Shisiiafea",
-            meaning: "defender",
+            name: "Mioshanavae",
+            meaning: "friend of light",
             use: "person",
           },
           {
-            name: "Manavealeashana",
-            meaning: "moon walker",
-            use: "person",
+            name: "Aeviliofi",
+            meaning: "city of water",
+            use: "place",
           },
           {
-            name: "Felelelemanayia",
-            meaning: "fire seeker",
-            use: "lineage",
+            name: "Nanaaevi",
+            meaning: "leader of the city",
+            use: "title",
           },
         ],
       },

@@ -50,6 +50,19 @@ const RPG_NPC_CONTINUATION: GeneratorContinuationConfig = {
   placement: "near-result",
 };
 
+const ADVENTURE_CONTINUATION: GeneratorContinuationConfig = {
+  headline: "Turn this scenario into an active thread",
+  summary:
+    "Save one adventure prep Note in your local Codex vault, with the scenario in GM notes and a short summary in the main text.",
+  capabilities: [
+    "Link the Note to existing characters, locations and factions as you prepare the next session",
+    "Record which clues the party found, how the clock advanced and what changed after play",
+  ],
+  localFirstNotice: LOCAL_FIRST_NOTICE,
+  ctaLabel: CTA_LABEL,
+  placement: "near-result",
+};
+
 const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
   {
     "minor-magic-item": {
@@ -163,6 +176,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    "god-generator": {
+      headline: "Keep the faith connected to its worshippers",
+      summary:
+        "Save a single deity as one Character or a pantheon as one Faction in your local Codex vault. Record how its worship, promises and rivalries change after play.",
+      capabilities: [
+        "Keep a single deity's rites, secret, myths and hooks in GM notes, or a pantheon's hidden problem and rumours",
+        "Link the entry to its temples, cults, communities and rival powers as you create them",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
     "pantheon-generator": {
       headline: "Bring this pantheon into your world",
       summary:
@@ -186,6 +211,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       ],
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
+    },
+    "language-generator": {
+      headline: "Keep an evolving glossary for your world",
+      summary:
+        "Save the language profile as one Note in your local Codex vault, with pronunciation, naming rules, vocabulary and phrases in main text.",
+      capabilities: [
+        "Keep example names and At the Table reference in GM notes",
+        "Link the Note to the cultures and places that use it, and record new words and agreed meanings after play",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
     },
     "ship-generator": {
       headline: "Dock this vessel in your campaign",
@@ -211,17 +248,31 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
-    "adventure-idea-generator": {
-      headline: "Turn this scenario into an active thread",
+    "adventure-generator": ADVENTURE_CONTINUATION,
+    "adventure-idea-generator": ADVENTURE_CONTINUATION,
+    rumour: {
+      headline: "Keep these rumours in circulation",
       summary:
-        "Stage this adventure idea for your local Codex vault so its public situation, clues, and GM-only outcomes stay separate and ready to open in Adventure Canvas.",
+        "Save all six rumours as one Note in your local Codex vault, with the gossip in the main text and the hidden truth in GM notes.",
       capabilities: [
-        "Keep initial situation, key locations, and clues separate from GM-only complications and outcomes",
-        "Open the scenario in Adventure Canvas to link scenes, actors, and secrets visually",
-        "Connect the thread to existing campaign factions, NPCs, and locations in your vault",
+        "Keep the leads and sources together for the next visit to the settlement",
+        "Mark each rumour as checked or disproved and link the Note to the places and people already in your vault",
       ],
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
+    "point-crawl": {
+      headline: "Keep the chosen route network in your vault",
+      summary:
+        "Check the graph's Saving points count first. Add to my Codex opens an overview Note and creates one Location for each included point in your local vault.",
+      capabilities: [
+        "Preserve connections between selected points, with encounters, clues and route details in each Location's GM notes",
+        "Use the full overview and, when available, its attached diagram for GM prep, then update the Locations as the party explores",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
     },
     "one-shot-adventure-generator": {
       headline: "Save this run sheet for tonight's table",
@@ -331,17 +382,54 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
-    nation: {
-      headline: "Keep building this nation",
+    settlement: {
+      headline: "Keep the settlement ready for a return visit",
       summary:
-        "Save this nation as a Faction entry in your local Codex vault so its government, tensions, and power blocs stay together across sessions.",
+        "Save one new Location in your local Codex vault and record what changes as the party uses its services, explores its places and meets its factions.",
+      capabilities: [
+        "Keep the settlement overview in the Location and people, factions, tension and hooks in GM notes",
+        "Link existing contacts and locations, and expand the places the party actually visits",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
+    tavern: {
+      headline: "Keep the party's favourite meeting place in play",
+      summary:
+        "Save one new Location in your local Codex vault and update its regulars, rumours and unresolved trouble after each visit.",
+      capabilities: [
+        "Keep trouble, hidden problem, hook, regulars and rumours in GM notes",
+        "Link the tavern to existing people and settlements and record what the party learns",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
+    kingdom: {
+      headline: "Keep the realm's power and pressures together",
+      summary:
+        "Save one new Faction in your local Codex vault and track which allies, resources and claims change as the campaign unfolds.",
+      capabilities: [
+        "Keep government detail, hidden problem, rivals, rumours and seeds in GM notes",
+        "Link existing rulers, capitals and factions as you develop them, and update the realm after play",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+      placement: "near-result",
+    },
+    nation: {
+      headline: "Keep the state's decisions and rival powers connected",
+      summary:
+        "Save this nation as one Faction entry in your local Codex vault, so you can record changes in its leadership, borders and political pressures.",
       capabilities: [
         "Store the state overview, power structure, and society in one Faction entry",
-        "Keep power blocs, rumours, and entity seeds as GM-only lore",
+        "Keep power blocs, rumours, the hidden problem and entity seeds as GM-only lore",
         "Develop the leader, rival blocs, and centre of power into linked entries inside your vault",
       ],
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
+      placement: "near-result",
     },
     business: {
       headline: "Keep the enterprise and its people together",

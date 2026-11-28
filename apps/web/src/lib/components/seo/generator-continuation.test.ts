@@ -15,6 +15,11 @@ describe("generator-continuation", () => {
   });
 
   it("returns Wave 1 configs for star-system, npc, rpg-npc-generator, and origin-generator", () => {
+    expect(getGeneratorContinuationConfig("point-crawl")).toMatchObject({
+      headline: "Keep the chosen route network in your vault",
+      ctaLabel: "Add to my Codex",
+      placement: "near-result",
+    });
     const starSystem = getGeneratorContinuationConfig("star-system");
     expect(starSystem).toMatchObject({
       headline: "Keep this system connected",
@@ -82,6 +87,17 @@ describe("generator-continuation", () => {
       headline: "Turn this scenario into an active thread",
       ctaLabel: "Add to my Codex",
       localFirstNotice: "No account needed; stored locally in this browser.",
+    });
+
+    expect(getGeneratorContinuationConfig("adventure-generator")).toBe(
+      adventureIdea,
+    );
+    expect(adventureIdea?.placement).toBe("near-result");
+    expect(adventureIdea?.summary).toContain("GM notes");
+    expect(getGeneratorContinuationConfig("rumour")).toMatchObject({
+      headline: "Keep these rumours in circulation",
+      placement: "near-result",
+      ctaLabel: "Add to my Codex",
     });
 
     const oneShot = getGeneratorContinuationConfig(
@@ -261,6 +277,13 @@ describe("generator-continuation", () => {
         variant: "default",
       }),
     ).toBe(false);
+  });
+
+  it("places the nation continuation beside the explicitly generated result", () => {
+    expect(getGeneratorContinuationConfig("nation")).toMatchObject({
+      placement: "near-result",
+      ctaLabel: "Add to my Codex",
+    });
   });
 
   it("configures the tome, secret society, and world imports with GM-only lore and generation gates", () => {
@@ -464,7 +487,6 @@ describe("generator-continuation", () => {
 
   it("returns null for Wave 2, names, and unknown generator types", () => {
     for (const type of [
-      "point-crawl",
       "names",
       "fantasy-names",
       "unknown-generator",
@@ -545,6 +567,6 @@ describe("generator-continuation", () => {
         isBusy: false,
         variant: "default",
       }),
-    ).toBe(false);
+    ).toBe(true);
   });
 });
