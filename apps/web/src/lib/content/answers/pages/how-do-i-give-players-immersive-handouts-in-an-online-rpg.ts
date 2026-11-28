@@ -164,6 +164,12 @@ export const howDoIGivePlayersImmersiveHandoutsInAnOnlineRpg: AnswerConfigInput 
     },
     relatedTools: [
       {
+        title: "Tome and Forbidden Book Generator",
+        description:
+          "Prepare a dangerous book's visible excerpt, contradictory evidence and private ground truth.",
+        href: "/generators/tome",
+      },
+      {
         title: "Campaign manager",
         description:
           "Keep the public version of each handout as a linked campaign record the party can revisit between sessions.",
