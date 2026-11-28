@@ -940,7 +940,8 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
           "Built-in Culture / Style options shape the batch. Choose Dwarven for a guild hall or border settlement and use Name Type to make a Place or Faction list; use Person for its inhabitants. A custom culture or style label uses generic fantasy tables on the offline roll. Keep one shared sound pattern and vary the first syllable so players do not confuse important names.",
       },
       {
-        title: "Set Gender / Presentation for full Norse and Celtic person names",
+        title:
+          "Set Gender / Presentation for full Norse and Celtic person names",
         detail:
           "On offline full person names, Gender / Presentation changes the surname only in Norse / Viking and Celtic / Gaelic names. It has no effect on first-name-only rolls or names in other cultures, so Any is fine for those. Choose names that distinguish household members or rivals when spoken aloud rather than treating a naming style as a personality.",
       },

@@ -940,7 +940,8 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
           "Yes. Pin a name in Quick names, choose New names to refresh the unpinned choices, then Copy pinned or Copy all. This is useful for building a cast list while the party explores.",
       },
       {
-        question: "What is the difference between quick names and names with notes?",
+        question:
+          "What is the difference between quick names and names with notes?",
         answer:
           "Quick names gives you a copyable list. Generate names with notes provides a detailed draft; use the AI option and Add campaign context for style explanations tied to your setting, or generate an offline name list using the built-in styles.",
       },
@@ -1635,6 +1636,11 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
         answer:
           "Yes. Unlike most Codex Cryptica generators, this one is Superhero / Comic Book only by design — origins are an inherently superhero-genre concept, so there is no genre selector.",
       },
+      {
+        question: "What goes into my vault?",
+        answer:
+          "Add to my Codex saves one new Character with The Origin, What the World Knows and Campaign Hook in the main text. The Full Truth, Ongoing Consequence, Who Knows and Further Hooks belong in GM notes. Review the main text and title before sharing; link the character to existing people and groups yourself.",
+      },
     ],
     relatedLinks: [
       { href: "/generators/npc", label: "RPG NPC Generator" },
@@ -1642,11 +1648,6 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         href: "/generators/bbeg-generator",
         label: "BBEG / Campaign Villain Generator",
-      },
-      {
-        question: "What goes into my vault?",
-        answer:
-          "Add to my Codex saves one new Character with The Origin, What the World Knows and Campaign Hook in the main text. The Full Truth, Ongoing Consequence, Who Knows and Further Hooks belong in GM notes. Review the main text and title before sharing; link the character to existing people and groups yourself.",
       },
     ],
   },

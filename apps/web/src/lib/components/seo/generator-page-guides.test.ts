@@ -238,9 +238,23 @@ describe("generator guide distinctness", () => {
 
   it("guides fantasy name, superhero origin and star-system preparation with actual controls", () => {
     for (const [slug, labels] of [
-      ["fantasy-names", ["Quick names", "Copy pinned", "Generate names with notes"]],
-      ["origin-generator", ["Origin Type", "Tone", "Campaign Hook", "Ongoing Consequence"]],
-      ["star-system", ["System Type", "Civilisation Level", "Scientific Realism", "Develop This World"]],
+      [
+        "fantasy-names",
+        ["Quick names", "Copy pinned", "Generate names with notes"],
+      ],
+      [
+        "origin-generator",
+        ["Origin Type", "Tone", "Campaign Hook", "Ongoing Consequence"],
+      ],
+      [
+        "star-system",
+        [
+          "System Type",
+          "Civilisation Level",
+          "Scientific Realism",
+          "Develop This World",
+        ],
+      ],
     ] as const) {
       const guide = getGeneratorGuide(slug, slug);
       const tips = guide.tips.map((tip) => tip.detail).join(" ");
