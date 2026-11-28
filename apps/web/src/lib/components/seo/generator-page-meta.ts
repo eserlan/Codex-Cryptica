@@ -1425,7 +1425,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Dungeon / Delve Idea Generator",
     eyebrow: "Dungeon Generator",
     introText:
-      "Create rich, multi-layered dungeons, ancient ruins, abandoned facilities, or subterranean vaults for any RPG genre or world theme. Generates evocative premises, original histories, current operational states, signature landmarks, active conflicts, sectors, factions, hazards, secrets, treasures, and adventure hooks. Every generated delve can also become a fully explorable, room-by-room map — the interactive Dungeon Canvas is exclusive to Codex Cryptica, free to open once you're in the app.",
+      "Prepare a delve with a visible landmark, connected sectors, rival occupants and an underlying secret. Decide how the party can enter, negotiate or bypass threats, then save the Location or build an editable Delve Canvas.",
     canonicalPath: "/generators/dungeon-generator",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-dungeon-generator.jpg",
@@ -1442,7 +1442,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "What does the dungeon generator create?",
         answer:
-          "It creates complete, multi-layered dungeon & delve concepts including history, current state, signature landmark, active conflict, 3–5 distinct sectors, resident factions, environmental hazards, secrets, loot, and adventure hooks.",
+          "It creates a site concept with history, current state, signature landmark, sectors, two competing factions, hazards, a central secret, treasures and hooks. Choose Complex Scale for a small lair, medium complex or sprawling megadungeon.",
       },
       {
         question: "Is it only for fantasy games?",
@@ -1452,18 +1452,18 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Does it work without an account?",
         answer:
-          "Yes. Generate and copy dungeons on this page without logging in. Save drafts directly into a browser-local Codex Cryptica vault — no sign-up required.",
+          "Yes. Generate and copy the draft without logging in. Add to my Codex saves one Location in the local browser vault, with site and faction details in its main text and the layout, secret, hazards, treasures and hooks in GM notes. Review the main text for spoilers before sharing.",
       },
       {
         question: "Can I turn this into an explorable map, not just text?",
         answer:
-          "Yes — hit Build Delve Canvas on any generated dungeon to open an interactive, room-by-room map with connected areas, loops, and hidden routes you can rearrange and edit, plus a full GM Dossier with atmosphere, connections, and secrets written out room by room. The dungeon itself is saved as a Location entity in your vault, so it's linked up with the rest of your world from the start. Both are exclusive to Codex Cryptica: they're not part of the plain text generator, but they're still free and need no account — just open your world in the app.",
+          "Build Delve Canvas is a separate action from Add to my Codex. It creates an editable room map and GM Dossier, together with a source Location in the local vault. Use it instead of importing the text first if you want the map; add links to your existing campaign entities yourself.",
         image: "/images/dungeon-canvas.png",
         imageAlt:
           "The interactive Dungeon Canvas showing a two-sector delve map with entrance, hazard, secret, and faction nodes connected by labeled passages",
         inlineImage: "/images/dungeon-canvas-button.png",
         inlineImageAlt:
-          "The Build Delve Canvas button, next to Save to Codex and Copy, on a generated dungeon result",
+          "The Build Delve Canvas button on a generated dungeon result",
         exclusiveLabel:
           "Codex Cryptica exclusive — generate full Delve Canvases and Dossiers inside the app",
         inlineImageCaption:
@@ -2375,7 +2375,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Tome & Forbidden Book Generator",
     eyebrow: "Forbidden Tome Generator",
     introText:
-      "Create sinister grimoires, heretical treatises, and esoteric manuscripts with binding details, readable excerpts, investigation risks, and adventure hooks. Works without login, then saves directly to your local Codex vault.",
+      "Create a grimoire, research log or forbidden archive that gives investigators evidence, not just lore. Work out who holds it, what it claims, what is wrong with that claim and the risks of reading it.",
     canonicalPath: "/generators/tome",
     labels: ["fantasy", "horror", "investigation"],
     ogImage: "https://assets.codexcryptica.com/screenshots/generator-tome.jpg",
@@ -2410,7 +2410,12 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Does the forbidden book generator require an account?",
         answer:
-          "No. You can configure, generate, and copy tome notes without signing in. Selecting 'Save to Codex' stores the draft in your browser's local storage so it imports into your Codex Cryptica campaign vault as a connected Item entity.",
+          "No. Generate and copy the draft without an account. Add to my Codex saves one Item in the browser-local vault. Names under Connected Entities are reference text, not automatically created entities or relationships.",
+      },
+      {
+        question: "Can I give the whole saved Item to players?",
+        answer:
+          "No. Ground Truth for the GM is in GM notes, but the main Item text includes clues, study hazards and hooks. Extract only the passage and physical details the characters have actually discovered. Review the title and summary too.",
       },
     ],
     relatedLinks: [

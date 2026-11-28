@@ -92,7 +92,7 @@ describe("generator-continuation", () => {
 
     const dungeon = getGeneratorContinuationConfig("dungeon-generator");
     expect(dungeon).toMatchObject({
-      headline: "Turn this delve into a playable site",
+      headline: "Keep the delve ready for the party's next visit",
       ctaLabel: "Add to my Codex",
       localFirstNotice: "No account needed; stored locally in this browser.",
     });
