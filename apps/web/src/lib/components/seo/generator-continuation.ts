@@ -37,6 +37,19 @@ const NPC_CONTINUATION: GeneratorContinuationConfig = {
   ctaLabel: CTA_LABEL,
 };
 
+const RPG_NPC_CONTINUATION: GeneratorContinuationConfig = {
+  headline: "Keep this contact ready for their return",
+  summary:
+    "Save this Table Card or Full Dossier as one new Character in your local Codex vault, and record what changed after the encounter.",
+  capabilities: [
+    "Keep labelled knowledge and secrets or dossier reference notes in GM notes",
+    "Link them to people and factions already in your vault and update their price or loyalties after play",
+  ],
+  localFirstNotice: LOCAL_FIRST_NOTICE,
+  ctaLabel: CTA_LABEL,
+  placement: "near-result",
+};
+
 const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
   {
     "star-system": {
@@ -87,8 +100,8 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       ctaLabel: CTA_LABEL,
       placement: "near-result",
     },
-    npc: NPC_CONTINUATION,
-    "rpg-npc-generator": NPC_CONTINUATION,
+    npc: RPG_NPC_CONTINUATION,
+    "rpg-npc-generator": RPG_NPC_CONTINUATION,
     "dnd-npc": NPC_CONTINUATION,
     "origin-generator": {
       headline: "Keep developing this origin",

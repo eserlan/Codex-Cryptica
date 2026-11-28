@@ -11,6 +11,7 @@ import type {
 import {
   deduplicateMarkdownSections,
   getGeneratorHandoffLayout,
+  usesSourceHandoff,
 } from "./generator-document-layout";
 
 export interface GeneratorSaveLayout {
@@ -142,7 +143,7 @@ function resolveSaveBodyAndLore(
   generatorType?: string,
 ): { content: string; lore: string } {
   const summaryPrefix = data.summary ? `*${data.summary}*` : "";
-  if (generatorType === "bbeg-generator") {
+  if (usesSourceHandoff(generatorType)) {
     return {
       content: [summaryPrefix, layout.content].filter(Boolean).join("\n\n"),
       lore: layout.lore,
@@ -190,7 +191,7 @@ export function buildGeneratorSavePayload(
   generatorType?: string,
 ): GeneratorSavePayload {
   const isAdventure =
-    generatorType !== "bbeg-generator" &&
+    !usesSourceHandoff(generatorType) &&
     (data.kind === "adventure" || data.labels.includes("adventure"));
   const { content, lore: initialLore } = resolveSaveBodyAndLore(
     data,

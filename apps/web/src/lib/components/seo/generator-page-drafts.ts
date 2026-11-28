@@ -29,12 +29,19 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
   },
   npc: {
     type: "character",
-    title: "Zephyrus Gray",
-    summary: "A mysterious rogue with a dark past.",
+    title: "Mara Reed",
+    summary:
+      "A human harbour guard who needs the last ferry to leave before the tide turns.",
     content:
-      "### Description\nZephyrus wears a hooded leather cloak and speaks in low whispers. He operates in the shadow of the docks.\n\n### Secret\nHe carries a silver key that opens a vault he refuses to talk about.",
-    lore: "",
-    labels: ["rpg-npc", "Rogue", "Mysterious"],
+      "### The Six Elements\n- **Immediate Want**: Get the party to escort two families onto the last ferry before the harbour closes.\n- **Physical Mannerism**: Counts the passengers on her fingers whenever interrupted.\n- **Sharp Contradiction**: Enforces every dock rule except the one banning unregistered children from boarding.\n- **Relationship Hook**: Owes ferryman Joss Flint a favour for carrying her injured sister home.\n- **Sensory Tag**: Her wool coat smells of creosote and wet rope.\n- **Knowledge & Secrets**: Saw the harbourmaster change the sailing ledger; does not know where the missing cargo went; conceals a second manifest in her boot.\n\n### Table Delivery\nBegin with Mara counting the waiting families. She asks the party to carry their bags aboard before the watch bell; if they challenge the passenger list, she quietly points them towards Joss.",
+    lore: "### At a Glance\n- **Theme / Genre**: Classic Fantasy\n- **Ancestry**: Human\n- **Role**: Guard\n- **Immediate Want**: Get the families onto the last ferry.\n- **Mannerism / Vocal Tell**: Counts passengers on her fingers.\n- **Contradiction**: Breaks the registration rule to protect children.\n- **Relationship Hook**: Owes Joss Flint a favour.\n- **Sensory Tag**: Creosote and wet rope.\n- **Knowledge & Secrets**: Saw the harbourmaster change the sailing ledger; does not know where the missing cargo went; conceals a second manifest in her boot.\n- **Moral Stance**: Common Good\n\n### Faction Connection\nThe Harbour Watch expects her to enforce registration; she prioritises the safety of the families.",
+    labels: [
+      "table-card",
+      "guard",
+      "rpg-character",
+      "npc-generator",
+      "imported-draft",
+    ],
     status: "draft",
   },
   settlement: {

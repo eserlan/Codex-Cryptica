@@ -22,11 +22,11 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     pageTitle:
       "RPG NPC Generator | Fantasy, Cyberpunk, Gothic & Sci-Fi Characters | Codex Cryptica",
     metaDescription:
-      "Generate NPCs across any genre — fantasy, cyberpunk, gothic horror, sci-fi, modern conspiracy, and post-apocalyptic. Each NPC has a secret, faction tie, and table-ready hook.",
+      "Create a quick NPC Table Card or a Full Dossier for fantasy, cyberpunk, horror, sci-fi and more. Give contacts a want, a relationship and something to conceal.",
     introTitle: "RPG NPC Generator",
     eyebrow: "RPG NPC Generator",
     introText:
-      "Create NPCs across any genre with secrets, faction ties, and table-ready hooks. Works without login, then imports into your local Codex vault.",
+      "Need someone to bargain with, question or revisit? Choose a genre, ancestry, role and moral stance, then generate a quick Table Card or a Full Dossier for a recurring character. No account required.",
     canonicalPath: "/generators/npc",
     ogImage: "https://assets.codexcryptica.com/screenshots/generator-npc.jpg",
     ogImageAlt:
@@ -40,24 +40,29 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     ],
     faqs: [
       {
-        question: "Does the D&D NPC generator require an account?",
+        question: "Which prep style should I choose?",
         answer:
-          "No. Generate and copy NPC notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
+          "Table Card gives six cues for a quick encounter: immediate want, mannerism, contradiction, relationship hook, sensory tag, and knowledge and secrets. Full Dossier adds a longer account of who they are, what they want, why they are useful and how to use them, with reference notes about loyalties, leverage and secrets.",
       },
       {
-        question: "What does the RPG NPC generator create?",
+        question: "Can I use this outside D&D?",
         answer:
-          "It generates a complete NPC with a name, ancestry, role, personality traits, a hidden secret, motivation, faction connection, and a table-ready GM hook — structured for immediate use.",
+          "Yes. Choose a vibe to change the available ancestries, roles and moral stances. The result is system-neutral character and roleplaying material, not a combat stat block.",
       },
       {
-        question: "Can I use it outside D&D?",
+        question: "Does campaign context work in both modes?",
         answer:
-          "Yes. The output works for D&D, Pathfinder, OSR games, cyberpunk, and any genre. The generator is system-agnostic.",
+          "AI generation uses your optional campaign context to tailor the draft. Non-AI Table Cards draw from prepared cues without incorporating that text; non-AI Full Dossiers display it in the background, rather than tailoring every detail to it. Dungeon or delve context can add lair-specific notes in either mode.",
       },
       {
-        question: "How does saving a generated NPC work?",
+        question: "Can I use the generator without an account?",
         answer:
-          "Clicking 'Save to Codex' stores the NPC draft in your browser's local storage. Open Codex Cryptica and it imports automatically as a Character entity, ready to link to factions, locations, and campaign notes.",
+          "Yes. Generate or copy the draft without signing in. Add to my Codex opens your local vault and imports one new Character. You can link the character to existing people and factions yourself; named relationships in the draft do not create separate entities or links.",
+      },
+      {
+        question: "What happens to the NPC's secrets?",
+        answer:
+          "When saving a generated NPC, the labelled Table Card Knowledge & Secrets and Full Dossier reference notes stay in GM notes. Check AI-written prose before sharing it. Copy and share links include the complete draft; imported remixes keep the restored text in GM notes because the original split cannot be recovered reliably.",
       },
     ],
     relatedLinks: [

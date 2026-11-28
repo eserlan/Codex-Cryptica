@@ -301,6 +301,29 @@ describe("generator save flows", () => {
     expect(payload.content).not.toContain("The Villain's Plan");
   });
 
+  it("retries an RPG NPC save without exposing the Table Card secret", async () => {
+    const draft = slugDrafts.npc!;
+    const deps = dependencies();
+    deps.store.mockImplementationOnce(() => {
+      throw new Error("storage blocked");
+    });
+    const layout = getGeneratorDocumentLayout(draft);
+    await expect(
+      saveGeneratorOutput(draft, layout, "npc", deps),
+    ).rejects.toThrow("storage blocked");
+    expect(deps.track).not.toHaveBeenCalled();
+    await saveGeneratorOutput(draft, layout, "npc", deps);
+    const payload = JSON.parse(deps.store.mock.calls[1][1]);
+    expect(payload).toMatchObject({
+      type: "character",
+      title: draft.title,
+      labels: draft.labels,
+    });
+    expect(payload.content).not.toContain("second manifest in her boot");
+    expect(payload.lore).toContain("second manifest in her boot");
+    expect(deps.track).toHaveBeenCalledOnce();
+  });
+
   it("continues saving when diagram export fails, but rejects storage failures", async () => {
     const deps = dependencies();
     vi.spyOn(console, "error").mockImplementation(() => {});

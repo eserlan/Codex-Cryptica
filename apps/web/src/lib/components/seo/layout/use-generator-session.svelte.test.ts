@@ -107,6 +107,30 @@ describe("useGeneratorSession", () => {
     expect(ctx.session.generatedData).toEqual(villain);
   });
 
+  it("records NPC Full Dossier source notes privately instead of the preview layout", async () => {
+    const npc = {
+      ...output,
+      summary: "",
+      content: "Known details",
+      lore: "### At a Glance\n- **Secret**: Hidden ledger",
+      labels: ["npc-generator"],
+    };
+    const ctx = setup({
+      generate: vi.fn(async () => npc),
+      generatorType: "npc",
+      documentLayout: { content: "Known details and Hidden ledger", lore: "" },
+    });
+    cleanup = ctx.cleanup;
+    await ctx.session.handleGenerate();
+    expect(hub.addEntity).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "character",
+        content: npc.content,
+        lore: npc.lore,
+      }),
+    );
+  });
+
   it("generates with AI by default, records the result and tracks the run", async () => {
     const ctx = setup();
     cleanup = ctx.cleanup;

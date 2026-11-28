@@ -165,9 +165,9 @@
 </div>
 
 <div class="flex flex-col gap-1.5">
-  <label for="rpgnpc-campaign-context" class={labelClass}
-    >Add campaign context</label
-  >
+  <label for="rpgnpc-campaign-context" class={labelClass}>
+    Add campaign context
+  </label>
   <textarea
     id="rpgnpc-campaign-context"
     name="campaign_context"
@@ -181,8 +181,9 @@
     id="rpgnpc-campaign-context-help"
     class="text-micro text-theme-text/60 leading-relaxed"
   >
-    Add a location, faction, villain, or active problem to aim the NPC at your
-    table.
+    Add a location, faction, villain or active problem for AI to use. Non-AI
+    Full Dossiers display this text in their background; Table Cards do not use
+    it.
   </p>
 </div>
 

@@ -433,32 +433,43 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   npc: {
     summary:
-      "Every table-ready NPC needs three things: a clear role in the scene, a faction or personal stake, and one secret that changes how the party negotiates with them.",
+      "Give an unexpected contact something to ask of the party, not just a name to introduce. Use a Table Card for an encounter now or a Full Dossier for someone whose loyalties and price will matter in later scenes.",
     tips: [
       {
-        title: "Give them an immediate agenda",
+        title: "Choose the person who controls the next step",
         detail:
-          "Decide what the NPC wants in the next ten minutes before the party even speaks to them.",
+          "In Choose their role, a Classic Fantasy Guard can refuse passage while a Merchant can withhold supplies. Pick Common Good under Choose their moral stance if harm to innocent people should change their mind, or Mercenary Instinct if a better bargain should sway them.",
       },
       {
-        title: "Connect them to a place or faction",
+        title: "Give the first conversation a decision",
         detail:
-          "Link the NPC to an existing settlement or guild so their alliances and enemies ripple through the campaign.",
+          "Set Prep style to Table Card for a surprise encounter. Start with the sensory tag and immediate want, then reveal the contradiction only when the players challenge their first impression. For a recurring rival or contact, choose Full Dossier and decide what price they will demand next time.",
       },
       {
-        title: "Leave the secret discoverable",
+        title: "Make the witness useful without making them omniscient",
         detail:
-          "Plant one visible clue in their gear, companions, or ledger that rewards curious players.",
+          "Separate what they witnessed from what they merely suspect or conceal. Let an honest question uncover a genuine lead, then use the relationship hook or faction connection to point the party towards someone who can answer what this NPC cannot.",
       },
     ],
+    linksTitle: "From first meeting to a recurring cast",
     links: [
       {
-        href: "/answers/how-do-i-improvise-npcs-in-dnd",
-        label: "How to improvise NPCs",
+        href: "/answers/how-do-you-improvise-npcs-on-the-spot",
+        label: "Introduce a contact without stopping play",
+        description:
+          "Use the five-beat introduction to establish their role, want and attitude before delivering backstory.",
       },
       {
-        href: "/answers/how-do-i-roleplay-npcs-if-im-not-good-at-acting",
-        label: "Roleplaying without acting",
+        href: "/answers/how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know",
+        label: "Handle broad questions without hiding essential clues",
+        description:
+          "Give the witness's useful account, distinguish evidence from hearsay and offer a lead the party can act on.",
+      },
+      {
+        href: "/answers/how-do-you-organise-npc-relationships",
+        label: "Turn a tentative connection into a changing relationship",
+        description:
+          "Record who owes whom, why, who knows and what could break the arrangement.",
       },
     ],
   },

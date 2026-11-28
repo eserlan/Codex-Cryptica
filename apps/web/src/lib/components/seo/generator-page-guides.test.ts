@@ -54,6 +54,31 @@ function guide(summary: string, detail = "A short tip."): GeneratorGuide {
   return { summary, tips: [{ title: "Tip", detail }] };
 }
 
+describe("RPG NPC guide", () => {
+  it("teaches role and moral stance choices, prep style and witness boundaries", () => {
+    const guide = getGeneratorGuide("npc", "RPG NPC Generator");
+    const tips = guide.tips.map((t) => t.detail).join(" ");
+    for (const label of [
+      "Choose their role",
+      "Choose their moral stance",
+      "Common Good",
+      "Mercenary Instinct",
+      "Prep style",
+      "Table Card",
+      "Full Dossier",
+      "merely suspect",
+    ])
+      expect(tips).toContain(label);
+    expect(guide.links?.map((l) => l.href)).toEqual([
+      "/answers/how-do-you-improvise-npcs-on-the-spot",
+      "/answers/how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know",
+      "/answers/how-do-you-organise-npc-relationships",
+    ]);
+    expect(guide.links?.every((l) => l.description)).toBe(true);
+    expect(tips).not.toMatch(/[–—]/);
+  });
+});
+
 describe("generator guide distinctness", () => {
   it("has no copy shared across specific guides", () => {
     expect(

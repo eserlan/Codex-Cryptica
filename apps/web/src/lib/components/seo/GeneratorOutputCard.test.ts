@@ -917,40 +917,45 @@ describe("GeneratorOutputCard", () => {
       expect(onSaveToCodex).toHaveBeenCalledTimes(1);
     });
 
-    it("places BBEG's continuation beside the result actions and reuses Save", async () => {
-      const onCopyMarkdown = vi.fn();
-      const { container, onSaveToCodex } = renderCard({
-        generatorType: "bbeg-generator",
-        generatedData: {
-          ...sampleData,
-          type: "character",
-          labels: ["villain", "bbeg-generator", "imported-draft"],
-        },
-        generatedSingular: "Character",
-        onCopyMarkdown,
-      });
-      const callout = screen.getByTestId("generator-continuation-callout");
-      const copy = screen.getByRole("button", { name: /^Copy$/ });
-      const section = screen.getByText(
-        "Brotherhood of Hollow Crown is a fallen order with real authority.",
-      );
-      expect(
-        copy.compareDocumentPosition(callout) &
-          Node.DOCUMENT_POSITION_FOLLOWING,
-      ).toBeTruthy();
-      expect(
-        callout.compareDocumentPosition(section) &
-          Node.DOCUMENT_POSITION_FOLLOWING,
-      ).toBeTruthy();
-      expect(container.querySelectorAll("#save-to-codex-btn")).toHaveLength(1);
-      expect(callout.textContent).toContain("one new Character");
-      await fireEvent.click(copy);
-      expect(onCopyMarkdown).toHaveBeenCalledOnce();
-      await fireEvent.click(
-        screen.getByRole("button", { name: "Add to my Codex" }),
-      );
-      expect(onSaveToCodex).toHaveBeenCalledOnce();
-    });
+    it.each(["bbeg-generator", "npc", "rpg-npc-generator"])(
+      "places %s continuation beside the result actions and reuses Save",
+      async (generatorType) => {
+        const onCopyMarkdown = vi.fn();
+        const { container, onSaveToCodex } = renderCard({
+          generatorType,
+          generatedData: {
+            ...sampleData,
+            type: "character",
+            labels: ["villain", "bbeg-generator", "imported-draft"],
+          },
+          generatedSingular: "Character",
+          onCopyMarkdown,
+        });
+        const callout = screen.getByTestId("generator-continuation-callout");
+        const copy = screen.getByRole("button", { name: /^Copy$/ });
+        const section = screen.getByText(
+          "Brotherhood of Hollow Crown is a fallen order with real authority.",
+        );
+        expect(
+          copy.compareDocumentPosition(callout) &
+            Node.DOCUMENT_POSITION_FOLLOWING,
+        ).toBeTruthy();
+        expect(
+          callout.compareDocumentPosition(section) &
+            Node.DOCUMENT_POSITION_FOLLOWING,
+        ).toBeTruthy();
+        expect(container.querySelectorAll("#save-to-codex-btn")).toHaveLength(
+          1,
+        );
+        expect(callout.textContent).toContain("one new Character");
+        await fireEvent.click(copy);
+        expect(onCopyMarkdown).toHaveBeenCalledOnce();
+        await fireEvent.click(
+          screen.getByRole("button", { name: "Add to my Codex" }),
+        );
+        expect(onSaveToCodex).toHaveBeenCalledOnce();
+      },
+    );
 
     it("hides the callout and keeps Save to Codex on seed/example drafts, unconfirmed runs, busy states, and Wave 2 generators", () => {
       for (const overrides of [

@@ -57,6 +57,47 @@ const allExpectedSlugs: ValidSlug[] = [
   "mystery-investigation",
 ];
 
+describe("RPG NPC surrounding copy", () => {
+  it("explains both prep styles and their real context and sharing boundaries", () => {
+    const meta = slugMeta.npc;
+    expect(meta.introText).toContain("Table Card or a Full Dossier");
+    const faq = meta.faqs?.map((f) => f.answer).join(" ");
+    for (const phrase of [
+      "without incorporating that text",
+      "display it in the background",
+      "one new Character",
+      "do not create separate entities or links",
+      "GM notes",
+      "complete draft",
+      "imported remixes",
+    ])
+      expect(faq).toContain(phrase);
+    expect(
+      meta.faqs?.every(
+        (f) => !f.question.includes("D&D NPC generator require"),
+      ),
+    ).toBe(true);
+  });
+  it("preloads a concrete six-element Table Card example with actual labelled sections", () => {
+    const draft = slugDrafts.npc!;
+    expect(draft.title).toBe("Mara Reed");
+    expect(draft.labels).toContain("table-card");
+    for (const field of [
+      "Immediate Want",
+      "Physical Mannerism",
+      "Sharp Contradiction",
+      "Relationship Hook",
+      "Sensory Tag",
+      "Knowledge & Secrets",
+    ])
+      expect(draft.content).toContain(`**${field}**`);
+    expect(draft.content).toContain("### Table Delivery");
+    expect(draft.lore).toContain("### At a Glance");
+    expect(draft.lore).toContain("### Faction Connection");
+    expect(draft.lore).toContain("second manifest in her boot");
+  });
+});
+
 describe("generator-page-meta completeness and social preview tags", () => {
   it("uses the Mystery & Investigation Generator's rendered social screenshot", () => {
     expect(slugMeta["mystery-investigation"].ogImage).toBe(

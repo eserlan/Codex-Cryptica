@@ -34,6 +34,24 @@ describe("getGeneratorDocumentLayout", () => {
     expect(layout.lore).toContain(secret);
   });
 
+  it("moves continued Table Card secrets without consuming the next public cue or section", () => {
+    const layout = getGeneratorDocumentLayout({
+      type: "character",
+      title: "Guard",
+      labels: ["table-card"],
+      content:
+        "### The Six Elements\n- **Knowledge & Secrets**: A witness lied.\n  They have a second ledger.\n  - **Proof**: a seal.\n- **Sensory Tag**: Wet wool.\n\n### Table Delivery\nTalk at the gate.",
+      lore: "### At a Glance\n- **Role**: Guard",
+      status: "active",
+    });
+    expect(layout.content).toContain("Wet wool");
+    expect(layout.content).toContain("Talk at the gate");
+    for (const secret of ["A witness lied", "second ledger", "a seal"]) {
+      expect(layout.content).not.toContain(secret);
+      expect(layout.lore).toContain(secret);
+    }
+  });
+
   it("keeps Table Card secrets private when lore uses an unexpected heading", () => {
     const secret = "The ledger is a forgery; she conceals the stolen signet.";
     const layout = getGeneratorDocumentLayout({
