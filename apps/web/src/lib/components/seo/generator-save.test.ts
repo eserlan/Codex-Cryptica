@@ -665,6 +665,48 @@ describe("generator save payloads", () => {
     expect(serialized).not.toContain(hiddenProblem!);
   });
 
+  it("keeps a Hidden Problem under an unexpected Nation lore heading private", () => {
+    const hiddenProblem = "The ruler concealed the failed pumps.";
+    const nation: GeneratorOutput = {
+      ...baseOutput,
+      type: "faction",
+      title: "The Brasswater Compact",
+      content: "### The State\nThe compact controls the river gates.",
+      lore: `### Hidden Problem\n${hiddenProblem}`,
+      labels: ["nation-generator"],
+      status: "active",
+    };
+    const layout = getGeneratorDocumentLayout(nation);
+    const payload = buildGeneratorSavePayload(nation, layout);
+
+    expect(layout.content).not.toContain(hiddenProblem);
+    expect(layout.lore).toContain(hiddenProblem);
+    expect(payload.content).not.toContain(hiddenProblem);
+    expect(payload.lore).toContain(hiddenProblem);
+
+    const entity = {
+      id: "nation-malformed-lore",
+      type: payload.type,
+      title: payload.title,
+      content: payload.content,
+      lore: payload.lore,
+      labels: payload.labels,
+      status: payload.status,
+      aliases: [],
+      connections: [],
+    } satisfies Entity;
+    const bundle = GuestExporter.export({
+      entities: [entity],
+      defaultVisibility: "visible",
+      activeTheme: { primaryColor: "#000000" },
+      publishId: "nation-malformed-lore-export-test",
+      vaultTitle: "Test Vault",
+      publisherVersion: "test",
+    });
+
+    expect(JSON.stringify(bundle)).not.toContain(hiddenProblem);
+  });
+
   it("keeps dark-fantasy-faction NPCs, internal conflict, rival, and secret out of guest exports", async () => {
     const { generateDarkFactionLocal } = await import("generator-engine");
     const faction = generateDarkFactionLocal(

@@ -94,6 +94,7 @@ const LAYOUT_RULES: LayoutRule[] = [
   },
   {
     label: "nation-generator",
+    unrecognizedLoreToRail: true,
     railSections: new Set([
       "At a Glance",
       "Power Blocs",
