@@ -1185,23 +1185,48 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "mystery-investigation": {
     summary:
-      "Keep tabletop mysteries moving with three independent clues per revelation so a single failed skill check never stalls the session.",
+      "Start from a fixed answer, then give players several ways to establish it. Use the draft as a case file, not a sequence of scenes they have to visit in order. Scope, Clue density and Danger / pressure guide AI-generated cases; the offline fallback does not apply those settings.",
     tips: [
       {
-        title: "Anchor clues to people and places",
+        title: "Choose the question and the size of the cast",
         detail:
-          "Every node in the mystery graph should point to at least one witness, physical trace, or ledger.",
+          "For AI-generated cases, set Mystery type to Theft, Disappearance or the event the players can actually investigate. Pair Scope set to One-shot case with Complexity / suspect count set to Lean (3 suspects) if you have one evening. Give every innocent suspect something to hide that the players can disprove.",
       },
       {
-        title: "Escalate when the trail cools",
+        title: "Make the essential inference independently testable",
         detail:
-          "If players hesitate, have the culprit try to cover their tracks—leaving a fresh lead behind.",
+          "For AI-generated cases, use Clue density set to Generous for a group new to investigation. For each conclusion the players need, check that at least two leads come from different sources: for example, an altered ledger and a witness who saw a delivery. Give a plausible way to test each rather than requiring one successful roll.",
+      },
+      {
+        title: "Advance the situation, not the solution",
+        detail:
+          "For AI-generated cases, Danger / pressure sets how urgently the case demands action. With Low, let the party follow a wrong lead without losing the case. With High, decide what changes at the next deadline and use the Next NPC Moves table in GM notes when the party stalls. Never change who did it to make a theory right.",
+      },
+      {
+        title: "Give the discovery a consequence",
+        detail:
+          "In Optional Campaign Context, name someone who needs the case solved and what they stand to lose. After drafting, decide how a supported accusation, a partial answer or an unsolved case changes that person's relationship with the party.",
       },
     ],
+    linksTitle: "From a fair clue trail to an unexpected conclusion",
     links: [
       {
+        href: "/answers/how-do-you-run-a-mystery-without-railroading",
+        label: "Run a case without prescribing the route",
+        description:
+          "Make essential information reachable from independent leads.",
+      },
+      {
         href: "/answers/how-do-i-get-a-stalled-rpg-investigation-moving-again",
-        label: "Unsticking stalled investigations",
+        label: "Move a stalled investigation forward",
+        description:
+          "Change what the suspects do without handing out the solution.",
+      },
+      {
+        href: "/answers/how-do-you-handle-players-reaching-the-wrong-conclusion-in-an-rpg-mystery",
+        label: "Let the party test a plausible but wrong conclusion",
+        description:
+          "Give theories observable consequences while keeping the truth fixed.",
       },
     ],
   },
