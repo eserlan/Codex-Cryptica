@@ -91,9 +91,19 @@ describe("FaqSection image view", () => {
 
     const dialog = screen.getByRole("dialog", { name: "Image view" });
     expect(dialog).toBeTruthy();
-    await fireEvent.click(
-      screen.getByRole("button", { name: "Dismiss image view" }),
+    const backdrop = screen.getByRole("button", { name: "Dismiss image view" });
+    await fireEvent.click(backdrop);
+    expect(backdrop.hasAttribute("inert")).toBe(true);
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Image view" })).toBeNull(),
     );
+
+    await fireEvent.click(openButton);
+    const reopenedBackdrop = screen.getByRole("button", {
+      name: "Dismiss image view",
+    });
+    reopenedBackdrop.focus();
+    await fireEvent.keyDown(reopenedBackdrop, { key: "Escape" });
     await waitFor(() =>
       expect(screen.queryByRole("dialog", { name: "Image view" })).toBeNull(),
     );

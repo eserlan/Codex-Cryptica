@@ -19,13 +19,16 @@
   } = $props();
 
   let lightboxImage = $state<{ src: string; alt: string } | null>(null);
+  let lightboxBackdrop = $state<HTMLButtonElement>();
   let closeLightboxBtn = $state<HTMLButtonElement>();
 
   function openLightbox(src: string, alt: string) {
+    lightboxBackdrop?.removeAttribute("inert");
     lightboxImage = { src, alt };
   }
 
   function closeLightbox() {
+    lightboxBackdrop?.setAttribute("inert", "");
     lightboxImage = null;
   }
 
@@ -148,8 +151,10 @@
   <button
     type="button"
     aria-label="Dismiss image view"
+    bind:this={lightboxBackdrop}
     class="fixed inset-0 z-[200] cursor-default bg-black/90 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-inset focus-visible:outline-none"
     onclick={closeLightbox}
+    onkeydown={handleKeydown}
     onpointerdown={(e) => e.preventDefault()}
     transition:fade={{ duration: 200 }}
   ></button>
