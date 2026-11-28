@@ -1,3 +1,4 @@
+import { getCalendarPreviewLayout } from "./generator-calendar-twist-handoff";
 import { describe, expect, it } from "vitest";
 import { GuestExporter } from "@codex/vault-engine";
 import type { Entity } from "schema";
@@ -232,6 +233,148 @@ describe("generator save payloads", () => {
     expect(payload.lore.match(/second manifest in her boot/g)).toHaveLength(1);
     expect(payload.content).toContain("Table Delivery");
     expect(payload.lore).toContain("Faction Connection");
+  });
+
+  it("preserves every observance's repeated headings in preview and Vault handoff", () => {
+    const output = generateHolidayLocal(
+      {
+        setSize: "A calendar of 6 observances",
+        includeControversial: true,
+      },
+      () => 0.21,
+    ) as GeneratorOutput;
+    const layout = getCalendarPreviewLayout(output);
+    expect(layout.content.match(/^### Origin$/gm)).toHaveLength(6);
+    expect(layout.content.match(/^### Traditions$/gm)).toHaveLength(6);
+    const payload = buildGeneratorSavePayload(
+      output,
+      layout,
+      undefined,
+      "holiday",
+    );
+    expect(payload.content).toContain(output.content);
+    expect(payload.content.match(/^### At the table$/gm)).toHaveLength(6);
+    for (const day of output.observances ?? []) {
+      expect(payload.content).toContain(day.traditions);
+      if (day.hiddenTruth) {
+        expect(payload.content).not.toContain(day.hiddenTruth);
+        expect(payload.lore).toContain(day.hiddenTruth);
+      }
+    }
+  });
+
+  it("routes Table Card secrets out of Holiday previews and saved Note content", () => {
+    const secret = "The midsummer rite conceals the vanished heir.";
+    const output: GeneratorOutput = {
+      ...baseOutput,
+      type: "note",
+      title: "The Lantern Calendar",
+      content:
+        "### Observance One\n- **Knowledge & Secrets**: " +
+        secret +
+        "\n\n### Observance Two\n- **Traditions**: Ring the bells.",
+      lore: "### GM Reference\nThe heir's route is still unknown.",
+      labels: ["holiday-generator", "table-card"],
+    };
+
+    const preview = getCalendarPreviewLayout(output);
+    expect(preview.content).toContain("### Observance One");
+    expect(preview.content).toContain("### Observance Two");
+    expect(preview.content).not.toContain(secret);
+    expect(preview.lore).toContain(secret);
+
+    const payload = buildGeneratorSavePayload(
+      output,
+      preview,
+      undefined,
+      "holiday",
+    );
+    expect(payload.content).not.toContain(secret);
+    expect(payload.lore).toContain(secret);
+  });
+
+  it("preserves Holiday public bullets and routes indented secrets through preview and save", () => {
+    const secret = "The captain sank the relief ship.";
+    const publicDetail = "Traditions: ring the bells";
+    const output: GeneratorOutput = {
+      ...baseOutput,
+      type: "note",
+      title: "The Bell Calendar",
+      content: `### Observance One\n  - **Knowledge & Secrets**: ${secret}\n- ${publicDetail}`,
+      lore: "The inscription uses - **Knowledge & Secrets** as a label.",
+      labels: ["holiday-generator", "table-card"],
+    };
+
+    const preview = getCalendarPreviewLayout(output);
+    expect(preview.content).toContain(publicDetail);
+    expect(preview.content).not.toContain(secret);
+    expect(preview.lore).toContain(secret);
+
+    const payload = buildGeneratorSavePayload(
+      output,
+      preview,
+      undefined,
+      "holiday",
+    );
+    expect(payload.content).toContain(publicDetail);
+    expect(payload.content).not.toContain(secret);
+    expect(payload.lore).toContain(secret);
+  });
+
+  it("keeps fenced Holiday secrets private in preview and saved Note", () => {
+    const secret = [
+      "- **Knowledge & Secrets**: The hidden history.",
+      "```text",
+      "- Witness: the missing heir is alive.",
+      "### Secret evidence",
+      "A forged ledger.",
+      "```",
+      "The watch is compromised.",
+    ].join("\n");
+    const output: GeneratorOutput = {
+      ...baseOutput,
+      type: "note",
+      content: `### Observance One\n${secret}\n- Public tradition: Bells.\n\n### Observance Two\nPublic feast.`,
+      lore: "### GM Reference\nPrevious notes.",
+      labels: ["holiday-generator", "table-card"],
+    };
+    const preview = getCalendarPreviewLayout(output);
+    const payload = buildGeneratorSavePayload(
+      output,
+      preview,
+      undefined,
+      "holiday",
+    );
+    for (const result of [preview, payload]) {
+      expect(result.content).toContain("Public tradition: Bells.");
+      expect(result.content).toContain("Public feast.");
+      expect(result.content).not.toContain("missing heir");
+      expect(result.content).not.toContain("Secret evidence");
+      expect(result.content).not.toContain("forged ledger");
+      expect(result.content).not.toContain("watch is compromised");
+      expect(result.lore).toContain(secret);
+    }
+  });
+
+  it("preserves the plot twist preparation in GM notes, including the generated summary", () => {
+    const output = {
+      ...slugDrafts["plot-twist-generator"]!,
+      summary: "The clerk paid the smugglers.",
+      labels: ["adventure", "npc-generator", "imported-draft"],
+    };
+    const layout = getGeneratorDocumentLayout(output);
+    const payload = buildGeneratorSavePayload(
+      output,
+      layout,
+      undefined,
+      "plot-twist-generator",
+    );
+    expect(payload.type).toBe("note");
+    expect(payload.content).not.toContain("The Reveal");
+    expect(payload.content).not.toContain(output.summary);
+    expect(payload.lore).toContain(output.summary);
+    expect(payload.lore).toContain(output.content);
+    expect(payload.lore).toContain(output.lore);
   });
 
   it("keeps controversial holiday history out of saved content and guest exports", () => {

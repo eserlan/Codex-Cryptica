@@ -157,6 +157,32 @@ describe("useGeneratorSession", () => {
     );
   });
 
+  it("keeps Plot Twist summaries and reveals in Session Hub GM notes", async () => {
+    const twist = {
+      ...output,
+      type: "note" as const,
+      summary: "The patron paid the smugglers.",
+      content: "### The Reveal\nThe patron is behind the theft.",
+      lore: "GM consequence.",
+    };
+    const ctx = setup({
+      generate: vi.fn(async () => twist),
+      generatorType: "plot-twist-generator",
+    });
+    cleanup = ctx.cleanup;
+    await ctx.session.handleGenerate();
+    expect(hub.addEntity).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: expect.not.stringContaining(twist.summary),
+        summary: undefined,
+        lore: expect.stringContaining(twist.summary),
+      }),
+    );
+    expect(hub.addEntity).toHaveBeenCalledWith(
+      expect.objectContaining({ lore: expect.stringContaining(twist.content) }),
+    );
+  });
+
   it("generates with AI by default, records the result and tracks the run", async () => {
     const ctx = setup();
     cleanup = ctx.cleanup;

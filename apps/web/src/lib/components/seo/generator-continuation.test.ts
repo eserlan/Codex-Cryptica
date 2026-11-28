@@ -136,7 +136,7 @@ describe("generator-continuation", () => {
 
     const plotTwist = getGeneratorContinuationConfig("plot-twist-generator");
     expect(plotTwist).toMatchObject({
-      headline: "Keep this reversal tied to your plot",
+      headline: "Keep the reversal ready, not revealed",
       ctaLabel: "Add to my Codex",
       localFirstNotice: "No account needed; stored locally in this browser.",
     });
@@ -185,9 +185,9 @@ describe("generator-continuation", () => {
   it("configures the holiday as a Note import with GM-only lore and gates it on completed generation", () => {
     const config = getGeneratorContinuationConfig("holiday");
     expect(config).not.toBeNull();
-    expect(config?.capabilities.join(" ")).toContain("Note entry");
-    expect(config?.capabilities.join(" ")).toContain("GM-only lore");
-    expect(config?.capabilities.join(" ")).toContain("remove table hooks");
+    expect(config?.summary).toContain("one new Note");
+    expect(config?.capabilities.join(" ")).toContain("GM notes");
+    expect(config?.capabilities.join(" ")).toContain("At the table tensions");
   });
 
   it("configures the encounter as an Event import with GM-only lore and gates it on completed generation", () => {

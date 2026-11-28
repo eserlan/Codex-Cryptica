@@ -28,12 +28,12 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
     type: "note",
     title: "Lanterns for the Returning Tide",
     summary:
-      "A harbour remembrance for neighbours who kept the river gate open and those who did not return.",
+      "A harbour remembrance for the rescuers who kept the river gate open and those who did not return.",
     content:
-      "## Lanterns for the Returning Tide\n\n**Type:** Memorial and seasonal observance\n\n**When:** The first calm night after the autumn equinox\n\nAt dusk, families carry covered lanterns to the quay and leave one place empty at supper. The official account credits the governor; dock families remember the rope crews who disobeyed the closure order.\n\n### At the table\nA newly found gate ledger names the official who ordered the rescue route closed. The governor's heir is due to lead this year's procession.",
-    lore: "## GM Notes\nThe ledger is authentic. The rope crews kept the river gate open against orders, but later records credited the governor.",
+      "## Lanterns for the Returning Tide\n\n**Type:** Memorial and seasonal observance\n**When:** The first calm night after the autumn equinox\n**Observed by:** Harbour families and river pilots\n\n### Origin\nThe lower quay survived the autumn flood when the rope crews kept the river gate open long enough for the last rescue boats to return.\n\n### Traditions\nAt dusk, residents carry covered lanterns to the quay, then leave one place empty at supper for the crews lost that night.\n\n### Food, dress and symbols\nSalt cakes, blue wool cords and lamps with a single covered pane.\n\n### Taboos and variations\nNever extinguish another family's lantern. The governor's procession stops at the gate; river pilots walk the full rescue route and name the missing crews.\n\n### What outsiders misunderstand\nThe empty place is not an invitation for a traveller to join the meal.\n\n### What people believe\nThe official account credits the governor for the rescue. Dock families honour the rope crews who worked through the flood.\n\n### At the table\nA pilot asks the party to protect a newly found gate ledger until the procession reaches the quay. They could escort the pilot or persuade the governor's heir to hear the evidence privately. If they decline, the pilot reads it alone.",
+    lore: "## GM-only history\nThe ledger is authentic: the governor ordered the gate closed, and the crews disobeyed. The heir does not know what her predecessor did.",
     labels: ["holiday-generator", "observance", "memorial"],
-    status: "draft",
+    status: "active",
     observances: [
       {
         name: "Lanterns for the Returning Tide",
@@ -41,8 +41,11 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
         when: "The first calm night after the autumn equinox",
         observers: "Harbour families and river pilots",
         traditions:
-          "Carry covered lanterns to the quay and leave one place empty at supper",
-        tension: "A newly found gate ledger challenges the official account.",
+          "Carry covered lanterns to the quay and leave one place empty at supper.",
+        hiddenTruth:
+          "The governor ordered the gate closed and the crews disobeyed.",
+        tension:
+          "A pilot asks the party to protect a ledger until the procession reaches the quay.",
       },
     ],
   },

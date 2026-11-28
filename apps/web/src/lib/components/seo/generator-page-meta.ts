@@ -1536,7 +1536,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Plot Twist & Complication Generator",
     eyebrow: "Plot Twist Generator",
     introText:
-      "Turn an established situation into a fair, playable reversal or complication. Keep the facts that matter, overturn an assumption, and give the players new choices.",
+      "Plan a reversal for an existing campaign problem. Start with what the players know, distinguish their assumptions from established facts, and prepare fair clues, consequences and choices instead of a scripted surprise.",
     canonicalPath: "/generators/plot-twist-generator",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-plot-twist-generator.jpg",
@@ -1549,6 +1549,23 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "quest twist creator",
       "tabletop plot reversals",
     ],
+    faqs: [
+      {
+        question: "How do I avoid invalidating earlier discoveries?",
+        answer:
+          "Write the facts already established in Avoid / constraints (optional) and distinguish them from theories in Current situation / premise. Review Why It Makes Sense and discard any reversal that requires changing those facts.",
+      },
+      {
+        question: "What if the players discover the twist early?",
+        answer:
+          "Let them act on it. The Reveal is a fact, not a required scene. Present the Immediate Consequences and New Choices according to what the players do, even if their early discovery prevents the planned crisis.",
+      },
+      {
+        question: "What goes into my vault?",
+        answer:
+          "Add to my Codex saves one Note, with the draft, reveal and clue schedule in GM notes. The generated title remains visible, so rename it if it gives away the twist. Link the Note to existing people, quests and places yourself.",
+      },
+    ],
   },
   holiday: {
     pageTitle:
@@ -1558,7 +1575,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Holiday & Festival Generator",
     eyebrow: "Worldbuilding Calendar Generator",
     introText:
-      "Create observances that feel like they grew from a society's history, climate, beliefs, and conflicts. Generate one memorable day or a coherent calendar, from celebratory festivals to contested memorials, without needing an account.",
+      "Prepare a festival or memorial the party can encounter in play, from a town's closed market to a disputed national ceremony. Choose one day or a calendar of 6, 10 or 14 observances, with origins, timing, traditions and tensions.",
     canonicalPath: "/generators/holiday",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-holiday.jpg",
@@ -1580,12 +1597,22 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Can I include historical figures and events?",
         answer:
-          "Yes. Add people or events as optional context. The generator treats them as candidates and only builds observances around those a culture might plausibly commemorate.",
+          "Yes. Add Important people or Important events and use the AI option to ground the observances in your campaign. Treat these as possible commemorations rather than a requirement to create a holiday for every event.",
       },
       {
         question: "Does it only create cheerful festivals?",
         answer:
           "No. Results can include holy days, fasts, memorials, civic holidays, market fairs, rites of passage, celestial observances, and contested or secret traditions.",
+      },
+      {
+        question: "Does saving create dates on my campaign timeline?",
+        answer:
+          "No. Add to my Codex saves one Note containing the single observance or the whole calendar, not individual Events or dated timeline entries. Use the When fields to add dates to your timeline, and link the Note to existing settlements or factions yourself.",
+      },
+      {
+        question: "Can I give the saved Note to players?",
+        answer:
+          "Hidden history belongs in GM notes, but the main Note includes At the table tensions. Read those and the generated title and summary before sharing, and remove anything that would spoil the scene.",
       },
     ],
     relatedLinks: [

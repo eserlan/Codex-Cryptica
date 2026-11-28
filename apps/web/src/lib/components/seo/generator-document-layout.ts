@@ -278,38 +278,64 @@ interface MarkdownSection {
   body: string;
 }
 
-function splitMarkdownSections(markdown: string): MarkdownSection[] {
+function splitMarkdownSections(
+  markdown: string,
+  respectFences = false,
+): MarkdownSection[] {
   const normalized = markdown.trim();
   if (!normalized) return [];
 
-  // ⚡ Bolt Optimization: Replace Array.from(matchAll).map() with an imperative iterator loop
-  // to avoid intermediate array allocations, reducing GC pressure for large documents.
-  const iterator = normalized.matchAll(/^#{2,3}\s+(.+)$/gm);
   const sections: MarkdownSection[] = [];
-  let prevMatch: RegExpExecArray | null = null;
-
-  for (const match of iterator) {
-    if (!prevMatch) {
-      const preamble = normalized.slice(0, match.index ?? 0).trim();
-      if (preamble) {
-        sections.push({ heading: "", body: preamble });
-      }
-    } else {
-      const heading = prevMatch[1]?.trim() ?? "";
-      const start = prevMatch.index ?? 0;
-      const end = match.index ?? normalized.length;
-      sections.push({ heading, body: normalized.slice(start, end).trim() });
-    }
-    prevMatch = match;
+  let heading = "";
+  let start = 0;
+  let foundHeading = false;
+  for (const match of findMarkdownHeadings(normalized, respectFences)) {
+    const body = normalized.slice(start, match.index).trim();
+    if (body) sections.push({ heading, body });
+    heading = match.heading;
+    start = match.index;
+    foundHeading = true;
   }
-
-  if (prevMatch) {
-    const heading = prevMatch[1]?.trim() ?? "";
-    const start = prevMatch.index ?? 0;
+  if (foundHeading) {
     sections.push({ heading, body: normalized.slice(start).trim() });
   }
-
   return sections;
+}
+
+/** Scan without allocating an intermediate array; headings in fences are literal text. */
+function* findMarkdownHeadings(markdown: string, respectFences: boolean) {
+  let fence: string | null = null;
+  const pattern = respectFences
+    ? /^(?:[ \t]*(?:`{3,}|~{3,})[^\r\n]*|#{2,3}[ \t]+(.+))$/gm
+    : /^#{2,3}\s+(.+)$/gm;
+  for (const match of markdown.matchAll(pattern)) {
+    if (!match[1]) {
+      fence = updateMarkdownFence(match[0], fence);
+    } else if (fence === null) {
+      yield { heading: match[1].trim(), index: match.index ?? 0 };
+    }
+  }
+}
+
+/** Fences close only with a matching marker of at least the opening length.
+ * Allow indentation for fenced continuations within list items.
+ */
+function updateMarkdownFence(
+  line: string,
+  fence: string | null,
+): string | null {
+  const match = /^[ \t]*(`{3,}|~{3,})(.*)$/.exec(line);
+  if (!match) return fence;
+  const [, marker, suffix] = match;
+  if (fence !== null) {
+    return marker[0] === fence[0] &&
+      marker.length >= fence.length &&
+      !suffix.trim()
+      ? null
+      : fence;
+  }
+  // A backtick fence cannot have a backtick in its info string.
+  return marker[0] === "`" && suffix.includes("`") ? null : marker;
 }
 
 function extractBullets(body: string, labels: Set<string>) {
@@ -331,21 +357,79 @@ function extractBullets(body: string, labels: Set<string>) {
 /** Keep an entire labelled secret bullet, including wrapped/nested lines. */
 function extractTableCardSecretBlocks(body: string) {
   const moved: string[] = [];
-  const kept = body.replace(
-    /^-[ \t]+\*\*Knowledge & Secrets\*\*[^\n]*(?:\n(?!-[ \t]+\*\*[^*\n]+\*\*)[^\n]*)*/gm,
-    (block) => {
-      moved.push(block.trim());
-      return "";
-    },
-  );
-  return { kept: kept.trim(), moved };
+  const kept: string[] = [];
+  const lines = body.split("\n");
+  let fence: string | null = null;
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index] ?? "";
+    const nextFence = updateMarkdownFence(line, fence);
+    if (fence !== null || nextFence !== null) {
+      kept.push(line);
+      fence = nextFence;
+      continue;
+    }
+    const secretIndent = getTableCardSecretIndent(line);
+    if (secretIndent === null) {
+      kept.push(line);
+      continue;
+    }
+
+    const blockEnd = findSecretBlockEnd(lines, index, secretIndent);
+    moved.push(
+      lines
+        .slice(index, blockEnd + 1)
+        .join("\n")
+        .trim(),
+    );
+    index = blockEnd;
+  }
+
+  return { kept: kept.join("\n").trim(), moved };
+}
+
+function getTableCardSecretIndent(line: string): number | null {
+  const match = line.match(/^([ \t]{0,3})-[ \t]+\*\*Knowledge & Secrets\*\*/);
+  return match ? getMarkdownIndentWidth(match[1] ?? "") : null;
+}
+
+function findSecretBlockEnd(
+  lines: string[],
+  startIndex: number,
+  secretIndent: number,
+): number {
+  let endIndex = startIndex;
+  let fence: string | null = null;
+  while (endIndex + 1 < lines.length) {
+    const line = lines[endIndex + 1] ?? "";
+    if (fence === null && isPeerListItem(line, secretIndent)) break;
+    fence = updateMarkdownFence(line, fence);
+    endIndex += 1;
+  }
+  return endIndex;
+}
+
+function isPeerListItem(line: string, secretIndent: number): boolean {
+  const match = line.match(/^([ \t]*)-[ \t]+/);
+  return !!match && getMarkdownIndentWidth(match[1] ?? "") <= secretIndent;
+}
+
+function getMarkdownIndentWidth(indent: string): number {
+  let width = 0;
+  for (const character of indent) {
+    width = character === "\t" ? width + (4 - (width % 4)) : width + 1;
+  }
+  return width;
 }
 
 function extractTableCardSecrets(
   markdown: string,
   gmOnlyBullets: string[],
 ): string {
-  return splitMarkdownSections(markdown)
+  // The Table Card extractor owns fenced secret blocks; other section-based
+  // handoffs retain their existing conservative heading rules.
+  const sections = splitMarkdownSections(markdown, true);
+  return (sections.length ? sections : [{ heading: "", body: markdown }])
     .map((section) => {
       const { kept, moved } = extractTableCardSecretBlocks(section.body);
       for (const bullet of moved) {
@@ -396,12 +480,26 @@ function routeTableCardSecrets(
   };
 }
 
+/** Apply Table Card secrecy routing without changing the source's section layout. */
+export function routeTableCardSecretHandoff(
+  content: string,
+  lore: string,
+  isTableCard: boolean,
+) {
+  const routed = routeTableCardSecrets(content, lore, isTableCard);
+  return {
+    content: routed.content,
+    lore: appendGmOnlySecrets(routed.lore, routed.gmOnlyBullets),
+  };
+}
+
 function appendGmOnlySecrets(lore: string, bullets: string[]): string {
-  if (bullets.length === 0 || /-\s+\*\*Knowledge & Secrets\*\*/.test(lore)) {
+  const missingBullets = bullets.filter((bullet) => !lore.includes(bullet));
+  if (missingBullets.length === 0) {
     return lore;
   }
 
-  return [lore, `### GM-Only Secrets\n${bullets.join("\n")}`]
+  return [lore, `### GM-Only Secrets\n${missingBullets.join("\n")}`]
     .filter(Boolean)
     .join("\n\n");
 }
@@ -534,7 +632,9 @@ function getFactionHandoffLayout(data: GeneratorOutput) {
 
 export function usesPrivateSummaryHandoff(generatorType?: string) {
   return (
-    generatorType === "urban-fantasy-faction" || generatorType === "social-hub"
+    generatorType === "urban-fantasy-faction" ||
+    generatorType === "social-hub" ||
+    generatorType === "plot-twist-generator"
   );
 }
 

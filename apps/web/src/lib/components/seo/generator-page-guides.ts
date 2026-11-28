@@ -126,32 +126,32 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   holiday: {
     summary:
-      "Generate one observance or a connected calendar of festivals, memorials and civic days, each with its origin, traditions, who keeps it, and a tension the party can walk into at the table.",
+      "Make a day on the calendar into a change in everyday life: who closes their shops, who owes a duty and what happens when someone breaks with tradition. Decide what the party witnesses before you decide whether they intervene.",
     tips: [
       {
-        title: "Choose Observance scope to decide who keeps the day",
+        title: "Choose who keeps the day, not just its date",
         detail:
-          "Observance scope sets who keeps each observance, from a local settlement to a religion or a faction. Every entry's Observed by line starts from that scope, and calendar titles and overviews name it too, so pick it before you read the traditions.",
+          "Set Observance scope to A local settlement for a harbour remembrance or A faction for a guild rite. In Culture or society and Climate, seasons, or calendar, name the people, their livelihood and a real seasonal pressure. Use Religion or cosmology and Tone to frame a solemn duty or a celebration. Ask which households cannot afford to stop work and how they keep the day differently.",
       },
       {
-        title: "Use the calendar size to choose one day or a set",
+        title: "Make a calendar change the campaign schedule",
         detail:
-          "Generate creates a single observance or a calendar of several. A single observance is one note with its timing, origin and table hook. A calendar adds an overview and a separate section for each day, so the set reads as connected rather than as a list of unrelated holidays.",
+          "Set Generate to one observance for the next session or choose a calendar of 6, 10 or 14 observances for recurring campaign dates. Read When and Observed by for each day, then mark two dates against upcoming travel: which ferry stops, market opens or authority becomes unavailable? Copy the dates into your existing campaign timeline yourself.",
       },
       {
-        title: "Add context fields when the offline draft is too generic",
+        title: "Give a contested tradition a choice, not a mandatory quest",
         detail:
-          "The offline draft uses Observance scope, the calendar size and the genre, but it does not use Culture, Climate, Religion, history, Important people, Important events or Tone. Those fields feed the AI draft, so use it when you want the observances to follow your setting.",
+          "Tick Include a contested, secret, or suppressed observance and name a remembered event or rival account in Political or historical background. Use the AI option to ground it in your campaign. Read What people believe and the GM history separately. Offer two ways to participate, such as escorting a procession or protecting a dissenter, and decide what the community does if the party declines.",
       },
     ],
     links: [
       {
         href: "/answers/how-do-you-create-a-believable-fictional-religion",
-        label: "Creating a believable fictional religion",
+        label: "Build rituals around beliefs and obligations",
       },
       {
         href: "/answers/how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
-        label: "Making cultures feel distinct",
+        label: "Give different households and regions their own traditions",
       },
     ],
   },
@@ -1779,36 +1779,36 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "plot-twist-generator": {
     summary:
-      "Reframe an active campaign problem without invalidating what the party already witnessed, producing a reversal, the assumption it overturns, fair clues and new player choices.",
+      "Reframe an active problem without undoing the party's earlier discoveries. Prepare a reversal that remains true whether the players spot it early, accept it as presented, or pursue a third course.",
     tips: [
       {
-        title: "Lock in the facts you must protect",
+        title: "Separate established facts from the party's assumptions",
         detail:
-          "Describe the scene in Current situation / premise, then list protected NPCs or truths in Avoid / constraints (optional) and World context (optional) so the reversal reinterprets motives rather than erasing play.",
+          "In Current situation / premise, name what the party witnessed and what they inferred, for example, the ferries stopped and the council blamed smugglers. Put the witnessed facts in Avoid / constraints (optional), and existing loyalties in World context (optional). Read Why It Makes Sense against those facts before accepting the reveal.",
       },
       {
-        title: "Dial scale, timing and fairness upfront",
+        title: "Choose a reversal proportional to the stakes",
         detail:
-          "Pair Choose a vibe and Twist Type with Impact, When It Hits and Fairness / Foreshadowing to decide whether the turn hits early as a subtle complication or lands at the climax.",
+          "Choose a vibe that fits the campaign. For a local hidden motive, set Twist Type to Hidden motive, Impact to Significant and When It Hits to Midpoint. Choose Foreshadowable in Fairness / Foreshadowing, or Already hinted if the players have relevant evidence. Use the AI draft for your premise and constraints; treat an offline draft as a starting point to adapt.",
       },
       {
-        title: "Plant clues before you spring the turn",
+        title: "Turn clues and consequences into decisions",
         detail:
-          "Seed two entries from Foreshadowing in an earlier scene, reveal What Everyone Believed alongside The Reveal, and put New Choices straight in front of the party.",
+          "Assign two Foreshadowing clues to different sources, such as a harbour ledger and a ferryman. When the players investigate either, give them the evidence honestly. Choose one Immediate Consequence that follows even if they leave, and keep at least two New Choices open. If they discover the reveal early, let them act on it instead of withholding it until the planned scene.",
       },
     ],
     links: [
       {
         href: "/answers/how-do-you-handle-players-reaching-the-wrong-conclusion-in-an-rpg-mystery",
-        label: "Keeping established facts steady when players theorise",
+        label: "Keep fixed facts steady when players theorise",
       },
       {
         href: "/answers/how-do-you-run-a-conspiracy-campaign",
-        label: "Leaking clues before the reversal lands",
+        label: "Reveal conspiracies through independent evidence",
       },
       {
         href: "/answers/how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
-        label: "Tracking fallout and unresolved hooks",
+        label: "Track the consequences of choices and delayed leads",
       },
     ],
   },
