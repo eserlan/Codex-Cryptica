@@ -3,6 +3,25 @@ import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 import type { ValidSlug } from "./generator-page-meta";
 import { extendedSlugDrafts } from "./generator-page-drafts-extended";
 
+const ADVENTURE_DRAFT: GeneratorOutput = {
+  type: "note",
+  kind: "adventure",
+  title: "The Witness Who Came Back",
+  summary:
+    "A witness to last year's warehouse fire has evidence against a magistrate, and the city gates close in 36 hours.",
+  content:
+    "## Initial Situation\nMira Osal, listed among the dead in last year's warehouse fire, has appeared at the Drowned Clinic with a sealed ledger. She wants safe passage to testify.\n\n## Primary Objective & Pressure\nGet Mira and the ledger beyond the city before the Salt Gate shuts for the harvest festival in 36 hours. The magistrate's agents are buying information about her movements.\n\n## Key Locations\n- **The Drowned Clinic:** A basement surgery beneath the harbour market.\n- **The Salt Gate:** The only land exit; festival guards check all carts.\n- **The Ropewalk:** Dock workers launch a cargo skiff at the evening tide.\n\n## Important NPCs & Factions\n- **Mira Osal:** Wants to testify, but refuses to leave without evidence of who died.\n- **Captain Deren:** Guards the gate and suspects his magistrate is destroying records.\n- **The rope crews:** Want the families of the dead compensated.\n\n## Threats & Antagonists\nThe magistrate's agents search the clinic and buy passage records. They can discredit Mira without killing her.\n\n## Clues, Secrets & Discoveries\n- A clinic receipt proves Mira was alive after the fire.\n- A duplicate cargo manifest at the Ropewalk identifies the magistrate's warehouse. Both records can corroborate her testimony.",
+  lore: "## Complications & Escalating Pressures\n- After 12 hours, agents question the physician. After 24, Deren receives orders to close the Salt Gate early.\n- The rope crews demand that the missing workers be named in any public testimony.\n\n## Rewards & Stakes\nThe families could win restitution; Deren could lose his command.\n\n## Possible Outcomes\n- Mira reaches the capital: the evidence triggers an inquiry, but the families still need representation.\n- The party releases the manifest locally: the magistrate cannot bury it, but his allies might seize control of the inquiry.\n- The ledger is lost: the repeatable records and witnesses still provide a route to proof.\n\n## Adventure Hooks\n- The physician asks the party to escort an injured patient.\n- A bereaved rope worker hires them to recover the duplicate manifest.",
+  labels: [
+    "adventure",
+    "event",
+    "classic-fantasy",
+    "rescue-recovery",
+    "imported-draft",
+  ],
+  status: "draft",
+};
+
 export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
   ...extendedSlugDrafts,
   holiday: {
@@ -47,12 +66,13 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
   settlement: {
     type: "location",
     title: "Cinderveil",
-    summary: "A fortified mining town built into a dormant volcanic ridge.",
+    summary:
+      "A highland trade town where miners and toll collectors depend on the same pass.",
     content:
-      "### Geography\nPerched above a network of ash-grey tunnels, the town's foundries run day and night.\n\n### Economy\nOre refining, black-market gems, and a militia that charges tolls on three mountain passes.",
-    lore: "",
-    labels: ["rpg-settlement", "Mining", "Fortified"],
-    status: "draft",
+      "## Core Concept\nCinderveil grew around the northern pass where ore carts descend from the mines.\n\n## First Impression\nAsh-grey roofs and the clang of a toll bell. A queue of ore carts fills the gate.\n\n## Inhabitants\nMiners, muleteers, smelters and traders live around the furnace yards.\n\n## Life Here\nA weekly market trades worked iron for grain. The innkeepers lend storage space when storms close the pass.\n\n## History\nThe miners built their own road before the merchant guild purchased the tollhouse.",
+    lore: "### Current Tension\nThe guild has doubled the toll after a rockslide. The miners threaten to close the road if the fee stands.\n\n### Points of Interest\n- **Tollhouse**: Where permits and objections are recorded.\n- **Old Smelter**: Closed furnace where miners meet.\n- **Copper Boar Inn**: A meeting place for mule drivers.\n- **South Granary**: Holds the grain reserve.\n- **High Pass Shrine**: Offers shelter to travellers.\n\n### Notable Inhabitants\n- **Mara (guild clerk):** Will show the party the disputed toll books if protected.\n- **Oren (miner):** Wants a winter maintenance fund, not a higher fee.\n- **Tess (innkeeper):** Knows which caravans bypassed the toll.\n\n### Controlling / Important Factions\n- **Pass Guild**: Runs the tollhouse.\n- **Mine Wardens**: Maintain the road.\n\n### Adventure Hooks\nA mule driver brings a bogus permit with the new toll seal; Mara asks the party to find its source before tomorrow's market.\n\n### GM Reference Information\n- **Scale**: Town\n- **Genre / Setting**: Fantasy\n- **Environment**: Mountain pass\n- **Primary Function**: Trade hub\n- **Official Authority**: Merchant guild\n- **Tone**: Grim and weathered",
+    labels: ["rpg-location", "imported-draft"],
+    status: "active",
   },
   "magic-item": {
     type: "item",
@@ -79,12 +99,12 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
     type: "faction",
     title: "The Kingdom of Vaelthorn",
     summary:
-      "A mid-sized kingdom held together by old oaths and a ruler who is running out of allies.",
+      "A highland kingdom held together by old oaths and a disputed winter road.",
     content:
-      "### The Realm\nVaelthorn spans three river valleys and two mountain passes. Its capital has stood for four centuries, though the walls have not been tested in a generation.\n\n### Government & Power\nKing Aldren rules through a council of six noble houses - three of which are quietly negotiating a change of leadership.",
-    lore: "",
+      "### The Realm\nVaelthorn spans three river valleys and two mountain passes. The capital, Thornkeep, guards the only road open through winter.\n\n### Government & Power\nKing Aldren rules by hereditary right through a council of noble houses. Licensed mages keep the pass markers lit. One house has been diverting maintenance funds to finance a rival claim.\n\n### Society & Culture\nVillages share winter shelters and pay grain duties into the royal storehouses. Travellers leave a lantern at the pass shrines.\n\n### How to use it at the table\nThe party is hired to escort a grain convoy and must choose between the crown's toll road and an unlicensed route protected by the rival house.",
+    lore: "### At a Glance\n- **Polity Type**: Kingdom\n- **Ruler**: King Aldren\n- **Capital**: Thornkeep\n- **Scale**: Mid-sized nation\n- **Magic Level**: Common but regulated\n- **Conflict Level**: Simmering tensions\n- **Hidden Problem**: One house has been diverting maintenance funds to finance a rival claim.\n- **Immediate Hook**: Pass markers have gone dark before a grain convoy arrives.\n\n### Major Factions\n- **Lantern Council**: Wants the crown to restore the road and its licence.\n- **House Wren**: Seeks support for a rival heir and controls a second route.\n\n### Rumours & Hooks\n- The lamp oil was sold before the storm warning.\n- Wren riders have offered free passage to merchants who swear loyalty.\n- The keeper of the royal accounts has gone missing.\n\n### Entity Seeds\n- **King Aldren (ruler)**: The threatened heir.\n- **House Wren**: The rival house.\n- **Thornkeep (capital)**: The fortified seat.\n- **Winter pass**: The disputed route.",
     labels: ["rpg-kingdom", "kingdom-generator", "imported-draft"],
-    status: "draft",
+    status: "active",
   },
   nation: {
     type: "faction",
@@ -123,12 +143,12 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
     type: "location",
     title: "The Copper Boar",
     summary:
-      "A rowdy crossroads tavern where travellers and locals share rumours and old grudges.",
+      "A modest market-town inn where caravan crews warm themselves beside a furnace.",
     content:
-      "### The Place\nA low-ceilinged roadside inn with smoke-stained rafters and a fire that runs all year. The house ale is cheap and reliable.\n\n### The Trouble\nThe owner owes a debt to someone who has just arrived in town.",
-    lore: "",
+      "### The Place\nThe Copper Boar is a low-ceilinged inn beside the market road. Its benches fill at sunset and its smoke-stained rafters bear the name of every caravan that survived the winter.\n\n### The People\nThe owner, Tess, knows which drivers are looking for work. Regulars Oren the muleteer and Ivara the toll clerk have stopped sitting at the same table.\n\n### The Trouble\nA creditor has been hiding forged toll permits beneath the inn's cellar floor and threatens to seize Tess's inn if she talks.\n\n### How to use it at the table\nLet the party enjoy a meal and hear a driver mention a changed toll. Give Tess a reason to trust them before she asks for help.",
+    lore: "### At a Glance\n- **Type**: Tavern / Inn\n- **Atmosphere**: Rowdy and welcoming\n- **Owner**: Tess, a former caravan cook\n- **Signature Drink or Dish**: Barley stew and dark cellar ale\n- **Hidden Problem**: A creditor hides forged toll permits in the cellar.\n- **Immediate Hook**: Oren is turned away at the gate with a permit purchased from the creditor.\n\n### Notable Patrons\n- **Oren**: A muleteer who has lost a week's wages.\n- **Ivara**: A toll clerk who recognises the forged seal but fears her employer.\n\n### Rumours\n- The creditor only visits when the market closes.\n- A driver saw a sack carried into the cellar.\n- Traders complain that the south road is flooded.\n\n### Entity Seeds\n- **The Copper Boar**: The inn.\n- **Tess**: Owner.\n- **Oren**: Regular.\n- **The tollhouse**: The source of the disputed permits.",
     labels: ["rpg-location", "tavern-generator", "imported-draft"],
-    status: "draft",
+    status: "active",
   },
   "vampire-clan": {
     type: "faction",
@@ -203,12 +223,13 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
   "god-generator": {
     type: "character",
     title: "Oros, the Light of Dawn",
-    summary: "A deity of the rising sun and new beginnings.",
+    summary:
+      "A god of first light and second chances, whose worshippers dispute who deserves sanctuary.",
     content:
-      "### Deity Description\nOros is depicted as a radiant figure carrying a shield of polished bronze. Their altars face the east.",
-    lore: "### At a Glance\n- **Deity Type**: God\n- **Primary Domain**: Light\n- **Worshippers**: State Religion",
+      "### Deity Description\nOros is depicted as a traveller holding a bronze lamp. Shrines stand beside city gates and at east-facing windows.\n\n### Divine Portfolio\nOros governs the first light and the chance to begin again. Pilgrims seek courage to return home, acknowledge a wrong or start a new trade.\n\n### Worship & Cults\nHouseholds light a lamp before dawn and offer a place at the breakfast table to strangers. The gate priests keep lists of people who need shelter, but a wealthy order claims only initiated citizens may receive the blessing.",
+    lore: "### At a Glance\n- **Deity Type**: God\n- **Primary Domain**: Light\n- **Worshippers**: Folk Devotion\n- **Sacred Symbol**: A bronze lamp with a split flame.\n- **Secret**: The oldest shrine's founding oath granted sanctuary to everyone, but the gate order has removed that passage from its copy.\n- **Immediate Hook**: Lamps have begun lighting themselves at the windows of people refused sanctuary.\n\n### Rituals & Taboos\n- **Ritual**: Share the dawn flame with a neighbour or traveller.\n- **Taboo**: Never extinguish the lamp of someone seeking refuge.\n\n### Myths & Legends\nOros lit the first lamp from a traveller's hearth and carried it through the longest night. Every new fire thereafter was borrowed, never owned.\n\n### Adventure Hooks\n- The gate priests hire the party to investigate the unexplained lamps before the next public rite.\n- A household keeper has found the original oath and needs protection while the clergy debate whether to read it aloud.",
     labels: ["rpg-deity", "deity-generator", "imported-draft"],
-    status: "draft",
+    status: "active",
   },
   "ship-generator": {
     type: "location",
@@ -243,28 +264,8 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
     labels: ["dungeon", "location", "dungeon-generator", "imported-draft"],
     status: "draft",
   },
-  "adventure-generator": {
-    type: "event",
-    title: "The Witness Who Came Back",
-    summary:
-      "A dying informant has surfaced with evidence that implicates the city's most powerful magistrate - and she has three days to live.",
-    content:
-      "## Initial Situation\nA street physician treated a woman who should be dead - she was listed as a victim of last year's warehouse fire. She is carrying a sealed ledger and will only hand it to someone who can guarantee safe passage out of the city.\n\n## Primary Objective & Pressure\nGet the witness and the ledger to the provincial capital before the magistrate's agents locate her - the city gates close in 36 hours for the harvest festival.",
-    lore: "### Key Locations\n- **The Drowned Clinic**: A basement surgery below the harbour market.\n- **The Salt Gate**: The only land route out.\n\n### Important NPCs & Factions\n- **Mira Osal, the witness**: Survived by accident; wants to testify.\n- **Guard-Captain Deren**: Loyal to the magistrate.\n\n### Possible Outcomes\n- The witness reaches the capital and testifies; the magistrate is arrested.",
-    labels: ["adventure", "event", "adventure-generator", "imported-draft"],
-    status: "draft",
-  },
-  "adventure-idea-generator": {
-    type: "event",
-    title: "The Witness Who Came Back",
-    summary:
-      "A dying informant has surfaced with evidence that implicates the city's most powerful magistrate - and she has three days to live.",
-    content:
-      "## Initial Situation\nA street physician treated a woman who should be dead - she was listed as a victim of last year's warehouse fire. She is carrying a sealed ledger and will only hand it to someone who can guarantee safe passage out of the city.\n\n## Primary Objective & Pressure\nGet the witness and the ledger to the provincial capital before the magistrate's agents locate her - the city gates close in 36 hours for the harvest festival.",
-    lore: "### Key Locations\n- **The Drowned Clinic**: A basement surgery below the harbour market.\n- **The Salt Gate**: The only land route out.\n\n### Important NPCs & Factions\n- **Mira Osal, the witness**: Survived by accident; wants to testify.\n- **Guard-Captain Deren**: Loyal to the magistrate.\n\n### Possible Outcomes\n- The witness reaches the capital and testifies; the magistrate is arrested.",
-    labels: ["adventure", "event", "adventure-generator", "imported-draft"],
-    status: "draft",
-  },
+  "adventure-generator": ADVENTURE_DRAFT,
+  "adventure-idea-generator": ADVENTURE_DRAFT,
   tome: {
     type: "item",
     title: "The Drowned Liturgy of Saint Jude-in-the-Fens",

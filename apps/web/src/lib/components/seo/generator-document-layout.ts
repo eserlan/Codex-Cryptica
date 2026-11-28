@@ -572,3 +572,34 @@ export function getGeneratorDocumentLayout(
     lore: appendGmOnlySecrets(lore, gmOnlyBullets),
   };
 }
+
+/** The three inhabited-place routes have source GM reference rather than
+ * player-ready text in the reading layout's promoted sections. */
+export function getInhabitedPlaceHandoffLayout(
+  data: GeneratorOutput,
+  layout: { content: string; lore: string },
+  generatorType?: string,
+) {
+  if (generatorType === "settlement") {
+    return { content: data.content, lore: data.lore ?? "" };
+  }
+  if (generatorType !== "tavern" && generatorType !== "kingdom") return layout;
+  const publicHeadings = new Set(
+    generatorType === "tavern"
+      ? ["the place", "the people"]
+      : ["the realm", "society & culture"],
+  );
+  const content: string[] = [];
+  const gm: string[] = [];
+  const sections = splitMarkdownSections(data.content);
+  if (sections.length === 0 && data.content.trim()) gm.push(data.content);
+  for (const section of sections) {
+    (publicHeadings.has(section.heading.toLowerCase()) ? content : gm).push(
+      section.body,
+    );
+  }
+  return {
+    content: content.join("\n\n"),
+    lore: [...gm, data.lore ?? ""].filter(Boolean).join("\n\n"),
+  };
+}
